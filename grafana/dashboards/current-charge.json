@@ -1012,7 +1012,7 @@
           "policy": "default",
           "rawQuery": true,
           "rawSql": " SELECT battery_level as \"数值\" FROM charges \twhere charging_process_id=$charging_processes \tORDER BY DATE ASC \tLIMIT 1",
-          "refId": "Inital SOC",
+          "refId": "Initial SOC",
           "resultFormat": "time_series",
           "select": [
             [
