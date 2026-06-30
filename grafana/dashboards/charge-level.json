@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       }
     ]
@@ -33,7 +33,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -230,7 +230,7 @@
           }
         }
       ],
-      "title": "Charge Level",
+      "title": "充电电量",
       "transformations": [
         {
           "id": "configFromData",
@@ -283,7 +283,7 @@
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "hide": 2,
         "includeAll": true,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -314,9 +314,9 @@
           "text": "7200",
           "value": "7200"
         },
-        "description": "Data used to calculate Moving Average / Percentiles is unevenly sampled in TeslaMate. To avoid biases towards more frequently sampled values, the data is bucketed. For buckets without sampled values, the last observed value is carried forward. Bucketing is not time-weighted but is a simple average. Increasing the bucket width results in a loss of accuracy.",
+        "description": "TeslaMate 中用于计算移动平均值/百分位数的数据采样并不均匀。为避免结果偏向高频采样值，系统会对数据分桶；没有采样值的桶会沿用上一个观测值。分桶使用简单平均而非时间加权，增大分桶宽度会降低精度。",
         "includeAll": false,
-        "label": "Bucket Width",
+        "label": "分桶宽度",
         "name": "bucket_width",
         "options": [],
         "query": "1h : 3600, 2h : 7200, 4h : 14400",
@@ -329,7 +329,7 @@
           "value": "1"
         },
         "includeAll": false,
-        "label": "Include Moving Average / Percentiles",
+        "label": "包含移动平均值/百分位数",
         "name": "include_average_percentiles",
         "options": [],
         "query": "no : 0, yes : 1",
@@ -343,7 +343,7 @@
         },
         "description": "",
         "includeAll": false,
-        "label": "Moving Average / Percentiles Width",
+        "label": "移动平均值/百分位数窗口",
         "name": "intervals_moving_average_percentiles",
         "options": [],
         "query": "1/6 of interval : 6, 1/12 of interval : 12",
@@ -375,7 +375,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Charge Level",
+  "title": "充电电量",
   "uid": "WopVO_mgz",
   "version": 1,
   "weekStart": ""

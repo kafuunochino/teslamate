@@ -1,4 +1,4 @@
-<nav class="breadcrumb" aria-label="breadcrumbs">
+<nav class="breadcrumb" aria-label={gettext("Breadcrumbs")}>
   <ul>
     <li><.link navigate={~p"/"}><%= gettext("Home") %></.link></li>
     <li class="is-active"><.link navigate=""><%= gettext("TeslaFi Import") %></.link></li>
@@ -89,7 +89,7 @@
         <%= submit(gettext("Import"),
           class: "button is-success is-fullwidth",
           disabled: !@changeset.valid? or length(@status.files) < 1,
-          phx_disable_with: "Saving...",
+          phx_disable_with: gettext("Saving..."),
           phx_loading_class: "is-loading"
         ) %>
       </div>

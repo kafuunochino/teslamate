@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       }
     ]
@@ -30,7 +30,7 @@
     {
       "icon": "",
       "tags": [],
-      "title": "GpxExport",
+      "title": "导出 GPX",
       "tooltip": "",
       "type": "link",
       "url": "${base_url:raw}/drive/$drive_id/gpx"
@@ -41,7 +41,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -498,7 +498,7 @@
           }
         }
       ],
-      "title": "Drive",
+      "title": "行程",
       "type": "timeseries"
     },
     {
@@ -543,7 +543,7 @@
       "options": {
         "basemap": {
           "config": {},
-          "name": "Layer 0",
+          "name": "图层 0",
           "type": "osm-standard"
         },
         "controls": {
@@ -812,7 +812,7 @@
           }
         }
       ],
-      "title": "Elevation",
+      "title": "海拔",
       "type": "timeseries"
     },
     {
@@ -1087,7 +1087,7 @@
           }
         }
       ],
-      "title": "Temperatures",
+      "title": "温度",
       "type": "timeseries"
     },
     {
@@ -1344,7 +1344,7 @@
           }
         }
       ],
-      "title": "Tire Pressure",
+      "title": "胎压",
       "type": "timeseries"
     },
     {
@@ -1357,7 +1357,7 @@
       },
       "id": 36,
       "panels": [],
-      "title": "More Details",
+      "title": "更多详情",
       "type": "row"
     },
     {
@@ -1373,7 +1373,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -1448,7 +1448,7 @@
           }
         }
       ],
-      "title": "Odometer (From - To)",
+      "title": "里程表（起点 - 终点）",
       "type": "stat"
     },
     {
@@ -1464,7 +1464,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -1539,7 +1539,7 @@
           }
         }
       ],
-      "title": "Drive Duration",
+      "title": "行程时长",
       "type": "stat"
     },
     {
@@ -1622,7 +1622,7 @@
           }
         }
       ],
-      "title": "Selected Duration",
+      "title": "所选时长",
       "type": "stat"
     },
     {
@@ -1754,7 +1754,7 @@
           }
         }
       ],
-      "title": "Speed Histogram ($speed_unit)",
+      "title": "速度分布图（$speed_unit）",
       "transformations": [
         {
           "id": "filterFieldsByName",
@@ -1780,13 +1780,13 @@
       "fieldConfig": {
         "defaults": {
           "decimals": 2,
-          "displayName": "Distance",
+          "displayName": "距离",
           "mappings": [
             {
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -1886,7 +1886,7 @@
           }
         }
       ],
-      "title": "Distance driven",
+      "title": "行驶距离",
       "type": "stat"
     },
     {
@@ -1996,7 +1996,7 @@
           }
         }
       ],
-      "title": "Elevation Summary",
+      "title": "海拔摘要",
       "type": "stat"
     },
     {
@@ -2012,7 +2012,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -2087,7 +2087,7 @@
           }
         }
       ],
-      "title": "Energy consumed (net)",
+      "title": "消耗电量（净值）",
       "type": "stat"
     },
     {
@@ -2095,7 +2095,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "Shows how much energy has been recovered through regenerative braking.\n\n\"Energy recovered\" is already included in \"Energy consumed (net)\" and is determined by looking for periods with negative power within your drive. \n\nRequires Streaming API to be enabled and available for this drive.",
+      "description": "显示通过能量回收制动回收的电量。\n\n“回收电量”已包含在“消耗电量（净值）”中，它通过行程内功率为负的时段计算。\n\n需要启用流式 API，且该行程具有相应数据。",
       "fieldConfig": {
         "defaults": {
           "decimals": 2,
@@ -2104,7 +2104,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -2179,7 +2179,7 @@
           }
         }
       ],
-      "title": "Energy recovered",
+      "title": "回收电量",
       "type": "stat"
     },
     {
@@ -2295,7 +2295,7 @@
           }
         }
       ],
-      "title": "Consumption (net)",
+      "title": "能耗（净值）",
       "type": "stat"
     },
     {
@@ -2403,7 +2403,7 @@
           }
         }
       ],
-      "title": "Ø Speed",
+      "title": "平均速度",
       "type": "stat"
     }
   ],
@@ -2471,7 +2471,7 @@
         },
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "includeAll": false,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -2575,7 +2575,7 @@
     "refresh_intervals": []
   },
   "timezone": "browser",
-  "title": "Drive Details",
+  "title": "行程详情",
   "uid": "zm7wN6Zgz",
   "version": 1,
   "weekStart": ""

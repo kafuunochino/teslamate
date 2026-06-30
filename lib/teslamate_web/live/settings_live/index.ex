@@ -140,7 +140,84 @@ defmodule TeslaMateWeb.SettingsLive.Index do
                           |> Enum.map(&{Map.get(@language_tags, &1, &1), &1})
                           |> Enum.sort_by(&elem(&1, 0))
 
-  defp supported_ui_languages, do: @supported_ui_languages
+  @language_names_zh_hans %{
+    "Albanian" => "阿尔巴尼亚语",
+    "Arabic" => "阿拉伯语",
+    "Armenian" => "亚美尼亚语",
+    "Azerbaijani" => "阿塞拜疆语",
+    "Belarusian" => "白俄罗斯语",
+    "Bosnian" => "波斯尼亚语",
+    "Breton" => "布列塔尼语",
+    "Bulgarian" => "保加利亚语",
+    "Catalan" => "加泰罗尼亚语",
+    "Chinese" => "中文",
+    "Chinese (simplified)" => "简体中文",
+    "Chinese (traditional)" => "繁体中文",
+    "Croatian" => "克罗地亚语",
+    "Czech" => "捷克语",
+    "Danish" => "丹麦语",
+    "Dutch" => "荷兰语",
+    "English" => "英语",
+    "Estonian" => "爱沙尼亚语",
+    "Finnish" => "芬兰语",
+    "French" => "法语",
+    "Georgian" => "格鲁吉亚语",
+    "German" => "德语",
+    "Greek" => "希腊语",
+    "Hebrew" => "希伯来语",
+    "Hungarian" => "匈牙利语",
+    "Icelandic" => "冰岛语",
+    "Irish" => "爱尔兰语",
+    "Italian" => "意大利语",
+    "Japanese" => "日语",
+    "Japanese (Kana)" => "日语（假名）",
+    "Japanese (Latin)" => "日语（拉丁字母）",
+    "Kannada" => "卡纳达语",
+    "Kazakh" => "哈萨克语",
+    "Korean" => "韩语",
+    "Korean (Latin)" => "韩语（拉丁字母）",
+    "Latin" => "拉丁语",
+    "Latvian" => "拉脱维亚语",
+    "Lithuanian" => "立陶宛语",
+    "Luxembourgish" => "卢森堡语",
+    "Macedonian" => "马其顿语",
+    "Maltese" => "马耳他语",
+    "Norwegian" => "挪威语",
+    "Polish" => "波兰语",
+    "Portuguese" => "葡萄牙语",
+    "Romania" => "罗马尼亚语",
+    "Romansh" => "罗曼什语",
+    "Russian" => "俄语",
+    "Scottish Gaelic" => "苏格兰盖尔语",
+    "Serbian (Cyrillic)" => "塞尔维亚语（西里尔字母）",
+    "Serbian (Latin)" => "塞尔维亚语（拉丁字母）",
+    "Slovak" => "斯洛伐克语",
+    "Slovene" => "斯洛文尼亚语",
+    "Spanish" => "西班牙语",
+    "Swedish" => "瑞典语",
+    "Thai" => "泰语",
+    "Turkish" => "土耳其语",
+    "Ukrainian" => "乌克兰语",
+    "Welsh" => "威尔士语",
+    "Western Frisian" => "西弗里西亚语"
+  }
+
+  defp supported_ui_languages, do: localize_language_options(@supported_ui_languages)
+
+  defp supported_address_languages do
+    GlobalSettings.supported_languages()
+    |> localize_language_options()
+  end
+
+  defp localize_language_options(options) do
+    if Gettext.get_locale() == "zh_Hans" do
+      Enum.map(options, fn {name, locale} ->
+        {Map.get(@language_names_zh_hans, name, name), locale}
+      end)
+    else
+      options
+    end
+  end
 
   defp addresses_migrated? do
     alias TeslaMate.Log.{Drive, ChargingProcess}

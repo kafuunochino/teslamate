@@ -10,7 +10,7 @@
     >
       <%= if @error do %>
         <div class="notification is-danger">
-          Error: <%= @error %>
+          <%= gettext("Error") %>: <%= @error %>
         </div>
       <% end %>
 

@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       }
     ]
@@ -77,7 +77,7 @@
         "showImage": false
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "Releases",
+      "title": "发行版本",
       "type": "news"
     }
   ],
@@ -95,7 +95,7 @@
     "hidden": true
   },
   "timezone": "browser",
-  "title": "Home",
+  "title": "首页",
   "uid": "be2m9kga7b8qoc",
   "version": 1,
   "weekStart": ""

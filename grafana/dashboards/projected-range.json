@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       },
       {
@@ -22,7 +22,7 @@
         "hide": false,
         "iconColor": "rgba(255, 96, 96, 1)",
         "limit": 100,
-        "name": "Charged",
+        "name": "充电记录",
         "rawQuery": "SELECT\n$__time(start_date),\nend_date as timeend,\nconcat('Charged: ',round(cast(charge_energy_added as numeric),2),' kWh') AS text\nFROM charging_processes\nWHERE\n$__timeFilter(start_date)  AND duration_min > 5\nORDER BY start_date DESC",
         "showIn": 0,
         "tags": [],
@@ -48,7 +48,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -240,7 +240,7 @@
           }
         }
       ],
-      "title": "Projected Range - Mileage",
+      "title": "续航预测 - 里程",
       "type": "timeseries"
     },
     {
@@ -417,7 +417,7 @@
           }
         }
       ],
-      "title": "Projected Range - Battery Level",
+      "title": "续航预测 - 电池电量",
       "type": "timeseries"
     },
     {
@@ -622,7 +622,7 @@
           }
         }
       ],
-      "title": "Projected Range - Outdoor Temp",
+      "title": "续航预测 - 室外温度",
       "type": "timeseries"
     }
   ],
@@ -643,7 +643,7 @@
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "hide": 2,
         "includeAll": true,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -725,41 +725,41 @@
         "auto_count": 30,
         "auto_min": "10s",
         "current": {
-          "text": "6h",
+          "text": "6 小时",
           "value": "6h"
         },
         "hide": 1,
-        "label": "Time Resolution",
+        "label": "时间分辨率",
         "name": "interval",
         "options": [
           {
             "selected": false,
-            "text": "5m",
+            "text": "5 分钟",
             "value": "5m"
           },
           {
             "selected": false,
-            "text": "15m",
+            "text": "15 分钟",
             "value": "15m"
           },
           {
             "selected": false,
-            "text": "30m",
+            "text": "30 分钟",
             "value": "30m"
           },
           {
             "selected": false,
-            "text": "1h",
+            "text": "1 小时",
             "value": "1h"
           },
           {
             "selected": false,
-            "text": "3h",
+            "text": "3 小时",
             "value": "3h"
           },
           {
             "selected": true,
-            "text": "6h",
+            "text": "6 小时",
             "value": "6h"
           }
         ],
@@ -775,7 +775,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Projected Range",
+  "title": "续航里程预测",
   "uid": "riqUfXgRz",
   "version": 1,
   "weekStart": ""

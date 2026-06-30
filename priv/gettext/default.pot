@@ -710,3 +710,37 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "Service Mode"
 msgstr ""
+
+#: lib/teslamate_web/live/charge_live/cost.html.heex:1
+#: lib/teslamate_web/live/geofence_live/form.html.heex:1
+#: lib/teslamate_web/live/geofence_live/index.html.heex:1
+#: lib/teslamate_web/live/import_live/index.html.heex:1
+#: lib/teslamate_web/live/settings_live/index.html.heex:1
+#, elixir-autogen, elixir-format
+msgid "Breadcrumbs"
+msgstr ""
+
+#: lib/teslamate_web/live/geofence_live/form.html.heex:156
+#, elixir-autogen, elixir-format
+msgid "Close"
+msgstr ""
+
+#: lib/teslamate_web/live/signin_live/index.html.heex:13
+#, elixir-autogen, elixir-format
+msgid "Error"
+msgstr ""
+
+#: lib/teslamate_web/templates/layout/root.html.heex:67
+#, elixir-autogen, elixir-format
+msgid "Main navigation"
+msgstr ""
+
+#: lib/teslamate_web/templates/layout/root.html.heex:80
+#, elixir-autogen, elixir-format
+msgid "Menu"
+msgstr ""
+
+#: lib/teslamate_web/controllers/drive_controller.ex:17
+#, elixir-autogen, elixir-format
+msgid "Drive not found"
+msgstr ""

@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       }
     ]
@@ -33,7 +33,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -48,7 +48,7 @@
       },
       "id": 16,
       "panels": [],
-      "title": "Summary of this period",
+      "title": "此时段摘要",
       "type": "row"
     },
     {
@@ -66,7 +66,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -164,7 +164,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -263,7 +263,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -362,7 +362,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -450,7 +450,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "Browse your charges by Geofence, Location, Type, Cost and Duration in order to have an accurate Total of kWh added and their respective costs",
+      "description": "按地理围栏、位置、类型、费用和时长浏览充电记录，以准确统计充入的总电量及相应费用。",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -500,7 +500,7 @@
                 "value": [
                   {
                     "targetBlank": false,
-                    "title": "View charge details",
+                    "title": "查看充电详情",
                     "url": "/d/BHhxFeZRz/charge-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}&var-car_id=${__data.fields.car_id.numeric}&var-charging_process_id=${__data.fields.id.numeric}"
                   }
                 ]
@@ -676,7 +676,7 @@
                 "value": [
                   {
                     "targetBlank": false,
-                    "title": "Set Cost",
+                    "title": "设置费用",
                     "url": "${base_url:raw}/charge-cost/${__data.fields.id.numeric}"
                   }
                 ]
@@ -730,7 +730,7 @@
                 "value": [
                   {
                     "targetBlank": true,
-                    "title": "Create or edit geo-fence",
+                    "title": "创建或编辑地理围栏",
                     "url": "${base_url:raw}/geo-fences/${__data.fields.path}"
                   }
                 ]
@@ -1195,7 +1195,7 @@
           }
         }
       ],
-      "title": "Charger type: $charge_type",
+      "title": "充电类型：$charge_type",
       "type": "table"
     },
     {
@@ -1208,7 +1208,7 @@
       },
       "id": 18,
       "panels": [],
-      "title": "General information (All charges)",
+      "title": "常规信息（全部充电记录）",
       "type": "row"
     },
     {
@@ -1308,7 +1308,7 @@
           }
         }
       ],
-      "title": "Incomplete Charges 🪫",
+      "title": "未完成的充电记录 🪫",
       "type": "table"
     }
   ],
@@ -1328,7 +1328,7 @@
         },
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "includeAll": false,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -1415,7 +1415,7 @@
         },
         "definition": "-- The \"Include All option\" built into Grafana is not initializing correctly if no value is returned by the SQL query anymore\r\n-- If no GeoFence exists, create a Placeholder Geofence entry until fixed (https://github.com/grafana/grafana/issues/119793)\r\n\r\nwith geofences_incl_placeholder as (\r\n\r\n  select 'Giga Texas (Placeholder)' as __text, 0 as __value where ((select count(*) from geofences) = 0)\r\n\r\n  union all\r\n\r\n  SELECT name AS __text, id AS __value from geofences\r\n\r\n)\r\n\r\nSELECT __text, __value from geofences_incl_placeholder order by __text asc",
         "includeAll": true,
-        "label": "Geofence",
+        "label": "地理围栏",
         "multi": true,
         "name": "geofence",
         "options": [],
@@ -1430,8 +1430,8 @@
           "text": "",
           "value": ""
         },
-        "description": "Type a text contained in Location",
-        "label": "Location",
+        "description": "输入位置中包含的文字",
+        "label": "位置",
         "name": "location",
         "options": [
           {
@@ -1446,7 +1446,7 @@
       {
         "current": {},
         "includeAll": true,
-        "label": "Type",
+        "label": "类型",
         "multi": true,
         "name": "charge_type",
         "options": [],
@@ -1459,7 +1459,7 @@
           "text": "",
           "value": ""
         },
-        "label": "Cost >=",
+        "label": "最低费用",
         "name": "cost",
         "options": [
           {
@@ -1476,7 +1476,7 @@
           "text": "0",
           "value": "0"
         },
-        "label": "Duration (minutes) >=",
+        "label": "最短时长（分钟）",
         "name": "min_duration_min",
         "options": [
           {
@@ -1496,7 +1496,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Charges",
+  "title": "充电记录",
   "uid": "TSmNYvRRk",
   "version": 1,
   "weekStart": ""

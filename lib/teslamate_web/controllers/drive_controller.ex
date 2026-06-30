@@ -14,7 +14,7 @@ defmodule TeslaMateWeb.DriveController do
       |> Repo.preload(positions: from(p in Position, order_by: p.date))
 
     case drive do
-      nil -> conn |> send_resp(404, "Drive not found")
+      nil -> conn |> send_resp(404, gettext("Drive not found"))
       drive -> send_gpx_file(conn, drive)
     end
   end

@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       }
     ]
@@ -33,7 +33,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -57,7 +57,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "(Range lost while driving * Efficiency) / Distance driven",
+      "description": "（行驶中损失续航 × 能效）/ 行驶距离",
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
@@ -161,7 +161,7 @@
           }
         }
       ],
-      "title": "Ø Consumption (net)",
+      "title": "平均能耗（净值）",
       "type": "stat"
     },
     {
@@ -169,7 +169,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "(Range lost * Efficiency) / Distance driven",
+      "description": "（损失续航 × 能效）/ 行驶距离",
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
@@ -273,7 +273,7 @@
           }
         }
       ],
-      "title": "Ø Consumption (gross)",
+      "title": "平均能耗（总值）",
       "transformations": [
         {
           "id": "organize",
@@ -295,7 +295,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "Distance of all logged drives",
+      "description": "所有已记录行程的总距离",
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
@@ -399,7 +399,7 @@
           }
         }
       ],
-      "title": "Logged Distance",
+      "title": "已记录距离",
       "type": "stat"
     },
     {
@@ -664,7 +664,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Temperature"
+            "displayName": "温度"
           }
         ]
       },
@@ -699,7 +699,7 @@
           }
         }
       ],
-      "title": "Temperature – Driving Efficiency",
+      "title": "温度与行驶能效",
       "type": "table"
     },
     {
@@ -810,7 +810,7 @@
           }
         }
       ],
-      "title": "Current $preferred_range efficiency",
+      "title": "当前$preferred_range能效",
       "type": "stat"
     },
     {
@@ -919,7 +919,7 @@
           }
         }
       ],
-      "title": "Derived ideal efficiencies",
+      "title": "推算的理想能效",
       "type": "table"
     },
     {
@@ -1028,7 +1028,7 @@
           }
         }
       ],
-      "title": "Derived rated efficiencies",
+      "title": "推算的额定能效",
       "type": "table"
     }
   ],
@@ -1049,7 +1049,7 @@
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "hide": 2,
         "includeAll": true,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -1115,7 +1115,7 @@
           "value": "1"
         },
         "includeAll": false,
-        "label": "min. distance per drive",
+        "label": "单次行程最短距离",
         "name": "min_distance",
         "options": [],
         "query": "1, 5, 10, 25, 50",
@@ -1147,7 +1147,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Efficiency",
+  "title": "能效",
   "uid": "fu4SiQgWz",
   "version": 1,
   "weekStart": ""

@@ -1,0 +1,69 @@
+services:
+  teslamate:
+    build:
+      context: .
+    restart: always
+    environment:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?请在 .env 中设置 ENCRYPTION_KEY}
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${DATABASE_PASS:?请在 .env 中设置 DATABASE_PASS}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      MQTT_HOST: mosquitto
+      DEFAULT_LOCALE: zh_Hans
+      TZ: ${TZ:-Asia/Shanghai}
+      # 中国大陆车辆通常需要取消下面两行的注释：
+      # TESLA_API_HOST: https://owner-api.vn.cloud.tesla.cn
+      # TESLA_WSS_HOST: wss://streaming.vn.cloud.tesla.cn
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./import:/opt/app/import
+    cap_drop:
+      - all
+    depends_on:
+      - database
+      - mosquitto
+
+  database:
+    image: postgres:18-trixie
+    restart: always
+    environment:
+      POSTGRES_USER: teslamate
+      POSTGRES_PASSWORD: ${DATABASE_PASS:?请在 .env 中设置 DATABASE_PASS}
+      POSTGRES_DB: teslamate
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - teslamate-db:/var/lib/postgresql
+
+  grafana:
+    build:
+      context: ./grafana
+    restart: always
+    environment:
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${DATABASE_PASS:?请在 .env 中设置 DATABASE_PASS}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      GF_USERS_DEFAULT_LANGUAGE: zh-Hans
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "3000:3000"
+    volumes:
+      - teslamate-grafana-data:/var/lib/grafana
+    depends_on:
+      - database
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: always
+    command: mosquitto -c /mosquitto-no-auth.conf
+    volumes:
+      - mosquitto-conf:/mosquitto/config
+      - mosquitto-data:/mosquitto/data
+
+volumes:
+  teslamate-db:
+  teslamate-grafana-data:
+  mosquitto-conf:
+  mosquitto-data:

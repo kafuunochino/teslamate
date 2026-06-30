@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       }
     ]
@@ -23,7 +23,7 @@
       "icon": "doc",
       "tags": [],
       "targetBlank": true,
-      "title": "Select last three drives",
+      "title": "选择最近三次行程",
       "type": "link",
       "url": "/d/FkUpJpQZk/trip?from=$from"
     },
@@ -41,7 +41,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -101,7 +101,7 @@
       "options": {
         "basemap": {
           "config": {},
-          "name": "Layer 0",
+          "name": "图层 0",
           "type": "osm-standard"
         },
         "controls": {
@@ -150,7 +150,7 @@
                 }
               }
             },
-            "name": "Layer 1",
+            "name": "图层 1",
             "tooltip": true,
             "type": "route"
           }
@@ -485,7 +485,7 @@
           }
         }
       ],
-      "title": "Time spent",
+      "title": "耗时",
       "type": "piechart"
     },
     {
@@ -500,7 +500,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -996,7 +996,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -1091,7 +1091,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -1365,41 +1365,41 @@
                 "0": {
                   "color": "#6ED0E0",
                   "index": 0,
-                  "text": "online"
+                  "text": "在线"
                 },
                 "1": {
                   "color": "#8F3BB8",
                   "index": 1,
-                  "text": "driving"
+                  "text": "行驶中"
                 },
                 "2": {
                   "color": "#F2CC0C",
                   "index": 2,
-                  "text": "charging"
+                  "text": "充电中"
                 },
                 "3": {
                   "color": "#FFB357",
                   "index": 3,
-                  "text": "offline"
+                  "text": "离线"
                 },
                 "4": {
                   "color": "#56A64B",
                   "index": 4,
-                  "text": "asleep"
+                  "text": "休眠"
                 },
                 "5": {
                   "color": "#6ED0E0",
                   "index": 5,
-                  "text": "online"
+                  "text": "在线"
                 },
                 "6": {
                   "color": "#E02F44",
                   "index": 6,
-                  "text": "updating"
+                  "text": "更新中"
                 },
                 "null": {
                   "index": 7,
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "value"
@@ -1537,7 +1537,7 @@
                 "value": [
                   {
                     "targetBlank": false,
-                    "title": "View drive details",
+                    "title": "查看行程详情",
                     "url": "/d/zm7wN6Zgz/drive-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}&var-car_id=${__data.fields.car_id.numeric}&var-drive_id=${__data.fields.drive_id.numeric}"
                   }
                 ]
@@ -1635,7 +1635,7 @@
                 "value": [
                   {
                     "targetBlank": true,
-                    "title": "Create or edit geo-fence",
+                    "title": "创建或编辑地理围栏",
                     "url": "${base_url:raw}/geo-fences/${__data.fields.start_path}"
                   }
                 ]
@@ -1661,7 +1661,7 @@
                 "value": [
                   {
                     "targetBlank": true,
-                    "title": "Create or edit geo-fence",
+                    "title": "创建或编辑地理围栏",
                     "url": "${base_url:raw}/geo-fences/${__data.fields.end_path}"
                   }
                 ]
@@ -1816,7 +1816,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Date"
+            "displayName": "日期"
           }
         ]
       },
@@ -1851,7 +1851,7 @@
           }
         }
       ],
-      "title": "Drives",
+      "title": "行程记录",
       "type": "table"
     },
     {
@@ -1912,7 +1912,7 @@
                 "value": [
                   {
                     "targetBlank": false,
-                    "title": "View charge details",
+                    "title": "查看充电详情",
                     "url": "/d/BHhxFeZRz/charge-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}&var-car_id=${__data.fields.car_id.numeric}&var-charging_process_id=${__data.fields.id.numeric:raw}"
                   }
                 ]
@@ -2038,7 +2038,7 @@
                 "value": [
                   {
                     "targetBlank": false,
-                    "title": "Set Cost",
+                    "title": "设置费用",
                     "url": "${base_url:raw}/charge-cost/${__data.fields.id.numeric:raw}"
                   }
                 ]
@@ -2088,7 +2088,7 @@
                 "value": [
                   {
                     "targetBlank": true,
-                    "title": "Create or edit geo-fence",
+                    "title": "创建或编辑地理围栏",
                     "url": "${base_url:raw}/geo-fences/${__data.fields.path}"
                   }
                 ]
@@ -2256,7 +2256,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Date"
+            "displayName": "日期"
           }
         ]
       },
@@ -2291,7 +2291,7 @@
           }
         }
       ],
-      "title": "Charges",
+      "title": "充电记录",
       "transformations": [
         {
           "id": "merge",
@@ -2489,7 +2489,7 @@
           }
         }
       ],
-      "title": "Battery Level & Range",
+      "title": "电池电量与续航里程",
       "type": "timeseries"
     },
     {
@@ -2657,7 +2657,7 @@
           }
         }
       ],
-      "title": "Elevation",
+      "title": "海拔",
       "type": "timeseries"
     }
   ],
@@ -2678,7 +2678,7 @@
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "hide": 2,
         "includeAll": true,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -2696,7 +2696,7 @@
         "definition": "select unit_of_temperature from settings limit 1;",
         "hide": 2,
         "includeAll": false,
-        "label": "temperature unit",
+        "label": "温度单位",
         "name": "temp_unit",
         "options": [],
         "query": "select unit_of_temperature from settings limit 1;",
@@ -2714,7 +2714,7 @@
         "definition": "select unit_of_length from settings limit 1;",
         "hide": 2,
         "includeAll": false,
-        "label": "length unit",
+        "label": "长度单位",
         "name": "length_unit",
         "options": [],
         "query": "select unit_of_length from settings limit 1;",
@@ -2799,7 +2799,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Trip",
+  "title": "行程",
   "uid": "FkUpJpQZk",
   "version": 1,
   "weekStart": ""

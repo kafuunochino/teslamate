@@ -101,6 +101,8 @@ end
 config :teslamate,
   default_geofence: System.get_env("DEFAULT_GEOFENCE")
 
+config :gettext, :default_locale, System.get_env("DEFAULT_LOCALE", "en")
+
 case System.get_env("DATABASE_SOCKET_DIR") do
   nil ->
     config :teslamate, TeslaMate.Repo,

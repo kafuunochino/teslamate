@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -39,7 +39,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -54,7 +54,7 @@
       },
       "id": 3,
       "panels": [],
-      "title": "Summary of this period",
+      "title": "此时段摘要",
       "type": "row"
     },
     {
@@ -72,7 +72,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -171,7 +171,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -270,7 +270,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -390,7 +390,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "N/A"
+                  "text": "不适用"
                 }
               },
               "type": "special"
@@ -589,7 +589,7 @@
                 "value": [
                   {
                     "targetBlank": false,
-                    "title": "View drive details",
+                    "title": "查看行程详情",
                     "url": "/d/zm7wN6Zgz/drive-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}&var-car_id=${__data.fields.car_id.numeric}&var-drive_id=${__data.fields.drive_id.numeric}"
                   }
                 ]
@@ -729,7 +729,7 @@
                 "value": [
                   {
                     "targetBlank": true,
-                    "title": "Create or edit geo-fence",
+                    "title": "创建或编辑地理围栏",
                     "url": "${base_url:raw}/geo-fences/${__data.fields.start_path}"
                   }
                 ]
@@ -755,7 +755,7 @@
                 "value": [
                   {
                     "targetBlank": true,
-                    "title": "Create or edit geo-fence",
+                    "title": "创建或编辑地理围栏",
                     "url": "${base_url:raw}/geo-fences/${__data.fields.end_path}"
                   }
                 ]
@@ -1285,7 +1285,7 @@
           }
         }
       ],
-      "title": "Drive",
+      "title": "行程",
       "type": "table"
     },
     {
@@ -1298,7 +1298,7 @@
       },
       "id": 10,
       "panels": [],
-      "title": "General information (All drives)",
+      "title": "常规信息（全部行程）",
       "type": "row"
     },
     {
@@ -1398,7 +1398,7 @@
           }
         }
       ],
-      "title": "Incomplete Drives 🛣️",
+      "title": "未完成的行程 🛣️",
       "type": "table"
     }
   ],
@@ -1418,7 +1418,7 @@
         },
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "includeAll": false,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -1437,7 +1437,7 @@
         },
         "definition": "-- The \"Include All option\" built into Grafana is not initializing correctly if no value is returned by the SQL query anymore\r\n-- If no GeoFence exists, create a Placeholder Geofence entry until fixed (https://github.com/grafana/grafana/issues/119793)\r\n\r\nwith geofences_incl_placeholder as (\r\n\r\n  select 'Giga Texas (Placeholder)' as __text, 0 as __value where ((select count(*) from geofences) = 0)\r\n\r\n  union all\r\n\r\n  SELECT name AS __text, id AS __value from geofences\r\n\r\n)\r\n\r\nSELECT __text, __value from geofences_incl_placeholder order by __text asc",
         "includeAll": true,
-        "label": "Geofence",
+        "label": "地理围栏",
         "multi": true,
         "name": "geofence",
         "options": [],
@@ -1452,8 +1452,8 @@
           "text": "",
           "value": ""
         },
-        "description": "Type a text contained in Start or Destination Location",
-        "label": "Location",
+        "description": "输入起点或目的地中包含的文字",
+        "label": "位置",
         "name": "location",
         "options": [
           {
@@ -1474,7 +1474,7 @@
         "definition": "select unit_of_temperature from settings limit 1;",
         "hide": 2,
         "includeAll": false,
-        "label": "temperature unit",
+        "label": "温度单位",
         "name": "temp_unit",
         "options": [],
         "query": "select unit_of_temperature from settings limit 1;",
@@ -1492,7 +1492,7 @@
         "definition": "select unit_of_length from settings limit 1;",
         "hide": 2,
         "includeAll": false,
-        "label": "length unit",
+        "label": "长度单位",
         "name": "length_unit",
         "options": [],
         "query": "select unit_of_length from settings limit 1;",
@@ -1540,7 +1540,7 @@
           "text": "0",
           "value": "0"
         },
-        "label": "Distance >=",
+        "label": "最短距离",
         "name": "min_dist",
         "options": [
           {
@@ -1557,7 +1557,7 @@
           "text": "0",
           "value": "0"
         },
-        "label": "Speed >=",
+        "label": "最低速度",
         "name": "min_speed",
         "options": [
           {
@@ -1572,11 +1572,11 @@
       {
         "allowCustomValue": false,
         "current": {
-          "text": "slope-adjusted",
+          "text": "坡度修正",
           "value": "slope-adjusted"
         },
-        "description": "Select how Efficiency ratings should be calculated.\n\n\"by distance\" is doing a simple comparison based on distance driven and range lost while driving.\n\n\"slope-adjusted\" takes ascent / descent of the drive into account and adjusts the energy consumed accordingly. regen breaking efficiency is set to 85% and the vehicle is assumed to have a weight of 2100 kg.",
-        "label": "Efficiency",
+        "description": "选择能效评级的计算方式。\n\n“按距离”根据行驶距离和行驶中损失的续航里程进行简单比较。\n\n“坡度修正”会考虑行程中的爬升和下降并相应调整能耗；能量回收制动效率按 85% 计算，车辆重量按 2100 kg 计算。",
+        "label": "能效",
         "name": "efficiency",
         "options": [],
         "query": "slope-adjusted,by distance",
@@ -1591,7 +1591,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Drives",
+  "title": "行程记录",
   "uid": "Y8upc6ZRk",
   "version": 1,
   "weekStart": ""

@@ -1,4 +1,4 @@
-<nav class="breadcrumb" aria-label="breadcrumbs">
+<nav class="breadcrumb" aria-label={gettext("Breadcrumbs")}>
   <ul>
     <li><.link navigate={~p"/"}><%= gettext("Home") %></.link></li>
     <li><.link navigate={~p"/geo-fences"}><%= gettext("Geo-Fences") %></.link></li>
@@ -153,7 +153,7 @@
   <div class="modal-card modal-content">
     <header class="modal-card-head">
       <p class="modal-card-title"><%= gettext("Charging Costs") %></p>
-      <button class="button is-text is-rounded" aria-label="close" phx-click="close-modal">
+      <button class="button is-text is-rounded" aria-label={gettext("Close")} phx-click="close-modal">
         <span class="icon is-small"><i class="mdi mdi-close"></i></span>
       </button>
     </header>

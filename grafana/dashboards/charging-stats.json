@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "注释与警报",
         "type": "dashboard"
       }
     ]
@@ -33,7 +33,7 @@
       "tags": [
         "tesla"
       ],
-      "title": "Dashboards",
+      "title": "仪表盘",
       "type": "dashboards"
     }
   ],
@@ -134,7 +134,7 @@
           }
         }
       ],
-      "title": "# of Charges",
+      "title": "充电次数",
       "type": "stat"
     },
     {
@@ -219,7 +219,7 @@
           }
         }
       ],
-      "title": "Total Energy added",
+      "title": "充入总电量",
       "type": "stat"
     },
     {
@@ -305,7 +305,7 @@
           }
         }
       ],
-      "title": "SuC Charging Cost",
+      "title": "超级充电费用",
       "type": "stat"
     },
     {
@@ -391,7 +391,7 @@
           }
         }
       ],
-      "title": "Total Charging Cost",
+      "title": "充电总费用",
       "type": "stat"
     },
     {
@@ -471,7 +471,7 @@
           }
         }
       ],
-      "title": "Ø Cost per 100 $length_unit",
+      "title": "每 100 $length_unit 平均费用",
       "type": "stat"
     },
     {
@@ -553,7 +553,7 @@
           }
         }
       ],
-      "title": "Ø Cost per kWh",
+      "title": "每千瓦时平均费用",
       "type": "stat"
     },
     {
@@ -635,7 +635,7 @@
           }
         }
       ],
-      "title": "Ø Cost per kWh DC",
+      "title": "直流充电每千瓦时平均费用",
       "type": "stat"
     },
     {
@@ -717,7 +717,7 @@
           }
         }
       ],
-      "title": "Ø Cost per kWh AC",
+      "title": "交流充电每千瓦时平均费用",
       "type": "stat"
     },
     {
@@ -829,7 +829,7 @@
         }
       ],
       "timeFrom": "6M",
-      "title": "Charge Heatmap",
+      "title": "充电热力图",
       "type": "heatmap"
     },
     {
@@ -1017,7 +1017,7 @@
         }
       ],
       "timeFrom": "6M",
-      "title": "Charge Delta",
+      "title": "充电增量",
       "transformations": [
         {
           "id": "configFromData",
@@ -1175,7 +1175,7 @@
           }
         }
       ],
-      "title": "AC/DC - Energy Used",
+      "title": "交流/直流 - 用电量",
       "type": "piechart"
     },
     {
@@ -1245,7 +1245,7 @@
       "options": {
         "basemap": {
           "config": {},
-          "name": "Layer 0",
+          "name": "图层 0",
           "tooltip": true,
           "type": "osm-standard"
         },
@@ -1304,7 +1304,7 @@
             "location": {
               "mode": "auto"
             },
-            "name": "Charge location",
+            "name": "充电位置",
             "tooltip": true,
             "type": "markers"
           }
@@ -1353,7 +1353,7 @@
           }
         }
       ],
-      "title": "Charging heat map by kWh",
+      "title": "按千瓦时统计的充电热力图",
       "type": "geomap"
     },
     {
@@ -1479,7 +1479,7 @@
           }
         }
       ],
-      "title": "AC/DC - Duration",
+      "title": "交流/直流 - 时长",
       "type": "piechart"
     },
     {
@@ -1542,7 +1542,7 @@
                 "id": "links",
                 "value": [
                   {
-                    "title": "Show charge details",
+                    "title": "查看充电详情",
                     "url": "/d/BHhxFeZRz/charge-details?from=${__data.fields.start_date.numeric}&to=${__data.fields.end_date.numeric}&var-car_id=${car_id}&var-charging_process_id=${__data.fields.charging_process_id.numeric}"
                   }
                 ]
@@ -1722,7 +1722,7 @@
           }
         }
       ],
-      "title": "DC Charging Curve",
+      "title": "直流充电曲线",
       "type": "xychart"
     },
     {
@@ -1730,7 +1730,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "Only End Battery Level of last Charging Process considered for consecutive Charging Processes",
+      "description": "连续充电记录仅采用最后一次充电结束时的电量。",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1886,7 +1886,7 @@
           }
         }
       ],
-      "title": "Charge Stats",
+      "title": "充电统计",
       "transformations": [
         {
           "id": "configFromData",
@@ -1921,7 +1921,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "Only Start Battery Level of first Charging Process considered for consecutive Charging Processes",
+      "description": "连续充电记录仅采用第一次充电开始时的电量。",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -2069,7 +2069,7 @@
           }
         }
       ],
-      "title": "Discharge Stats",
+      "title": "放电统计",
       "type": "table"
     },
     {
@@ -2189,7 +2189,7 @@
           }
         }
       ],
-      "title": "Top Charging Stations (Charged)",
+      "title": "充电站排行（充电量）",
       "type": "table"
     },
     {
@@ -2305,7 +2305,7 @@
           }
         }
       ],
-      "title": "Top Charging Stations (Cost)",
+      "title": "充电站排行（费用）",
       "type": "table"
     }
   ],
@@ -2326,7 +2326,7 @@
         "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "hide": 2,
         "includeAll": true,
-        "label": "Car",
+        "label": "车辆",
         "name": "car_id",
         "options": [],
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
@@ -2371,7 +2371,7 @@
       },
       {
         "current": {},
-        "label": "Duration >=",
+        "label": "最短时长",
         "name": "min_duration",
         "options": [
           {
@@ -2393,7 +2393,7 @@
         },
         "definition": "-- The \"Include All option\" built into Grafana is not initializing correctly if no value is returned by the SQL query anymore\r\n-- If no GeoFence exists, create a Placeholder Geofence entry until fixed (https://github.com/grafana/grafana/issues/119793)\r\n\r\nwith geofences_incl_placeholder as (\r\n\r\n  select 'Giga Texas (Placeholder)' as __text, 0 as __value where ((select count(*) from geofences) = 0)\r\n\r\n  union all\r\n\r\n  SELECT name AS __text, id AS __value from geofences\r\n\r\n)\r\n\r\nSELECT __text, __value from geofences_incl_placeholder order by __text asc",
         "includeAll": true,
-        "label": "Geofence",
+        "label": "地理围栏",
         "multi": true,
         "name": "geofence",
         "options": [],
@@ -2427,7 +2427,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Charging Stats",
+  "title": "充电统计",
   "uid": "-pkIkhmRz",
   "version": 1,
   "weekStart": ""
