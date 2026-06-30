@@ -36,7 +36,10 @@ jobs:
         shell: sh
 
       - name: Verify that POT files are up to date
-        run: mix gettext.extract --check-up-to-date
+        run: |
+          mix gettext.extract
+          git diff -- priv/gettext/default.pot
+          exit 1
 
       - name: Check unused dependencies
         run: mix deps.unlock --check-unused
