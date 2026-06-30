@@ -536,7 +536,7 @@ msgstr ""
 msgid "Streaming API"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#: lib/teslamate_web/live/settings_live/index.html.heex:449
 #, elixir-autogen, elixir-format
 msgid "Documentation"
 msgstr ""
@@ -748,7 +748,7 @@ msgstr ""
 msgid "Drive not found"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:449
+#: lib/teslamate_web/live/settings_live/index.html.heex:395
 #, elixir-autogen, elixir-format
 msgid "Project updates"
 msgstr ""
