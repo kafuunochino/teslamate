@@ -102,4 +102,4 @@ Compose 文件把项目内的 `import` 目录挂载到容器的 `/opt/app/import
 - 中国大陆车辆无法连接：确认已启用 Compose 文件中的中国区 API 与流式服务地址，并检查网络连通性。
 - 汉化未生效：本项目需要从源码构建；直接使用官方 `teslamate/teslamate:latest` 或 `teslamate/grafana:latest` 镜像不会包含本分支的汉化内容。
 
-更多高级配置、反向代理、Home Assistant、MQTT 与数据修复说明，请参考 [TeslaMate 官方文档](https://docs.teslamate.org)。
+更多高级配置、反向代理、Home Assistant、MQTT 与数据修复说明，请参考 [TeslaMate 官方文档](https://docs.teslamate.org/)。

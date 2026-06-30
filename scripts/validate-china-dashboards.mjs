@@ -70,8 +70,10 @@ const allowedPanelTypes = new Set([
   "xychart",
 ]);
 
-const writeSql = /\b(insert|update|delete|drop|alter|truncate|grant|revoke|copy|call|do)\b/i;
-const privateIp = /https?:\/\/(?:10\.|127\.|169\.254\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/i;
+const writeSql =
+  /\b(insert|update|delete|drop|alter|truncate|grant|revoke|copy|call|do)\b/i;
+const privateIp =
+  /https?:\/\/(?:10\.|127\.|169\.254\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/i;
 const errors = [];
 const seenUids = new Map();
 
