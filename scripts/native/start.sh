@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-PROJECT_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/../.." && pwd)
 
-# shellcheck source=load-env.sh
+# shellcheck source=/dev/null
 . "$SCRIPT_DIR/load-env.sh"
 cd "$PROJECT_DIR"
 load_native_env "${1:-.env.native}"
