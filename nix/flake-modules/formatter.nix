@@ -83,11 +83,14 @@
         runtimeInputs = [
           config.teslamate.elixir
           config.treefmt.build.wrapper
+          pkgs.git
         ];
         runtimeEnv.MIX_REBAR3 = "${config.teslamate.rebar3}/bin/rebar3";
         text = ''
           mix deps.get
-          exec treefmt "$@"
+          treefmt "$@" || true
+          git diff -- README.zh-CN.md
+          exit 1
         '';
       };
     };
