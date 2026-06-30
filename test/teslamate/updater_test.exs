@@ -106,6 +106,7 @@ defmodule TeslaMate.UpdaterTest do
     current = String.duplicate("a", 40)
     remote = String.duplicate("b", 40)
     process_name = :"repository_updater_#{name}"
+
     updater_opts = [
       name: process_name,
       version: "1.0.0",
