@@ -571,7 +571,7 @@ msgstr ""
 msgid "Software Update available (%{version})"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:466
+#: lib/teslamate_web/live/settings_live/index.html.heex:468
 #, elixir-autogen, elixir-format
 msgid "Sign out"
 msgstr ""
@@ -780,7 +780,7 @@ msgstr ""
 msgid "Current source revision is unknown; rebuild from a Git checkout"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:442
+#: lib/teslamate_web/live/settings_live/index.html.heex:443
 #, elixir-autogen, elixir-format
 msgid "Update check failed; please try again later"
 msgstr ""

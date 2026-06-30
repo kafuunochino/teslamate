@@ -439,7 +439,9 @@
                   <%= gettext("Current source revision is unknown; rebuild from a Git checkout") %>
                 </p>
               <% {:error, _reason} -> %>
-                <p class="help is-danger"><%= gettext("Update check failed; please try again later") %></p>
+                <p class="help is-danger">
+                  <%= gettext("Update check failed; please try again later") %>
+                </p>
             <% end %>
           </td>
         </tr>

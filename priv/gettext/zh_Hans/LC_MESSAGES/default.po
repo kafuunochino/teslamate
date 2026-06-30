@@ -572,7 +572,7 @@ msgstr "按分钟"
 msgid "Software Update available (%{version})"
 msgstr "有可用的软件更新（%{version}）"
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:466
+#: lib/teslamate_web/live/settings_live/index.html.heex:468
 #, elixir-autogen, elixir-format
 msgid "Sign out"
 msgstr "退出登录"
@@ -781,7 +781,7 @@ msgstr "查看差异"
 msgid "Current source revision is unknown; rebuild from a Git checkout"
 msgstr "无法识别当前源码版本，请从 Git 检出的源码重新构建"
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:442
+#: lib/teslamate_web/live/settings_live/index.html.heex:443
 #, elixir-autogen, elixir-format
 msgid "Update check failed; please try again later"
 msgstr "检查更新失败，请稍后重试"
