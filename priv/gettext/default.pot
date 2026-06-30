@@ -571,7 +571,7 @@ msgstr ""
 msgid "Software Update available (%{version})"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:417
+#: lib/teslamate_web/live/settings_live/index.html.heex:466
 #, elixir-autogen, elixir-format
 msgid "Sign out"
 msgstr ""
@@ -743,4 +743,44 @@ msgstr ""
 #: lib/teslamate_web/controllers/drive_controller.ex:17
 #, elixir-autogen, elixir-format
 msgid "Drive not found"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#, elixir-autogen, elixir-format
+msgid "Project updates"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:404
+#, elixir-autogen, elixir-format
+msgid "Check for updates"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:410
+#, elixir-autogen, elixir-format
+msgid "Checking for updates…"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:417
+#, elixir-autogen, elixir-format
+msgid "Already up to date (%{revision})"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:428
+#, elixir-autogen, elixir-format
+msgid "Project differences found (%{revision})"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:431
+#, elixir-autogen, elixir-format
+msgid "View changes"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:439
+#, elixir-autogen, elixir-format
+msgid "Current source revision is unknown; rebuild from a Git checkout"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:442
+#, elixir-autogen, elixir-format
+msgid "Update check failed; please try again later"
 msgstr ""

@@ -265,6 +265,10 @@ psql -U teslamate -h 127.0.0.1 -d teslamate -c \
 
 Grafana 和 PostgreSQL 使用各自系统服务。TeslaMate 更新前先备份数据库：
 
+可先在 TeslaMate 的“设置 → 项目更新”中点击“检查更新”。该按钮只读取
+`kafuunochino/teslamate` 的 `main` 分支版本并提供差异链接，不会从网页进程执行
+Git 命令或覆盖本机文件。确认差异后，再在项目目录中手动执行下列命令：
+
 ```bash
 pg_dump -U teslamate -h 127.0.0.1 -d teslamate -Fc -f teslamate-backup.dump
 git pull --ff-only

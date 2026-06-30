@@ -384,11 +384,63 @@
         <tr>
           <th align="right"><%= gettext("GitHub") %></th>
           <td>
-            <%= link("teslamate-org/teslamate",
-              to: "https://github.com/teslamate-org/teslamate",
+            <%= link("kafuunochino/teslamate",
+              to: "https://github.com/kafuunochino/teslamate",
               target: "_blank",
               rel: "noopener noreferrer"
             ) %>
+          </td>
+        </tr>
+        <tr>
+          <th align="right"><%= gettext("Project updates") %></th>
+          <td>
+            <button
+              id="check-project-update"
+              type="button"
+              class={["button", "is-small", if(@repository_check == :checking, do: "is-loading")]}
+              phx-click="check_repository_update"
+              disabled={@repository_check == :checking}
+            >
+              <%= gettext("Check for updates") %>
+            </button>
+
+            <%= case @repository_check do %>
+              <% :idle -> %>
+              <% :checking -> %>
+                <p class="help"><%= gettext("Checking for updates…") %></p>
+              <% {:ok,
+                   %TeslaMate.Updater.RepositoryCheck{
+                     status: :current,
+                     remote_revision: revision
+                   }} -> %>
+                <p class="help is-success">
+                  <%= gettext("Already up to date (%{revision})",
+                    revision: String.slice(revision, 0, 8)
+                  ) %>
+                </p>
+              <% {:ok,
+                   %TeslaMate.Updater.RepositoryCheck{
+                     status: :update_available,
+                     remote_revision: revision,
+                     compare_url: compare_url
+                   }} -> %>
+                <p class="help is-warning">
+                  <%= gettext("Project differences found (%{revision})",
+                    revision: String.slice(revision, 0, 8)
+                  ) %>
+                  <%= link(gettext("View changes"),
+                    to: compare_url,
+                    target: "_blank",
+                    rel: "noopener noreferrer"
+                  ) %>
+                </p>
+              <% {:error, :unknown_current_revision} -> %>
+                <p class="help is-danger">
+                  <%= gettext("Current source revision is unknown; rebuild from a Git checkout") %>
+                </p>
+              <% {:error, _reason} -> %>
+                <p class="help is-danger"><%= gettext("Update check failed; please try again later") %></p>
+            <% end %>
           </td>
         </tr>
         <tr>

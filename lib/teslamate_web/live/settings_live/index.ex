@@ -16,6 +16,7 @@ defmodule TeslaMateWeb.SettingsLive.Index do
       car: nil,
       global_settings: settings |> prepare(),
       update: Updater.get_update(),
+      repository_check: :idle,
       refreshing_addresses?: nil,
       refresh_error: nil,
       page_title: gettext("Settings")
@@ -108,6 +109,12 @@ defmodule TeslaMateWeb.SettingsLive.Index do
     {:noreply, redirect(socket, to: Routes.car_path(socket, :index))}
   end
 
+  def handle_event("check_repository_update", _params, socket) do
+    :ok = Updater.check_repository(self())
+
+    {:noreply, assign(socket, repository_check: :checking)}
+  end
+
   @impl true
   def handle_info({:assigns, assigns}, socket) do
     socket =
@@ -116,6 +123,10 @@ defmodule TeslaMateWeb.SettingsLive.Index do
       |> assign(assigns)
 
     {:noreply, socket}
+  end
+
+  def handle_info({:repository_update_check, result}, socket) do
+    {:noreply, assign(socket, repository_check: result)}
   end
 
   def handle_info(msg, socket) do
