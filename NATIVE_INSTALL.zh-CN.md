@@ -14,15 +14,15 @@
 
 本仓库当前构建基线：
 
-| 组件 | 建议版本 | 用途 |
-| --- | --- | --- |
-| Erlang/OTP | 28 | Elixir 运行时 |
-| Elixir | 1.19.5（OTP 28） | TeslaMate 主程序 |
-| Node.js | 22 LTS | 构建网页资源 |
-| PostgreSQL | 18 | 数据库与仪表盘查询 |
-| Grafana OSS | 13.0.1 或同系列安全更新 | 仪表盘 |
-| Mosquitto | 2.x，可选 | MQTT/Home Assistant 集成 |
-| Git | 当前受支持版本 | 获取与更新源码 |
+| 组件        | 建议版本                | 用途                     |
+| ----------- | ----------------------- | ------------------------ |
+| Erlang/OTP  | 28                      | Elixir 运行时            |
+| Elixir      | 1.19.5（OTP 28）        | TeslaMate 主程序         |
+| Node.js     | 22 LTS                  | 构建网页资源             |
+| PostgreSQL  | 18                      | 数据库与仪表盘查询       |
+| Grafana OSS | 13.0.1 或同系列安全更新 | 仪表盘                   |
+| Mosquitto   | 2.x，可选               | MQTT/Home Assistant 集成 |
+| Git         | 当前受支持版本          | 获取与更新源码           |
 
 只从各项目官方网站或操作系统可信软件源安装：
 
@@ -189,12 +189,12 @@ GF_USERS_ALLOW_SIGN_UP=false
 
 常见 provisioning 路径：
 
-| 系统 | 路径 |
-| --- | --- |
-| Windows ZIP/安装版 | Grafana 安装目录下的 `conf/provisioning` |
-| Linux 软件包 | `/etc/grafana/provisioning` |
+| 系统                         | 路径                                     |
+| ---------------------------- | ---------------------------------------- |
+| Windows ZIP/安装版           | Grafana 安装目录下的 `conf/provisioning` |
+| Linux 软件包                 | `/etc/grafana/provisioning`              |
 | macOS Apple Silicon Homebrew | `/opt/homebrew/etc/grafana/provisioning` |
-| macOS Intel Homebrew | `/usr/local/etc/grafana/provisioning` |
+| macOS Intel Homebrew         | `/usr/local/etc/grafana/provisioning`    |
 
 确保启动 Grafana 的服务或终端进程能读取上述环境变量，然后重启 Grafana。访问 <http://127.0.0.1:3000>，首次登录后立即更改管理员密码。
 

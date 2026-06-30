@@ -3,7 +3,10 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const projectRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const dashboardRoot = path.join(projectRoot, "grafana", "dashboards");
 
 const importedFiles = new Set([
@@ -75,9 +78,13 @@ const seenUids = new Map();
 function visit(node, callback, location = "root") {
   callback(node, location);
   if (Array.isArray(node)) {
-    node.forEach((value, index) => visit(value, callback, `${location}[${index}]`));
+    node.forEach((value, index) =>
+      visit(value, callback, `${location}[${index}]`),
+    );
   } else if (node && typeof node === "object") {
-    Object.entries(node).forEach(([key, value]) => visit(value, callback, `${location}.${key}`));
+    Object.entries(node).forEach(([key, value]) =>
+      visit(value, callback, `${location}.${key}`),
+    );
   }
 }
 
@@ -92,7 +99,9 @@ function dashboardFiles(directory, prefix = "") {
 
 for (const file of dashboardFiles(dashboardRoot)) {
   try {
-    const dashboard = JSON.parse(fs.readFileSync(path.join(dashboardRoot, file), "utf8"));
+    const dashboard = JSON.parse(
+      fs.readFileSync(path.join(dashboardRoot, file), "utf8"),
+    );
     if (!dashboard.uid) {
       errors.push(`${file}: dashboard UID is missing`);
     } else if (seenUids.has(dashboard.uid)) {
@@ -107,7 +116,10 @@ for (const file of dashboardFiles(dashboardRoot)) {
   }
 }
 
-function validateDashboard(file, { imported = false, officialMap = false } = {}) {
+function validateDashboard(
+  file,
+  { imported = false, officialMap = false } = {},
+) {
   const fullPath = path.join(dashboardRoot, file);
   if (!fs.existsSync(fullPath)) {
     errors.push(`${file}: missing dashboard`);
@@ -134,18 +146,24 @@ function validateDashboard(file, { imported = false, officialMap = false } = {})
         errors.push(`${file} ${location}: unnamespaced TOU function remains`);
       }
       if (/tm_(?:lat|lng)_for_map\('\$\{map_url\}'/.test(node)) {
-        errors.push(`${file} ${location}: map variable is interpolated without SQL escaping`);
+        errors.push(
+          `${file} ${location}: map variable is interpolated without SQL escaping`,
+        );
       }
       if (node.includes("raw.githubusercontent.com")) {
         errors.push(`${file} ${location}: auto-loaded remote asset remains`);
       }
-      if (privateIp.test(node)) errors.push(`${file} ${location}: private IP address remains`);
+      if (privateIp.test(node))
+        errors.push(`${file} ${location}: private IP address remains`);
       return;
     }
 
     if (!node || Array.isArray(node) || typeof node !== "object") return;
 
-    if (("gridPos" in node || "targets" in node) && typeof node.type === "string") {
+    if (
+      ("gridPos" in node || "targets" in node) &&
+      typeof node.type === "string"
+    ) {
       if (imported && !allowedPanelTypes.has(node.type)) {
         errors.push(`${file} ${location}: unsupported panel ${node.type}`);
       }
@@ -156,7 +174,9 @@ function validateDashboard(file, { imported = false, officialMap = false } = {})
           node.options?.basemap?.type !== "xyz" ||
           node.options?.basemap?.config?.url !== "${map_url}"
         ) {
-          errors.push(`${file} ${location}: geomap does not use the selected safe map source`);
+          errors.push(
+            `${file} ${location}: geomap does not use the selected safe map source`,
+          );
         }
       }
     }
@@ -170,10 +190,14 @@ function validateDashboard(file, { imported = false, officialMap = false } = {})
     if (node.name === "map_url") {
       mapVariable = node;
       if (node.current?.value !== amapUrl) {
-        errors.push(`${file} ${location}: mainland-safe AMap is not the default`);
+        errors.push(
+          `${file} ${location}: mainland-safe AMap is not the default`,
+        );
       }
       if (node.skipUrlSync !== true) {
-        errors.push(`${file} ${location}: map source can be overridden through dashboard URLs`);
+        errors.push(
+          `${file} ${location}: map source can be overridden through dashboard URLs`,
+        );
       }
       if (
         !Array.isArray(node.options) ||
@@ -196,16 +220,22 @@ function validateDashboard(file, { imported = false, officialMap = false } = {})
       .join("\n");
 
     if (!geomapSql.includes("tm_lat_for_map(${map_url:sqlstring}")) {
-      errors.push(`${file}: latitude is not converted for the selected map source`);
+      errors.push(
+        `${file}: latitude is not converted for the selected map source`,
+      );
     }
     if (!geomapSql.includes("tm_lng_for_map(${map_url:sqlstring}")) {
-      errors.push(`${file}: longitude is not converted for the selected map source`);
+      errors.push(
+        `${file}: longitude is not converted for the selected map source`,
+      );
     }
   }
 }
 
 for (const file of importedFiles) validateDashboard(file, { imported: true });
-for (const file of officialMapFiles) validateDashboard(file, { officialMap: true });
+for (const file of officialMapFiles) {
+  validateDashboard(file, { officialMap: true });
+}
 
 if (errors.length > 0) {
   console.error(errors.join("\n"));
