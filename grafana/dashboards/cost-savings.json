@@ -1,0 +1,1116 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "标注与警报",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "trip"
+      ],
+      "title": "行驶",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "tags": [],
+      "targetBlank": true,
+      "title": "中文文档",
+      "type": "link",
+      "url": "https://github.com/kafuunochino/teslamate"
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "panels": [],
+      "title": "省钱概览",
+      "type": "row",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "super-light-green",
+                "value": 1000
+              },
+              {
+                "color": "dark-green",
+                "value": 5000
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2,
+          "displayName": "累计节省金额(元)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ROUND((\n    COALESCE(SUM(d.distance), 0) * $fuel_efficiency / 100.0 * $fuel_price\n    - COALESCE((SELECT SUM(tm_effective_cost(id, cost)) FROM charging_processes WHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL AND $__timeFilter(start_date)), 0)\n  )::numeric, 2) AS savings\nFROM drives d\nWHERE d.car_id = $car_id AND $__timeFilter(d.start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2,
+          "displayName": "燃油等价费用(元)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ROUND((COALESCE(SUM(distance), 0) * $fuel_efficiency / 100.0 * $fuel_price)::numeric, 2) AS fuel_cost\nFROM drives\nWHERE car_id = $car_id AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue"
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2,
+          "displayName": "实际充电费用(元)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ROUND(COALESCE(SUM(tm_effective_cost(id, cost)), 0)::numeric, 2) AS charge_cost\nFROM charging_processes\nWHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 1,
+          "displayName": "节省比例"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  CASE WHEN fuel_cost > 0 THEN\n    ROUND(((fuel_cost - charge_cost) / fuel_cost * 100)::numeric, 1)\n  ELSE 0 END AS save_pct\nFROM (\n  SELECT\n    COALESCE(SUM(d.distance), 0) * $fuel_efficiency / 100.0 * $fuel_price AS fuel_cost,\n    COALESCE((SELECT SUM(tm_effective_cost(id, cost)) FROM charging_processes WHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL AND $__timeFilter(start_date)), 0) AS charge_cost\n  FROM drives d\n  WHERE d.car_id = $car_id AND $__timeFilter(d.start_date)\n) sub;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 101,
+      "panels": [],
+      "title": "费用趋势",
+      "type": "row",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "none",
+          "decimals": 2
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "燃油等价"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "实际充电"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5794F2",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 0,
+        "y": 6
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  date_trunc('month', timezone('UTC', start_date), '$__timezone') AS time,\n  ROUND((SUM(distance) * $fuel_efficiency / 100.0 * $fuel_price)::numeric, 2) AS \"燃油等价\"\nFROM drives\nWHERE car_id = $car_id AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  date_trunc('month', timezone('UTC', start_date), '$__timezone') AS time,\n  ROUND(COALESCE(SUM(tm_effective_cost(id, cost)), 0)::numeric, 2) AS \"实际充电\"\nFROM charging_processes\nWHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "B"
+        }
+      ],
+      "description": "燃油等价费用根据里程×油耗×油价估算；实际充电费用需在 TeslaMate 中手动录入，未录入时显示为0。",
+      "title": "月度费用对比（燃油 vs 实际充电）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 6
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "pieType": "donut",
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ROUND(SUM(CASE WHEN EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) = 23 OR EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) BETWEEN 0 AND 6 THEN tm_effective_cost(id, cost) ELSE 0 END)::numeric, 2) AS \"深夜谷时(23-07点)\",\n  ROUND(SUM(CASE WHEN EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) BETWEEN 7 AND 8 THEN tm_effective_cost(id, cost) ELSE 0 END)::numeric, 2) AS \"早高峰(07-09点)\",\n  ROUND(SUM(CASE WHEN EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) BETWEEN 9 AND 11 THEN tm_effective_cost(id, cost) ELSE 0 END)::numeric, 2) AS \"上午平时(09-12点)\",\n  ROUND(SUM(CASE WHEN EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) BETWEEN 12 AND 13 THEN tm_effective_cost(id, cost) ELSE 0 END)::numeric, 2) AS \"午间(12-14点)\",\n  ROUND(SUM(CASE WHEN EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) BETWEEN 14 AND 16 THEN tm_effective_cost(id, cost) ELSE 0 END)::numeric, 2) AS \"下午平时(14-17点)\",\n  ROUND(SUM(CASE WHEN EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) BETWEEN 17 AND 19 THEN tm_effective_cost(id, cost) ELSE 0 END)::numeric, 2) AS \"晚高峰(17-20点)\",\n  ROUND(SUM(CASE WHEN EXTRACT(HOUR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) BETWEEN 20 AND 22 THEN tm_effective_cost(id, cost) ELSE 0 END)::numeric, 2) AS \"晚间(20-23点)\"\nFROM charging_processes\nWHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "description": "按充电开始时间段统计费用分布。需在 TeslaMate 中手动录入每次充电费用后才会显示数据。",
+      "title": "充电时段费用分布",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 102,
+      "panels": [],
+      "title": "充电成本分析",
+      "type": "row",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "充电量 (kWh)",
+            "fillOpacity": 70
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "energy_kwh"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电电量(kWh)"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 7,
+      "description": "基于 charges 表的秒级采样数据，按实际充电小时分桶。若一次充电跨多个小时（如 23:00 开始到次日 06:00），每小时真实增加的 kWh 会正确归到对应桶中，而不是全算到 23:00。",
+      "options": {
+        "barWidth": 0.7,
+        "groupWidth": 0.7,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelRotation": -45
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH per_sample AS (\n  SELECT\n    c.date,\n    c.charge_energy_added - LAG(c.charge_energy_added) OVER (PARTITION BY c.charging_process_id ORDER BY c.date) AS delta_kwh\n  FROM charges c\n  JOIN charging_processes cp ON cp.id = c.charging_process_id\n  WHERE cp.car_id = $car_id\n    AND $__timeFilter(cp.start_date)\n)\nSELECT\n  LPAD(EXTRACT(HOUR FROM (date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone'))::int::text, 2, '0') || ':00' AS hour,\n  ROUND(SUM(GREATEST(delta_kwh, 0))::numeric, 2) AS energy_kwh\nFROM per_sample\nWHERE delta_kwh IS NOT NULL\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "按小时充电量分布（找最优充电时间）",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 1,
+          "displayName": "已用预算占比"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 16
+      },
+      "id": 8,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "11.6.1",
+      "description": "今年已用充电费用占年度预算($annual_budget 元)的百分比。绿色<70%，黄色70-90%，红色>90%",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  CASE WHEN $annual_budget::numeric > 0 THEN\n    ROUND((COALESCE(SUM(tm_effective_cost(id, cost)), 0) / $annual_budget::numeric * 100)::numeric, 1)\n  ELSE 0 END AS budget_pct\nFROM charging_processes\nWHERE car_id = $car_id\n  AND tm_effective_cost(id, cost) IS NOT NULL\n  AND EXTRACT(YEAR FROM (start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone')) = EXTRACT(YEAR FROM timezone('$__timezone', NOW()));",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "今年充电费用 vs 年度预算",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue"
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 4,
+          "displayName": "每公里电费(元/km)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  CASE WHEN total_km > 0 THEN ROUND((total_cost / total_km)::numeric, 4) ELSE 0 END AS cost_per_km\nFROM (\n  SELECT\n    COALESCE((SELECT SUM(tm_effective_cost(id, cost)) FROM charging_processes WHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL AND $__timeFilter(start_date)), 0) AS total_cost,\n    COALESCE(SUM(distance), 0) AS total_km\n  FROM drives WHERE car_id = $car_id AND $__timeFilter(start_date)\n) sub;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2,
+          "displayName": "预计全年费用(元)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 20
+      },
+      "id": 10,
+      "description": "基于最近 30 天充电费用 × 12 的外推估算，比 YTD 线性外推更稳健（避免年初数据量小时方差过大）。如果近 30 天未充电则显示为 0。",
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ROUND((COALESCE(SUM(tm_effective_cost(id, cost)), 0) * 365.0 / 30)::numeric, 2) AS predicted_annual\nFROM charging_processes\nWHERE car_id = $car_id\n  AND tm_effective_cost(id, cost) IS NOT NULL\n  AND (start_date AT TIME ZONE 'UTC') >= NOW() - INTERVAL '30 days';",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "tesla",
+    "cost",
+    "简体中文",
+    "只读增强"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "TeslaMate"
+        },
+        "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
+        "hide": 0,
+        "includeAll": false,
+        "label": "车辆",
+        "name": "car_id",
+        "options": [],
+        "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
+        "refresh": 1,
+        "regex": "",
+        "type": "query",
+        "regexApplyTo": "value"
+      },
+      {
+        "current": {
+          "text": "7.5",
+          "value": "7.5"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "油价 (元/升)",
+        "name": "fuel_price",
+        "options": [
+          {
+            "selected": false,
+            "text": "6.0",
+            "value": "6.0"
+          },
+          {
+            "selected": false,
+            "text": "6.5",
+            "value": "6.5"
+          },
+          {
+            "selected": false,
+            "text": "7.0",
+            "value": "7.0"
+          },
+          {
+            "selected": true,
+            "text": "7.5",
+            "value": "7.5"
+          },
+          {
+            "selected": false,
+            "text": "8.0",
+            "value": "8.0"
+          },
+          {
+            "selected": false,
+            "text": "8.5",
+            "value": "8.5"
+          },
+          {
+            "selected": false,
+            "text": "9.0",
+            "value": "9.0"
+          }
+        ],
+        "query": "6.0,6.5,7.0,7.5,8.0,8.5,9.0",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "8",
+          "value": "8"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "同级燃油车油耗 (L/100km)",
+        "name": "fuel_efficiency",
+        "options": [
+          {
+            "selected": false,
+            "text": "6",
+            "value": "6"
+          },
+          {
+            "selected": false,
+            "text": "7",
+            "value": "7"
+          },
+          {
+            "selected": true,
+            "text": "8",
+            "value": "8"
+          },
+          {
+            "selected": false,
+            "text": "9",
+            "value": "9"
+          },
+          {
+            "selected": false,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "12",
+            "value": "12"
+          }
+        ],
+        "query": "6,7,8,9,10,12",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "3000",
+          "value": "3000"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "年度充电预算 (元)",
+        "name": "annual_budget",
+        "options": [
+          {
+            "selected": false,
+            "text": "1000",
+            "value": "1000"
+          },
+          {
+            "selected": false,
+            "text": "2000",
+            "value": "2000"
+          },
+          {
+            "selected": true,
+            "text": "3000",
+            "value": "3000"
+          },
+          {
+            "selected": false,
+            "text": "4000",
+            "value": "4000"
+          },
+          {
+            "selected": false,
+            "text": "5000",
+            "value": "5000"
+          },
+          {
+            "selected": false,
+            "text": "8000",
+            "value": "8000"
+          }
+        ],
+        "query": "1000,2000,3000,4000,5000,8000",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1y",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "省钱分析",
+  "uid": "cost-savings-cn",
+  "version": 1
+}

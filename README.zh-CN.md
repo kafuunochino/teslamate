@@ -1,6 +1,8 @@
 # TeslaMate 简体中文使用说明
 
-此分支在不改变车辆采集、数据库、MQTT 和 Grafana 查询逻辑的前提下，完成了 TeslaMate 网页界面、表单校验信息和内置 Grafana 仪表盘的简体中文本地化。网页应用和 Grafana 默认使用简体中文。
+此分支保持 TeslaMate 的车辆采集、MQTT 与 PostgreSQL 核心架构不变，完成了网页界面、表单校验信息和内置 Grafana 仪表盘的简体中文本地化，并以独立迁移和只读查询增加中国区仪表盘功能。网页应用和 Grafana 默认使用简体中文。
+
+如果不使用 Docker，请直接阅读 [Windows / Linux / macOS 原生安装说明](NATIVE_INSTALL.zh-CN.md)。本分支还包含 25 个经过安全清理的中国区增强仪表盘、默认高德地图、GCJ-02 坐标纠偏、安全旁路分时电价和 Grafana 只读数据库账户。安全取舍见 [迁移安全审计](SECURITY_AUDIT.zh-CN.md)。
 
 > [!CAUTION]
 > TeslaMate 会保存 Tesla API 令牌和车辆轨迹。请只在可信设备上部署，设置高强度密钥与密码，并且不要把 3000、4000 端口直接暴露到互联网。远程访问建议使用 VPN、Tailscale、Cloudflare Tunnel 或配置了 HTTPS 与身份认证的反向代理。
@@ -25,7 +27,7 @@
    - `ENCRYPTION_KEY`：用于加密 Tesla API 令牌。建议使用密码管理器生成至少 32 位的随机字符串；部署后请妥善保存，不能随意更换。
    - `DATABASE_PASS`：PostgreSQL 数据库密码，建议使用独立的高强度随机密码。
 
-3. 如果车辆账户属于中国大陆区域，请编辑 `docker-compose.zh-CN.yml`，取消 `TESLA_API_HOST` 和 `TESLA_WSS_HOST` 两行的注释。
+3. 中国大陆账户的 API 与流式服务地址会根据令牌区域自动选择，通常无需手工设置；只有排查特殊网络问题时才使用 Compose 文件中的显式覆盖项。
 
 4. 构建并启动服务：
 

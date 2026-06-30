@@ -1,0 +1,1439 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "标注与警报",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "battery"
+      ],
+      "title": "电池",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "tags": [],
+      "targetBlank": true,
+      "title": "中文文档",
+      "type": "link",
+      "url": "https://github.com/kafuunochino/teslamate"
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "panels": [],
+      "title": "动能回收概览",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2,
+          "displayName": "累计回收(kWh)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 42
+        }
+      },
+      "title": "",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n)\nSELECT ROUND(COALESCE(SUM(regen_kwh), 0)::numeric, 2) AS total_regen_kwh\nFROM regen;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2,
+          "displayName": "平均单次(kWh)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 42
+        }
+      },
+      "title": "",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n)\nSELECT ROUND(AVG(regen_kwh)::numeric, 2) AS avg_regen_kwh\nFROM regen WHERE regen_kwh > 0;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1,
+          "displayName": "平均回收率(%)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 42
+        }
+      },
+      "title": "",
+      "description": "动能回收电量占（行驶消耗 + 回收量）的平均比例",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n),\ndrive_energy AS (\n  SELECT d.id AS drive_id,\n    GREATEST(COALESCE((d.start_ideal_range_km - d.end_ideal_range_km) * c.efficiency, 0), 0) AS drive_kwh\n  FROM drives d\n  JOIN cars c ON c.id = d.car_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n    AND d.start_ideal_range_km > d.end_ideal_range_km\n)\nSELECT ROUND(AVG(r.regen_kwh / NULLIF(r.regen_kwh + de.drive_kwh, 0) * 100)::numeric, 1) AS avg_pct\nFROM regen r\nJOIN drive_energy de ON de.drive_id = r.drive_id\nWHERE r.regen_kwh > 0 AND de.drive_kwh > 0;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2,
+          "displayName": "最高单次(kWh)"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 42
+        }
+      },
+      "title": "",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n)\nSELECT ROUND(COALESCE(MAX(regen_kwh), 0)::numeric, 2) AS max_regen_kwh\nFROM regen;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 101,
+      "panels": [],
+      "title": "固件版本对比",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 25
+              },
+              {
+                "color": "light-red",
+                "value": 35
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1,
+          "min": 0,
+          "max": 40
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "id": 5,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "valueMode": "color",
+        "text": {},
+        "minVizWidth": 0,
+        "minVizHeight": 10
+      },
+      "title": "各固件版本平均回收率(%)",
+      "description": "升级前后对比：回收率下降说明新版本降低了制动能量回收强度。",
+      "type": "bargauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n),\ncombined AS (\n  SELECT\n    r.regen_kwh,\n    GREATEST(COALESCE((d.start_ideal_range_km - d.end_ideal_range_km) * c.efficiency, 0), 0) AS drive_kwh,\n    COALESCE(\n      (SELECT SPLIT_PART(u.version, ' ', 1) FROM updates u\n       WHERE u.car_id = $car_id AND u.start_date <= d.start_date\n       ORDER BY u.start_date DESC LIMIT 1),\n      '未知'\n    ) AS fw_version\n  FROM regen r\n  JOIN drives d ON d.id = r.drive_id\n  JOIN cars c ON c.id = d.car_id\n  WHERE r.regen_kwh > 0\n)\nSELECT\n  fw_version AS \"固件版本\",\n  ROUND(AVG(regen_kwh / NULLIF(regen_kwh + drive_kwh, 0) * 100)::numeric, 1) AS \"平均回收率(%)\"\nFROM combined\nWHERE drive_kwh > 0\nGROUP BY fw_version\nORDER BY\n  CASE WHEN fw_version LIKE '20%' THEN SPLIT_PART(fw_version, '.', 1)::int ELSE 0 END DESC,\n  CASE WHEN fw_version LIKE '20%' THEN SPLIT_PART(fw_version, '.', 2)::int ELSE 0 END DESC,\n  CASE WHEN fw_version LIKE '20%' THEN SPLIT_PART(fw_version, '.', 3)::int ELSE 0 END DESC;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "回收率(%)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "线性 回归 日均回收率(%)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    8
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "title": "日均回收率趋势(%)",
+      "description": "折线图显示每日平均回收率变化，可观察固件升级前后的明显拐点。",
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "regression",
+          "options": {
+            "modelType": "linear",
+            "xFieldName": "Time",
+            "yFieldName": "日均回收率(%)",
+            "predictionCount": 100
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power, d.start_date,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id, MAX(start_date) AS start_date,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n),\ncombined AS (\n  SELECT r.start_date,\n    r.regen_kwh / NULLIF(r.regen_kwh + GREATEST(COALESCE((d.start_ideal_range_km - d.end_ideal_range_km) * c.efficiency, 0), 0), 0) * 100 AS regen_pct\n  FROM regen r\n  JOIN drives d ON d.id = r.drive_id\n  JOIN cars c ON c.id = d.car_id\n  WHERE r.regen_kwh > 0 AND d.start_ideal_range_km > d.end_ideal_range_km\n)\nSELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS time,\n  ROUND(AVG(regen_pct)::numeric, 1) AS \"日均回收率(%)\"\nFROM combined\nGROUP BY 1 ORDER BY 1;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 12,
+      "description": "各固件版本下记录到的最大瞬时回收功率(kW)。数值下降说明新版本限制了回收峰值功率。数据不受时间范围过滤影响，展示全历史记录。",
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "title": "各固件版本最大回收功率(kW)",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH drive_version AS (\n  SELECT\n    d.id AS drive_id,\n    COALESCE(\n      (SELECT SPLIT_PART(u.version, ' ', 1) FROM updates u\n       WHERE u.car_id = $car_id AND u.start_date <= d.start_date\n       ORDER BY u.start_date DESC LIMIT 1),\n      '未知'\n    ) AS fw_version\n  FROM drives d\n  WHERE d.car_id = $car_id\n    AND d.end_date IS NOT NULL\n)\nSELECT\n  dv.fw_version AS \"固件版本\",\n  ROUND(MAX(ABS(p.power))::numeric, 1) AS \"最大回收功率(kW)\"\nFROM positions p\nJOIN drive_version dv ON dv.drive_id = p.drive_id\nWHERE p.power < 0\nGROUP BY dv.fw_version\nORDER BY\n  CASE WHEN dv.fw_version LIKE '20%' THEN SPLIT_PART(dv.fw_version, '.', 1)::int ELSE 0 END DESC,\n  CASE WHEN dv.fw_version LIKE '20%' THEN SPLIT_PART(dv.fw_version, '.', 2)::int ELSE 0 END DESC,\n  CASE WHEN dv.fw_version LIKE '20%' THEN SPLIT_PART(dv.fw_version, '.', 3)::int ELSE 0 END DESC;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 13,
+      "description": "按历史最大回收功率从高到低排序，可快速找出哪个版本回收峰值最强。数据不受时间范围过滤影响，展示全历史记录。",
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "title": "各固件版本最大回收功率排名(kW)",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH drive_version AS (\n  SELECT\n    d.id AS drive_id,\n    COALESCE(\n      (SELECT SPLIT_PART(u.version, ' ', 1) FROM updates u\n       WHERE u.car_id = $car_id AND u.start_date <= d.start_date\n       ORDER BY u.start_date DESC LIMIT 1),\n      '未知'\n    ) AS fw_version\n  FROM drives d\n  WHERE d.car_id = $car_id\n    AND d.end_date IS NOT NULL\n)\nSELECT\n  dv.fw_version AS \"固件版本\",\n  ROUND(MAX(ABS(p.power))::numeric, 1) AS \"最大回收功率(kW)\"\nFROM positions p\nJOIN drive_version dv ON dv.drive_id = p.drive_id\nWHERE p.power < 0\nGROUP BY dv.fw_version\nORDER BY \"最大回收功率(kW)\" DESC;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 102,
+      "panels": [],
+      "title": "每日 / 每周趋势",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "回收电量(kWh)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "title": "每日回收电量(kWh)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power, d.start_date,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id, MAX(start_date) AS start_date,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n)\nSELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS time,\n  ROUND(SUM(regen_kwh)::numeric, 2) AS \"每日回收(kWh)\"\nFROM regen\nGROUP BY 1 ORDER BY 1;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "回收电量(kWh)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "title": "每周回收电量(kWh)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power, d.start_date,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n),\nregen AS (\n  SELECT drive_id, MAX(start_date) AS start_date,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n)\nSELECT\n  date_trunc('week', timezone('UTC', start_date), '$__timezone') AS time,\n  ROUND(SUM(regen_kwh)::numeric, 2) AS \"每周回收(kWh)\"\nFROM regen\nGROUP BY 1 ORDER BY 1;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 103,
+      "panels": [],
+      "title": "影响因素分析",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "axisLabel": "平均回收率 (%)"
+          },
+          "unit": "none",
+          "decimals": 1,
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "行程数"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "tooltip": false,
+                  "viz": true,
+                  "legend": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 9,
+      "description": "按 5°C 区间统计平均动能回收率，低温区间柱子更低说明冬季电池内阻增大、回收功率受限。仅统计行程 > 5km 且有回收的记录；鼠标悬停可看每区间的行程数。",
+      "options": {
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        },
+        "xTickLabelRotation": 0
+      },
+      "title": "温度区间平均回收率 (%，低温区间柱子更低)",
+      "type": "barchart",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n    AND d.outside_temp_avg IS NOT NULL\n    AND d.distance > 5\n),\nregen AS (\n  SELECT drive_id,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n),\nper_drive AS (\n  SELECT\n    FLOOR(d.outside_temp_avg / 5) AS bin_idx,\n    (r.regen_kwh / NULLIF(r.regen_kwh + GREATEST(COALESCE((d.start_ideal_range_km - d.end_ideal_range_km) * c.efficiency, 0), 0), 0) * 100) AS recovery_pct\n  FROM regen r\n  JOIN drives d ON d.id = r.drive_id\n  JOIN cars c ON c.id = d.car_id\n  WHERE r.regen_kwh > 0\n    AND d.start_ideal_range_km > d.end_ideal_range_km\n)\nSELECT\n  CONCAT((bin_idx * 5)::int, '~', (bin_idx * 5 + 5)::int, '°C') AS \"温度区间\",\n  ROUND(AVG(recovery_pct)::numeric, 1) AS \"平均回收率(%)\",\n  COUNT(*) AS \"行程数\"\nFROM per_drive\nWHERE recovery_pct IS NOT NULL\nGROUP BY bin_idx\nORDER BY bin_idx;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "平均回收功率(kW)",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "id": 10,
+      "description": "不同时速区间下的平均回收功率(kW)，高速制动回收更多能量。",
+      "options": {
+        "barRadius": 0.05,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "auto",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 200
+      },
+      "title": "时速区间 vs 平均回收功率(kW)",
+      "type": "barchart",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  speed_range AS \"时速区间\",\n  ROUND(AVG(ABS(power))::numeric, 1) AS \"平均回收功率(kW)\"\nFROM (\n  SELECT\n    p.power,\n    CASE\n      WHEN p.speed < 30  THEN '0-30 km/h'\n      WHEN p.speed < 60  THEN '30-60 km/h'\n      WHEN p.speed < 90  THEN '60-90 km/h'\n      WHEN p.speed < 120 THEN '90-120 km/h'\n      ELSE '>120 km/h'\n    END AS speed_range,\n    CASE\n      WHEN p.speed < 30  THEN 1\n      WHEN p.speed < 60  THEN 2\n      WHEN p.speed < 90  THEN 3\n      WHEN p.speed < 120 THEN 4\n      ELSE 5\n    END AS sort_key\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND p.power < 0\n    AND p.speed IS NOT NULL\n    AND p.speed > 0\n) t\nGROUP BY speed_range, sort_key\nORDER BY sort_key;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "id": 104,
+      "panels": [],
+      "title": "行程明细（回收率 TOP20）",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "出发时间"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "里程(km)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "回收电量(kWh)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "回收率(%)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "green",
+                      "value": 25
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "均温(°C)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "固件版本"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      },
+      "id": 11,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "回收率(%)"
+          }
+        ]
+      },
+      "title": "行程回收明细 TOP20（时间范围内）",
+      "description": "回收率 = 回收电量 / (行驶消耗 + 回收电量)。可查看固件版本与回收率的关联。",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pos_lead AS (\n  SELECT p.drive_id, p.power,\n    COALESCE(EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)), 0) AS interval_sec\n  FROM positions p\n  JOIN drives d ON d.id = p.drive_id\n  WHERE d.car_id = $car_id\n    AND $__timeFilter(d.start_date)\n    AND d.end_date IS NOT NULL\n    AND d.distance > 5\n),\nregen AS (\n  SELECT drive_id,\n    SUM(CASE WHEN power < 0 THEN ABS(power) * GREATEST(interval_sec, 0) / 3600.0 ELSE 0 END) AS regen_kwh\n  FROM pos_lead GROUP BY drive_id\n)\nSELECT\n  TO_CHAR((d.start_date AT TIME ZONE 'UTC' AT TIME ZONE '$__timezone'), 'YYYY-MM-DD HH24:MI') AS \"出发时间\",\n  ROUND(d.distance::numeric, 1) AS \"里程(km)\",\n  ROUND(r.regen_kwh::numeric, 2) AS \"回收电量(kWh)\",\n  ROUND((r.regen_kwh / NULLIF(r.regen_kwh + GREATEST(COALESCE((d.start_ideal_range_km - d.end_ideal_range_km) * c.efficiency, 0), 0), 0) * 100)::numeric, 1) AS \"回收率(%)\",\n  ROUND(d.outside_temp_avg::numeric, 1) AS \"均温(°C)\",\n  COALESCE(\n    (SELECT SPLIT_PART(u.version, ' ', 1) FROM updates u\n     WHERE u.car_id = $car_id AND u.start_date <= d.start_date\n     ORDER BY u.start_date DESC LIMIT 1),\n    '未知'\n  ) AS \"固件版本\"\nFROM regen r\nJOIN drives d ON d.id = r.drive_id\nJOIN cars c ON c.id = d.car_id\nWHERE r.regen_kwh > 0\n  AND d.start_ideal_range_km > d.end_ideal_range_km\nORDER BY \"回收率(%)\" DESC\nLIMIT 20;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "最高回收功率(kW)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      },
+      "id": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "title": "每周最高回收功率(kW)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  date_trunc('week', timezone('UTC', d.start_date), '$__timezone') AS time,\n  ROUND(MAX(ABS(p.power))::numeric, 1) AS \"每周最高回收功率(kW)\"\nFROM positions p\nJOIN drives d ON p.drive_id = d.id\nWHERE d.car_id = $car_id\n  AND $__timeFilter(d.start_date)\n  AND d.end_date IS NOT NULL\n  AND p.power < 0\nGROUP BY 1\nORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "tesla",
+    "battery",
+    "简体中文",
+    "只读增强"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "TeslaMate"
+        },
+        "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
+        "hide": 0,
+        "includeAll": false,
+        "label": "车辆",
+        "multi": false,
+        "name": "car_id",
+        "options": [],
+        "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "动能回收分析",
+  "uid": "regen-braking-cn",
+  "version": 1,
+  "weekStart": ""
+}
