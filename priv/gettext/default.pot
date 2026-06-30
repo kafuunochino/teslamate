@@ -76,11 +76,12 @@ msgstr ""
 #: lib/teslamate_web/live/geofence_live/index.html.heex:3
 #: lib/teslamate_web/live/import_live/index.html.heex:3
 #: lib/teslamate_web/live/settings_live/index.html.heex:3
+#: lib/teslamate_web/templates/layout/root.html.heex:11
 #, elixir-autogen, elixir-format
 msgid "Home"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.ex:21
+#: lib/teslamate_web/live/settings_live/index.ex:22
 #: lib/teslamate_web/live/settings_live/index.html.heex:4
 #: lib/teslamate_web/templates/layout/root.html.heex:119
 #, elixir-autogen, elixir-format
@@ -178,6 +179,7 @@ msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:169
 #: lib/teslamate_web/live/geofence_live/form.html.heex:129
+#: lib/teslamate_web/live/import_live/index.html.heex:92
 #: lib/teslamate_web/live/signin_live/index.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Saving..."
@@ -432,7 +434,7 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.ex:64
+#: lib/teslamate_web/live/settings_live/index.ex:65
 #, elixir-autogen, elixir-format
 msgid "There was a problem retrieving data from OpenStreetMap. Please try again later."
 msgstr ""
@@ -572,6 +574,7 @@ msgid "Software Update available (%{version})"
 msgstr ""
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:468
+#: lib/teslamate_web/live/settings_live/index.html.heex:471
 #, elixir-autogen, elixir-format
 msgid "Sign out"
 msgstr ""
@@ -745,7 +748,7 @@ msgstr ""
 msgid "Drive not found"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#: lib/teslamate_web/live/settings_live/index.html.heex:449
 #, elixir-autogen, elixir-format
 msgid "Project updates"
 msgstr ""

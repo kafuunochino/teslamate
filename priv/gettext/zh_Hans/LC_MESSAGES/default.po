@@ -77,11 +77,12 @@ msgstr "哨兵模式"
 #: lib/teslamate_web/live/geofence_live/index.html.heex:3
 #: lib/teslamate_web/live/import_live/index.html.heex:3
 #: lib/teslamate_web/live/settings_live/index.html.heex:3
+#: lib/teslamate_web/templates/layout/root.html.heex:11
 #, elixir-autogen, elixir-format
 msgid "Home"
 msgstr "首页"
 
-#: lib/teslamate_web/live/settings_live/index.ex:21
+#: lib/teslamate_web/live/settings_live/index.ex:22
 #: lib/teslamate_web/live/settings_live/index.html.heex:4
 #: lib/teslamate_web/templates/layout/root.html.heex:119
 #, elixir-autogen, elixir-format
@@ -179,6 +180,7 @@ msgstr "保存"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:169
 #: lib/teslamate_web/live/geofence_live/form.html.heex:129
+#: lib/teslamate_web/live/import_live/index.html.heex:92
 #: lib/teslamate_web/live/signin_live/index.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Saving..."
@@ -433,7 +435,7 @@ msgstr "地址"
 msgid "Language"
 msgstr "语言"
 
-#: lib/teslamate_web/live/settings_live/index.ex:64
+#: lib/teslamate_web/live/settings_live/index.ex:65
 #, elixir-autogen, elixir-format
 msgid "There was a problem retrieving data from OpenStreetMap. Please try again later."
 msgstr "从 OpenStreetMap 获取数据时出现问题，请稍后重试。"
@@ -535,7 +537,7 @@ msgstr "里程"
 msgid "Streaming API"
 msgstr "流式 API"
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#: lib/teslamate_web/live/settings_live/index.html.heex:449
 #, elixir-autogen, elixir-format
 msgid "Documentation"
 msgstr "文档"
@@ -573,6 +575,7 @@ msgid "Software Update available (%{version})"
 msgstr "有可用的软件更新（%{version}）"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:468
+#: lib/teslamate_web/live/settings_live/index.html.heex:471
 #, elixir-autogen, elixir-format
 msgid "Sign out"
 msgstr "退出登录"
