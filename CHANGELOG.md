@@ -29,6 +29,7 @@
 
 #### Dashboards
 
+- fix: preserve existing Grafana datasource identities during Docker and NixOS upgrades
 - fix: reorganize Grafana dashboards and make monthly driving/parking energy panels resilient to missing range and efficiency data
 - fix: keep categorized dashboards visible in the TeslaMate navigation and validate all dashboard SQL and remote resources
 

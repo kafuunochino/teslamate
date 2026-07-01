@@ -343,8 +343,20 @@ const dockerDatasource = fs.readFileSync(
   path.join(projectRoot, "grafana", "datasource.yml"),
   "utf8",
 );
-if (!/^\s+uid: TeslaMate$/m.test(dockerDatasource)) {
-  errors.push("grafana/datasource.yml: stable TeslaMate datasource UID is missing");
+if (/^\s+uid:/m.test(dockerDatasource)) {
+  errors.push(
+    "grafana/datasource.yml: Docker upgrades must preserve the UID of the existing named datasource",
+  );
+}
+
+const nixModule = fs.readFileSync(
+  path.join(projectRoot, "nix", "module.nix"),
+  "utf8",
+);
+if (nixModule.includes('uid = "TeslaMate";')) {
+  errors.push(
+    "nix/module.nix: NixOS upgrades must preserve the UID of the existing named datasource",
+  );
 }
 
 const layoutView = fs.readFileSync(

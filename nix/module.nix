@@ -298,7 +298,6 @@ in
             # extracted from ../grafana/datasource.yml
             {
               name = "TeslaMate";
-              uid = "TeslaMate";
               type = "postgres";
               url = "${cfg.postgres.host}:${toString cfg.postgres.port}";
               user = cfg.postgres.user;

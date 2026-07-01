@@ -107,6 +107,7 @@ Compose 文件把项目内的 `import` 目录挂载到容器的 `/opt/app/import
 
 - 网页打不开：确认 `docker compose ... ps` 中 `teslamate` 为运行状态，并检查 4000 端口是否被占用或被防火墙拦截。
 - Grafana 没有数据：先确认 TeslaMate 已成功连接车辆并产生记录，再检查 `grafana` 和 `database` 服务日志。
+- Grafana 启动时提示数据源配置导入失败：请拉取最新代码并仅重新构建服务，不要删除 `teslamate-grafana-data` 数据卷；修复版会按已有数据源名称更新配置并保留原 UID。
 - 重启后需要重新登录：确认 `.env` 中设置了固定的 `ENCRYPTION_KEY`，且启动时使用了同一个 `.env`。
 - 数据库连接失败：确认 `.env` 中的 `DATABASE_PASS` 没有被修改，并且 Compose 中数据库与其他服务使用的是同一个值。
 - 中国大陆车辆无法连接：确认已启用 Compose 文件中的中国区 API 与流式服务地址，并检查网络连通性。
