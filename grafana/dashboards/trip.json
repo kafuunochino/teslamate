@@ -100,9 +100,14 @@
       "maxDataPoints": 500,
       "options": {
         "basemap": {
-          "config": {},
+          "config": {
+            "attribution": "${map_url:text} contributors",
+            "url": "${map_url}",
+            "minZoom": 3,
+            "maxZoom": 18
+          },
           "name": "图层 0",
-          "type": "osm-standard"
+          "type": "xyz"
         },
         "controls": {
           "mouseWheelZoom": true,
@@ -178,7 +183,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "with unioned_positions as (\n\n    -- fetch all positions based on start_date of drives so the map aligns with data shown in other panels\n    select p.*\n    from positions p\n             inner join drives d on p.drive_id = d.id\n    where p.car_id = $car_id and $__timeFilter(d.start_date)\n\n    union all\n\n    -- get all positions logged while not driving\n    select *\n    from positions p\n    where p.car_id = $car_id and drive_id is null and $__timeFilter(date))\n\nSELECT $__timeGroup(date, '5s')                AS time,\n       avg(latitude)                           AS latitude,\n       avg(longitude)                          AS longitude\nfrom unioned_positions\nGROUP BY 1\nORDER BY 1 ASC",
+          "rawSql": "with unioned_positions as (\n\n    -- fetch all positions based on start_date of drives so the map aligns with data shown in other panels\n    select p.*\n    from positions p\n             inner join drives d on p.drive_id = d.id\n    where p.car_id = $car_id and $__timeFilter(d.start_date)\n\n    union all\n\n    -- get all positions logged while not driving\n    select *\n    from positions p\n    where p.car_id = $car_id and drive_id is null and $__timeFilter(date))\n\nSELECT $__timeGroup(date, '5s')                AS time,\n       tm_lat_for_map(${map_url:sqlstring}, avg(latitude), avg(longitude))                           AS latitude,\n       tm_lng_for_map(${map_url:sqlstring}, avg(latitude), avg(longitude))                          AS longitude\nfrom unioned_positions\nGROUP BY 1\nORDER BY 1 ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2790,6 +2795,40 @@
         "regex": "",
         "regexApplyTo": "value",
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "高德地图",
+          "value": "https://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}"
+        },
+        "description": "中国大陆默认使用高德地图并自动进行 WGS-84 → GCJ-02 坐标纠偏；高德卫星同样使用纠偏坐标。OpenStreetMap 保留原始 WGS-84 坐标。地图瓦片请求会发送视野范围、缩放级别和网络地址给所选地图服务商。",
+        "hide": 0,
+        "includeAll": false,
+        "label": "地图源",
+        "multi": false,
+        "name": "map_url",
+        "options": [
+          {
+            "selected": true,
+            "text": "高德地图",
+            "value": "https://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}"
+          },
+          {
+            "selected": false,
+            "text": "高德卫星",
+            "value": "https://webst01.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}"
+          },
+          {
+            "selected": false,
+            "text": "OpenStreetMap",
+            "value": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          }
+        ],
+        "query": "高德地图 : https://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z},高德卫星 : https://webst01.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z},OpenStreetMap : https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "queryValue": "",
+        "skipUrlSync": true,
+        "type": "custom"
       }
     ]
   },

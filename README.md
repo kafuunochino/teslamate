@@ -1,6 +1,6 @@
 # TeslaMate
 
-[简体中文使用说明](README.zh-CN.md)
+[简体中文使用说明](README.zh-CN.md) · [Windows / Linux / macOS 原生安装（不使用 Docker）](NATIVE_INSTALL.zh-CN.md)
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](https://github.com/teslamate-org/teslamate/blob/main/LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10859/badge)](https://www.bestpractices.dev/projects/10859)

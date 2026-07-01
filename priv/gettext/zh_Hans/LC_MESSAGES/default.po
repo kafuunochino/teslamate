@@ -77,11 +77,12 @@ msgstr "哨兵模式"
 #: lib/teslamate_web/live/geofence_live/index.html.heex:3
 #: lib/teslamate_web/live/import_live/index.html.heex:3
 #: lib/teslamate_web/live/settings_live/index.html.heex:3
+#: lib/teslamate_web/templates/layout/root.html.heex:11
 #, elixir-autogen, elixir-format
 msgid "Home"
 msgstr "首页"
 
-#: lib/teslamate_web/live/settings_live/index.ex:21
+#: lib/teslamate_web/live/settings_live/index.ex:22
 #: lib/teslamate_web/live/settings_live/index.html.heex:4
 #: lib/teslamate_web/templates/layout/root.html.heex:119
 #, elixir-autogen, elixir-format
@@ -179,6 +180,7 @@ msgstr "保存"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:169
 #: lib/teslamate_web/live/geofence_live/form.html.heex:129
+#: lib/teslamate_web/live/import_live/index.html.heex:92
 #: lib/teslamate_web/live/signin_live/index.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Saving..."
@@ -433,7 +435,7 @@ msgstr "地址"
 msgid "Language"
 msgstr "语言"
 
-#: lib/teslamate_web/live/settings_live/index.ex:64
+#: lib/teslamate_web/live/settings_live/index.ex:65
 #, elixir-autogen, elixir-format
 msgid "There was a problem retrieving data from OpenStreetMap. Please try again later."
 msgstr "从 OpenStreetMap 获取数据时出现问题，请稍后重试。"
@@ -535,7 +537,7 @@ msgstr "里程"
 msgid "Streaming API"
 msgstr "流式 API"
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#: lib/teslamate_web/live/settings_live/index.html.heex:449
 #, elixir-autogen, elixir-format
 msgid "Documentation"
 msgstr "文档"
@@ -572,7 +574,8 @@ msgstr "按分钟"
 msgid "Software Update available (%{version})"
 msgstr "有可用的软件更新（%{version}）"
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:413
+#: lib/teslamate_web/live/settings_live/index.html.heex:468
+#: lib/teslamate_web/live/settings_live/index.html.heex:471
 #, elixir-autogen, elixir-format
 msgid "Sign out"
 msgstr "退出登录"
@@ -745,3 +748,43 @@ msgstr "菜单"
 #, elixir-autogen, elixir-format
 msgid "Drive not found"
 msgstr "未找到行程"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#, elixir-autogen, elixir-format
+msgid "Project updates"
+msgstr "项目更新"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:404
+#, elixir-autogen, elixir-format
+msgid "Check for updates"
+msgstr "检查更新"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:410
+#, elixir-autogen, elixir-format
+msgid "Checking for updates…"
+msgstr "正在检查更新…"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:417
+#, elixir-autogen, elixir-format
+msgid "Already up to date (%{revision})"
+msgstr "已是最新版本（%{revision}）"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:428
+#, elixir-autogen, elixir-format
+msgid "Project differences found (%{revision})"
+msgstr "发现项目差异（%{revision}）"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:431
+#, elixir-autogen, elixir-format
+msgid "View changes"
+msgstr "查看差异"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:439
+#, elixir-autogen, elixir-format
+msgid "Current source revision is unknown; rebuild from a Git checkout"
+msgstr "无法识别当前源码版本，请从 Git 检出的源码重新构建"
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:443
+#, elixir-autogen, elixir-format
+msgid "Update check failed; please try again later"
+msgstr "检查更新失败，请稍后重试"

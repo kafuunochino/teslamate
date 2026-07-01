@@ -101,4 +101,41 @@ defmodule TeslaMate.UpdaterTest do
       assert nil == Updater.get_update(pid)
     end
   end
+
+  test "manually checks the configured repository for source changes", %{test: name} do
+    current = String.duplicate("a", 40)
+    remote = String.duplicate("b", 40)
+    process_name = :"repository_updater_#{name}"
+
+    updater_opts = [
+      name: process_name,
+      version: "1.0.0",
+      revision: current,
+      check_after: :timer.hours(1)
+    ]
+
+    with_mocks [
+      {Tesla.Adapter.Finch, [],
+       call: fn %Tesla.Env{} = env, _opts ->
+         assert env.url == "https://api.github.com/repos/kafuunochino/teslamate/commits/main"
+         {:ok, %Tesla.Env{status: 200, body: %{"sha" => remote}}}
+       end}
+    ] do
+      pid = start_supervised!({Updater, updater_opts})
+
+      assert :ok = Updater.check_repository(self(), pid)
+
+      assert_receive {:repository_update_check,
+                      {:ok,
+                       %Updater.RepositoryCheck{
+                         status: :update_available,
+                         current_revision: ^current,
+                         remote_revision: ^remote,
+                         compare_url: compare_url
+                       }}}
+
+      assert compare_url ==
+               "https://github.com/kafuunochino/teslamate/compare/#{current}...#{remote}"
+    end
+  end
 end

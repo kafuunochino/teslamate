@@ -546,6 +546,33 @@ defmodule TeslaMateWeb.SettingsLiveTest do
                ] = Floki.find(html, ".footer a")
       end
     end
+
+    test "checks the project repository when requested", %{conn: conn} do
+      current = String.duplicate("a", 40)
+      remote = String.duplicate("b", 40)
+      updater_opts = [revision: current, version: "1.0.0", check_after: :timer.hours(1)]
+
+      repository_mock =
+        {Tesla.Adapter.Finch, [],
+         call: fn %Tesla.Env{} = env, _opts ->
+           assert env.url == "https://api.github.com/repos/kafuunochino/teslamate/commits/main"
+           {:ok, %Tesla.Env{status: 200, body: %{"sha" => remote}}}
+         end}
+
+      with_mocks [repository_mock] do
+        _pid = start_supervised!({Updater, updater_opts})
+
+        assert {:ok, view, _html} = live(conn, "/settings")
+
+        view
+        |> element("#check-project-update")
+        |> render_click()
+
+        html = render(view)
+        assert html =~ "Project differences found (bbbbbbbb)"
+        assert html =~ "kafuunochino/teslamate/compare/#{current}...#{remote}"
+      end
+    end
   end
 
   describe "sign-out" do

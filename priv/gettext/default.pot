@@ -76,11 +76,12 @@ msgstr ""
 #: lib/teslamate_web/live/geofence_live/index.html.heex:3
 #: lib/teslamate_web/live/import_live/index.html.heex:3
 #: lib/teslamate_web/live/settings_live/index.html.heex:3
+#: lib/teslamate_web/templates/layout/root.html.heex:11
 #, elixir-autogen, elixir-format
 msgid "Home"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.ex:21
+#: lib/teslamate_web/live/settings_live/index.ex:22
 #: lib/teslamate_web/live/settings_live/index.html.heex:4
 #: lib/teslamate_web/templates/layout/root.html.heex:119
 #, elixir-autogen, elixir-format
@@ -178,6 +179,7 @@ msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:169
 #: lib/teslamate_web/live/geofence_live/form.html.heex:129
+#: lib/teslamate_web/live/import_live/index.html.heex:92
 #: lib/teslamate_web/live/signin_live/index.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Saving..."
@@ -432,7 +434,7 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.ex:64
+#: lib/teslamate_web/live/settings_live/index.ex:65
 #, elixir-autogen, elixir-format
 msgid "There was a problem retrieving data from OpenStreetMap. Please try again later."
 msgstr ""
@@ -502,14 +504,14 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:163
+#: lib/teslamate_web/live/geofence_live/form.html.heex:167
 #, elixir-format, elixir-autogen
 msgid "There is <strong>%{n} charging session</strong> at this location for which no costs have been added yet."
 msgid_plural "There are <strong>%{n} charging sessions</strong> at this location for which no costs have been added yet."
 msgstr[0] ""
 msgstr[1] ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:177
+#: lib/teslamate_web/live/geofence_live/form.html.heex:181
 #, elixir-autogen, elixir-format
 msgid "Add costs retroactively"
 msgstr ""
@@ -519,7 +521,7 @@ msgstr ""
 msgid "Charging Costs"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:174
+#: lib/teslamate_web/live/geofence_live/form.html.heex:178
 #, elixir-autogen, elixir-format
 msgid "Continue"
 msgstr ""
@@ -534,7 +536,7 @@ msgstr ""
 msgid "Streaming API"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#: lib/teslamate_web/live/settings_live/index.html.heex:449
 #, elixir-autogen, elixir-format
 msgid "Documentation"
 msgstr ""
@@ -571,7 +573,8 @@ msgstr ""
 msgid "Software Update available (%{version})"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:413
+#: lib/teslamate_web/live/settings_live/index.html.heex:468
+#: lib/teslamate_web/live/settings_live/index.html.heex:471
 #, elixir-autogen, elixir-format
 msgid "Sign out"
 msgstr ""
@@ -720,7 +723,7 @@ msgstr ""
 msgid "Breadcrumbs"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:156
+#: lib/teslamate_web/live/geofence_live/form.html.heex:158
 #, elixir-autogen, elixir-format
 msgid "Close"
 msgstr ""
@@ -743,4 +746,44 @@ msgstr ""
 #: lib/teslamate_web/controllers/drive_controller.ex:17
 #, elixir-autogen, elixir-format
 msgid "Drive not found"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:395
+#, elixir-autogen, elixir-format
+msgid "Project updates"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:404
+#, elixir-autogen, elixir-format
+msgid "Check for updates"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:410
+#, elixir-autogen, elixir-format
+msgid "Checking for updates…"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:417
+#, elixir-autogen, elixir-format
+msgid "Already up to date (%{revision})"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:428
+#, elixir-autogen, elixir-format
+msgid "Project differences found (%{revision})"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:431
+#, elixir-autogen, elixir-format
+msgid "View changes"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:439
+#, elixir-autogen, elixir-format
+msgid "Current source revision is unknown; rebuild from a Git checkout"
+msgstr ""
+
+#: lib/teslamate_web/live/settings_live/index.html.heex:443
+#, elixir-autogen, elixir-format
+msgid "Update check failed; please try again later"
 msgstr ""
