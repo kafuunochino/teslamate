@@ -1,126 +1,106 @@
-# TeslaMate
+# TeslaMate 简体中文使用说明
 
-[简体中文使用说明](README.zh-CN.md) · [Windows / Linux / macOS 原生安装（不使用 Docker）](NATIVE_INSTALL.zh-CN.md)
+[English documentation](README.en.md) · [Windows / Linux / macOS 原生安装（不使用 Docker）](NATIVE_INSTALL.zh-CN.md) · [安全审计](SECURITY_AUDIT.zh-CN.md)
 
-[![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](https://github.com/teslamate-org/teslamate/blob/main/LICENSE)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10859/badge)](https://www.bestpractices.dev/projects/10859)
-[![CI](https://github.com/teslamate-org/teslamate/actions/workflows/devops.yml/badge.svg)](https://github.com/teslamate-org/teslamate/actions/workflows/devops.yml)
-[![Publish Docker images](https://github.com/teslamate-org/teslamate/actions/workflows/buildx.yml/badge.svg)](https://github.com/teslamate-org/teslamate/actions/workflows/buildx.yml)
-[![Coverage](https://coveralls.io/repos/github/teslamate-org/teslamate/badge.svg?branch=main)](https://coveralls.io/github/teslamate-org/teslamate?branch=main)
-[![current version](https://img.shields.io/docker/v/teslamate/teslamate/latest)](https://hub.docker.com/r/teslamate/teslamate)
-[![docker image size](https://img.shields.io/docker/image-size/teslamate/teslamate/latest)](https://hub.docker.com/r/teslamate/teslamate)
-[![docker pulls](https://img.shields.io/docker/pulls/teslamate/teslamate?color=%23099cec)](https://hub.docker.com/r/teslamate/teslamate)
+本项目保持 TeslaMate 的车辆采集、MQTT 与 PostgreSQL 核心架构不变，完成了网页界面、表单校验信息和内置 Grafana 仪表盘的简体中文本地化，并以独立迁移和只读查询增加中国区仪表盘功能。网页应用和 Grafana 默认使用简体中文。
 
-A powerful, self-hosted data logger for your Tesla.
-
-- Written in **[Elixir](https://elixir-lang.org/)**
-- Data is stored in a **Postgres** database
-- Visualization and data analysis with **Grafana**
-- Vehicle data is published to a local **[MQTT](https://en.wikipedia.org/wiki/MQTT)** Broker
-
-## ⚠️ Security Warning
+推荐直接阅读 [Windows / Linux / macOS 原生安装说明](NATIVE_INSTALL.zh-CN.md)，无需使用 Docker。本项目还包含 25 个经过安全清理的中国区增强仪表盘、默认高德地图、GCJ-02 坐标纠偏、安全旁路分时电价和 Grafana 只读数据库账户。Docker 安装方式作为备选保留在本文后续章节。
 
 > [!CAUTION]
-> **Use Official Versions Only**
+> TeslaMate 会保存 Tesla API 令牌和车辆轨迹。请只在可信设备上部署，设置高强度密钥与密码，并且不要把 3000、4000 端口直接暴露到互联网。远程访问建议使用 VPN、Tailscale、Cloudflare Tunnel 或配置了 HTTPS 与身份认证的反向代理。
 
-To protect yourself from malicious forks, malware, and data theft, please ensure you only obtain TeslaMate from the official source:
+## 一、准备工作
 
-- Official Repository: [https://github.com/teslamate-org/teslamate](https://github.com/teslamate-org/teslamate)
-- Official Documentation: [https://docs.teslamate.org](https://docs.teslamate.org/)
+- 一台可长期运行的 64 位设备；建议至少 2 GB 内存。
+- Docker 与 Docker Compose。
+- 可访问 Tesla 服务和 Docker 镜像仓库的网络。
+- Tesla API 的访问令牌（Access Token）和刷新令牌（Refresh Token）。
 
-We have received reports of deceptive websites and unofficial mobile apps (e.g. on the App Store) using the TeslaMate name to distribute modified or harmful versions. If you are using a version from another source, your Tesla account credentials and vehicle data may be at risk.
+## 二、首次安装
 
-## Documentation
+1. 进入项目目录，复制环境变量示例文件：
 
-The documentation is available at [https://docs.teslamate.org](https://docs.teslamate.org/)
+   ```bash
+   cp .env.zh-CN.example .env
+   ```
 
-## Features
+2. 编辑 `.env`，务必替换以下两项：
+   - `ENCRYPTION_KEY`：用于加密 Tesla API 令牌。建议使用密码管理器生成至少 32 位的随机字符串；部署后请妥善保存，不能随意更换。
+   - `DATABASE_PASS`：PostgreSQL 数据库密码，建议使用独立的高强度随机密码。
 
-### General
+3. 中国大陆账户的 API 与流式服务地址会根据令牌区域自动选择，通常无需手工设置；只有排查特殊网络问题时才使用 Compose 文件中的显式覆盖项。
 
-- High precision drive data recording
-- No additional vampire drain: the car will fall asleep as soon as possible
-- Automatic address lookup
-- Easy integration into Home Assistant (via MQTT)
-- Easy integration into Node-Red & Telegram (via MQTT)
-- Geo-fencing feature to create custom locations
-- Supports multiple vehicles per Tesla Account
-- Charge cost tracking
-- Import from TeslaFi and tesla-apiscraper
-- Customizable theme mode (light, dark, or system default)
+4. 构建并启动服务：
 
-### Dashboards
+   ```bash
+   docker compose -f docker-compose.zh-CN.yml up -d --build
+   ```
 
-Sample screenshots of bundled dashboards can be seen by clicking the links below.
+5. 查看启动状态：
 
-- [Battery Health](https://docs.teslamate.org/docs/screenshots/#battery-health)
-- [Charge Level](https://docs.teslamate.org/docs/screenshots/#charge-level)
-- [Charges (Energy added / used)](https://docs.teslamate.org/docs/screenshots#charges)
-- [Charge Details](https://docs.teslamate.org/docs/screenshots#charge-details)
-- [Charging Stats](https://docs.teslamate.org/docs/screenshots#charging-stats)
-- [Database Information](https://docs.teslamate.org/docs/screenshots/#database-information)
-- [Drive Stats](https://docs.teslamate.org/docs/screenshots#drive-stats)
-- [Drives (Distance / Energy consumed (net))](https://docs.teslamate.org/docs/screenshots/#drives)
-- [Drive Details](https://docs.teslamate.org/docs/screenshots/#drive-details)
-- [Efficiency (Consumption (net / gross))](https://docs.teslamate.org/docs/screenshots#efficiency)
-- [Locations (addresses)](https://docs.teslamate.org/docs/screenshots/#location-addresses)
-- [Mileage](https://docs.teslamate.org/docs/screenshots/#mileage)
-- [Overview](https://docs.teslamate.org/docs/screenshots/#overview)
-- [Projected Range (battery degradation)](https://docs.teslamate.org/docs/screenshots#projected-range)
-- [States (see when your car was online or asleep)](https://docs.teslamate.org/docs/screenshots#states)
-- [Statistics](https://docs.teslamate.org/docs/screenshots/#statistics)
-- [Timeline](https://docs.teslamate.org/docs/screenshots/#timeline)
-- [Trip](https://docs.teslamate.org/docs/screenshots/#trip)
-- [Updates (History of installed updates)](https://docs.teslamate.org/docs/screenshots#updates)
-- [Vampire Drain](https://docs.teslamate.org/docs/screenshots#vampire-drain)
-- [Visited (Lifetime driving map)](https://docs.teslamate.org/docs/screenshots/#visited-lifetime-driving-map)
+   ```bash
+   docker compose -f docker-compose.zh-CN.yml ps
+   docker compose -f docker-compose.zh-CN.yml logs -f teslamate
+   ```
 
-## Screenshots
+   日志出现服务已启动的信息后，按 `Ctrl+C` 退出日志查看即可，不会停止容器。
 
-Sneak peak into TeslaMate interface and bundled dashboards. See [the docs](https://docs.teslamate.org/docs/screenshots) for additional screenshots.
+## 三、登录与日常使用
 
-![Web Interface](/website/static/screenshots/web_interface.png)
+1. 打开 `http://设备IP:4000`。
+2. 在登录页填写 Tesla API 的访问令牌和刷新令牌，然后登录。
+3. 首页用于查看车辆状态、续航、充电、温度与里程。顶部的“地理围栏”可配置常用地点和充电价格，“设置”可调整单位、休眠条件、主题与地址语言。
+4. 打开 `http://设备IP:3000` 查看 Grafana 仪表盘。首次登录用户名和密码均为 `admin`，登录后请立即修改密码。
+5. 如果网页没有自动显示中文，可访问 `http://设备IP:4000/?locale=zh_Hans`，随后在“设置 → 语言 → 网页应用”中选择简体中文。
 
-![Drive Details](/website/static/screenshots/drive.png)
+Tesla 官方令牌获取说明会随 Tesla API 政策变化，请以 [TeslaMate 官方常见问题](https://docs.teslamate.org/docs/faq#how-to-generate-your-own-tokens) 为准。不要把令牌发送给他人或写入 Git 仓库。
 
-![Battery Health](/website/static/screenshots/battery-health.png)
+## 四、常用管理命令
 
-## License
+```bash
+# 查看全部服务状态
+docker compose -f docker-compose.zh-CN.yml ps
 
-TeslaMate is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
+# 查看 TeslaMate 日志
+docker compose -f docker-compose.zh-CN.yml logs -f teslamate
 
-This license is designed to ensure that TeslaMate remains free and open for everyone. By using, modifying, or building upon this project, you agree to the following:
+# 重启服务
+docker compose -f docker-compose.zh-CN.yml restart
 
-- Reciprocal Sharing (Copyleft): If you modify TeslaMate or incorporate it into another project, you must release the entire source code of your version under the same AGPLv3 license.
-- Universal Access to Source: This requirement applies regardless of how you provide the software to others—whether you distribute it as a downloadable application (e.g., in an App Store), as a pre-packaged image, or provide access to its functionality via a network service (SaaS).
-- No Closed-Source Derivatives: We do not permit the use of TeslaMate or its components in closed-source commercial products. If your software interacts with or relies on TeslaMate, it must be open-source. If you build upon this project, you are expected to contribute back to the community.
+# 停止服务（保留数据库和 Grafana 数据）
+docker compose -f docker-compose.zh-CN.yml down
 
-For the full legal terms, please refer to the [LICENSE](https://github.com/teslamate-org/teslamate/blob/main/LICENSE) file.
+# 重新构建并启动当前代码
+docker compose -f docker-compose.zh-CN.yml up -d --build
+```
 
-Key Requirements:
+不要使用 `docker compose down -v`，其中的 `-v` 会删除数据库和 Grafana 数据卷。
 
-- Copyleft: If you modify TeslaMate and distribute it (e.g., as an app, binary, or package) or offer it as a service over a network (SaaS), you must make your modified source code available to all users under the same AGPLv3 license.
-- No "Closed" Forks: This license ensures that improvements made by commercial entities or third parties remain open to the entire community.
-- Attribution: You must keep all original copyright notices and license information intact.
+## 五、更新
 
-**Trademark Policy**: The use of the TeslaMate name and logo is governed by our [Trademark Policy](https://github.com/teslamate-org/teslamate/blob/main/TRADEMARK.md).
+先备份数据库，再拉取代码并重新构建：
 
-**Contributions:** All contributors must sign our [Contributor License Agreement](https://github.com/teslamate-org/legal/blob/main/CLA.md). This is handled via cla-assistant.io automatically on first PR and does not take long. **Why do we need this?** It guarantees that TeslaMate will **always remain Free Software** (AGPL-3.0) and allows the [teslamate-org](https://github.com/teslamate-org) to legally defend the project against license violations.
+```bash
+docker compose -f docker-compose.zh-CN.yml exec -T database \
+  pg_dump -U teslamate -d teslamate -Fc > teslamate-backup.dump
 
-## Star History
+git pull
+docker compose -f docker-compose.zh-CN.yml up -d --build
+```
 
-<!-- markdownlint-disable MD033 -->
-<a href="https://www.star-history.com/#teslamate-org/teslamate&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=teslamate-org/teslamate&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=teslamate-org/teslamate&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=teslamate-org/teslamate&type=date&legend=top-left" />
- </picture>
-</a>
-<!-- markdownlint-enable MD033 -->
+更新完成后检查 `ps` 和 TeslaMate 日志。恢复数据库前请停止 TeslaMate，并确认备份文件完整可读。
 
-## Credits
+## 六、数据导入
 
-- Initial Author: Adrian Kumpf
-- List of Contributors:
-- [![TeslaMate Contributors](https://contrib.rocks/image?repo=teslamate-org/teslamate)](https://github.com/teslamate-org/teslamate/graphs/contributors)
+Compose 文件把项目内的 `import` 目录挂载到容器的 `/opt/app/import`。将 TeslaFi 等受支持的导出文件放入 `import` 目录，然后打开 TeslaMate 的导入页面。导入前建议先备份数据库；大量历史数据的导入可能需要较长时间。
+
+## 七、常见问题
+
+- 网页打不开：确认 `docker compose ... ps` 中 `teslamate` 为运行状态，并检查 4000 端口是否被占用或被防火墙拦截。
+- Grafana 没有数据：先确认 TeslaMate 已成功连接车辆并产生记录，再检查 `grafana` 和 `database` 服务日志。
+- 重启后需要重新登录：确认 `.env` 中设置了固定的 `ENCRYPTION_KEY`，且启动时使用了同一个 `.env`。
+- 数据库连接失败：确认 `.env` 中的 `DATABASE_PASS` 没有被修改，并且 Compose 中数据库与其他服务使用的是同一个值。
+- 中国大陆车辆无法连接：确认已启用 Compose 文件中的中国区 API 与流式服务地址，并检查网络连通性。
+- 汉化未生效：本项目需要从源码构建；直接使用官方 `teslamate/teslamate:latest` 或 `teslamate/grafana:latest` 镜像不会包含本项目的汉化内容。
+
+更多高级配置、反向代理、Home Assistant、MQTT 与数据修复说明，请参考 [TeslaMate 官方文档](https://docs.teslamate.org/)。
