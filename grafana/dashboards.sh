@@ -42,6 +42,34 @@ slugify() {
 	echo "$slug"
 }
 
+folder_title_for_category() {
+	case $1 in
+	overview) echo "TeslaMate · 常用概览" ;;
+	driving) echo "TeslaMate · 行程驾驶" ;;
+	charging) echo "TeslaMate · 充电费用" ;;
+	energy) echo "TeslaMate · 电池能耗" ;;
+	analysis) echo "TeslaMate · 统计分析" ;;
+	system) echo "TeslaMate · 系统维护" ;;
+	internal) echo "TeslaMate · 内部明细" ;;
+	reports) echo "TeslaMate · 专题报告" ;;
+	*) echo "$1" ;;
+	esac
+}
+
+category_for_folder_title() {
+	case $1 in
+	"TeslaMate · 常用概览") echo "overview" ;;
+	"TeslaMate · 行程驾驶") echo "driving" ;;
+	"TeslaMate · 充电费用") echo "charging" ;;
+	"TeslaMate · 电池能耗") echo "energy" ;;
+	"TeslaMate · 统计分析") echo "analysis" ;;
+	"TeslaMate · 系统维护") echo "system" ;;
+	"TeslaMate · 内部明细") echo "internal" ;;
+	"TeslaMate · 专题报告") echo "reports" ;;
+	*) echo "" ;;
+	esac
+}
+
 main() {
 	local task=$1
 
@@ -65,13 +93,15 @@ backup() {
 	local dashboard_uid
 	local dashboard_title
 	local initial_folder_uid
+	local initial_folder_title
+	local local_category
 	local grafana_path_array_str
 	local -a grafana_path_array # Declare as array
 	local dashboard_json
 	local target_dir
 	local filename
 
-	echo "Starting dashboard backup process (scoped to 'TeslaMate' folder and its subfolders)..."
+	echo "Starting dashboard backup process (scoped to TeslaMate dashboard folders)..."
 	mkdir -p "$DASHBOARDS_DIRECTORY" # Ensure base directory exists
 
 	list_dashboards | while IFS= read -r dashboard_info_json; do
@@ -93,30 +123,34 @@ backup() {
 			continue # Skip dashboards not in any folder
 		fi
 
-		grafana_path_array_str=$(build_grafana_folder_path_array "$initial_folder_uid")
-		# Convert space-separated string to bash array
-		read -r -a grafana_path_array <<<"$grafana_path_array_str"
+		initial_folder_title=$(get_folder_path_details "$initial_folder_uid" | jq -r '.title // empty')
+		local_category=$(category_for_folder_title "$initial_folder_title")
 
-		if [[ ${#grafana_path_array[@]} -eq 0 || ${grafana_path_array[0]} != "teslamate" ]]; then
-			# Folder path couldn't be determined, or it's not under "TeslaMate"
-			# echo "INFO: Dashboard '$dashboard_title' (UID: $dashboard_uid) is not under 'TeslaMate' folder (path: $grafana_path_array_str), skipping."
-			continue
-		fi
+		if [[ -n $local_category ]]; then
+			target_dir="$DASHBOARDS_DIRECTORY/$local_category"
+		else
+			grafana_path_array_str=$(build_grafana_folder_path_array "$initial_folder_uid")
+			# Convert space-separated string to bash array
+			read -r -a grafana_path_array <<<"$grafana_path_array_str"
 
-		# Construct local save path (remove "TeslaMate" from the path components)
-		local -a local_save_path_parts=()
-		if ((${#grafana_path_array[@]} > 1)); then
-			local_save_path_parts=("${grafana_path_array[@]:1}") # All elements except the first
-		fi
+			if [[ ${#grafana_path_array[@]} -eq 0 || ${grafana_path_array[0]} != "teslamate" ]]; then
+				continue
+			fi
 
-		target_dir="$DASHBOARDS_DIRECTORY"
-		if ((${#local_save_path_parts[@]} > 0)); then
-			relative_save_path=$(
-				IFS=/
-				echo "${local_save_path_parts[*]}"
-			)
-			# Further sanitize relative_save_path if folder titles can have problematic chars for dir names
-			target_dir="$DASHBOARDS_DIRECTORY/$relative_save_path"
+			# Construct local save path (remove "TeslaMate" from the path components)
+			local -a local_save_path_parts=()
+			if ((${#grafana_path_array[@]} > 1)); then
+				local_save_path_parts=("${grafana_path_array[@]:1}")
+			fi
+
+			target_dir="$DASHBOARDS_DIRECTORY"
+			if ((${#local_save_path_parts[@]} > 0)); then
+				relative_save_path=$(
+					IFS=/
+					echo "${local_save_path_parts[*]}"
+				)
+				target_dir="$DASHBOARDS_DIRECTORY/$relative_save_path"
+			fi
 		fi
 
 		mkdir -p "$target_dir"
@@ -146,15 +180,17 @@ restore() {
 			local_subfolder_path=$(dirname "$relative_file_path")
 
 			local -a target_grafana_folder_titles_array=()
-			target_grafana_folder_titles_array+=("TeslaMate") # Always start with TeslaMate
-
-			if [[ $local_subfolder_path != "." && -n $local_subfolder_path ]]; then
+			if [[ $local_subfolder_path == "." || -z $local_subfolder_path ]]; then
+				target_grafana_folder_titles_array+=("TeslaMate")
+			else
 				local old_ifs=$IFS
 				IFS='/'
 				# shellcheck disable=SC2206 # Word splitting is desired here
 				local path_parts_for_restore=($local_subfolder_path)
 				IFS=$old_ifs
-				target_grafana_folder_titles_array+=("${path_parts_for_restore[@]}")
+				for path_part in "${path_parts_for_restore[@]}"; do
+					target_grafana_folder_titles_array+=("$(folder_title_for_category "$path_part")")
+				done
 			fi
 
 			local leaf_folder_to_assign_dashboard_uid=""

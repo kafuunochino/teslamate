@@ -1,35 +1,90 @@
 apiVersion: 1
 
 providers:
-  - name: teslamate
+  - name: teslamate_overview
     orgId: 1
-    folder: TeslaMate
+    folder: "TeslaMate · 常用概览"
     folderUid: Nr4ofiDZk
     type: file
     disableDeletion: false
     allowUiUpdates: false
     updateIntervalSeconds: 60
     options:
-      path: $TESLAMATE_DASHBOARDS_PATH
+      path: $TESLAMATE_DASHBOARDS_PATH/overview
+
+  - name: teslamate_driving
+    orgId: 1
+    folder: "TeslaMate · 行程驾驶"
+    folderUid: tmDrivingCN
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: $TESLAMATE_DASHBOARDS_PATH/driving
+
+  - name: teslamate_charging
+    orgId: 1
+    folder: "TeslaMate · 充电费用"
+    folderUid: tmChargingCN
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: $TESLAMATE_DASHBOARDS_PATH/charging
+
+  - name: teslamate_energy
+    orgId: 1
+    folder: "TeslaMate · 电池能耗"
+    folderUid: tmEnergyCN
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: $TESLAMATE_DASHBOARDS_PATH/energy
+
+  - name: teslamate_analysis
+    orgId: 1
+    folder: "TeslaMate · 统计分析"
+    folderUid: tmAnalysisCN
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: $TESLAMATE_DASHBOARDS_PATH/analysis
+
+  - name: teslamate_system
+    orgId: 1
+    folder: "TeslaMate · 系统维护"
+    folderUid: tmSystemCN
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: $TESLAMATE_DASHBOARDS_PATH/system
 
   - name: teslamate_internal
     orgId: 1
-    folder: Internal
+    folder: "TeslaMate · 内部明细"
     folderUid: Nr5ofiDZk
     type: file
     disableDeletion: false
     allowUiUpdates: false
     updateIntervalSeconds: 60
     options:
-      path: $TESLAMATE_INTERNAL_DASHBOARDS_PATH
+      path: $TESLAMATE_DASHBOARDS_PATH/internal
 
   - name: teslamate_reports
     orgId: 1
-    folder: Reports
+    folder: "TeslaMate · 专题报告"
     folderUid: Nr6ofiDZk
     type: file
     disableDeletion: false
     allowUiUpdates: false
     updateIntervalSeconds: 60
     options:
-      path: $TESLAMATE_REPORT_DASHBOARDS_PATH
+      path: $TESLAMATE_DASHBOARDS_PATH/reports

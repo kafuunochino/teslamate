@@ -30,9 +30,18 @@
 
 3. 中国大陆账户的 API 与流式服务地址会根据令牌区域自动选择，通常无需手工设置；只有排查特殊网络问题时才使用 Compose 文件中的显式覆盖项。
 
-4. 构建并启动服务：
+4. 构建并启动服务。构建时传入当前 Git 提交号，供“设置 → 检查项目更新”准确比较差异：
+
+   Linux / macOS：
 
    ```bash
+   TESLAMATE_REVISION="$(git rev-parse HEAD)" docker compose -f docker-compose.zh-CN.yml up -d --build
+   ```
+
+   Windows PowerShell：
+
+   ```powershell
+   $env:TESLAMATE_REVISION = git rev-parse HEAD
    docker compose -f docker-compose.zh-CN.yml up -d --build
    ```
 
@@ -50,7 +59,7 @@
 1. 打开 `http://设备IP:4000`。
 2. 在登录页填写 Tesla API 的访问令牌和刷新令牌，然后登录。
 3. 首页用于查看车辆状态、续航、充电、温度与里程。顶部的“地理围栏”可配置常用地点和充电价格，“设置”可调整单位、休眠条件、主题与地址语言。
-4. 打开 `http://设备IP:3000` 查看 Grafana 仪表盘。首次登录用户名和密码均为 `admin`，登录后请立即修改密码。
+4. 打开 `http://设备IP:3000` 查看 Grafana 仪表盘。仪表盘按“常用概览、行程驾驶、充电费用、电池能耗、统计分析、系统维护”分类；首次登录用户名和密码均为 `admin`，登录后请立即修改密码。
 5. 如果网页没有自动显示中文，可访问 `http://设备IP:4000/?locale=zh_Hans`，随后在“设置 → 语言 → 网页应用”中选择简体中文。
 
 Tesla 官方令牌获取说明会随 Tesla API 政策变化，请以 [TeslaMate 官方常见问题](https://docs.teslamate.org/docs/faq#how-to-generate-your-own-tokens) 为准。不要把令牌发送给他人或写入 Git 仓库。
@@ -70,8 +79,8 @@ docker compose -f docker-compose.zh-CN.yml restart
 # 停止服务（保留数据库和 Grafana 数据）
 docker compose -f docker-compose.zh-CN.yml down
 
-# 重新构建并启动当前代码
-docker compose -f docker-compose.zh-CN.yml up -d --build
+# 重新构建并启动当前代码（Linux / macOS）
+TESLAMATE_REVISION="$(git rev-parse HEAD)" docker compose -f docker-compose.zh-CN.yml up -d --build
 ```
 
 不要使用 `docker compose down -v`，其中的 `-v` 会删除数据库和 Grafana 数据卷。
@@ -85,10 +94,10 @@ docker compose -f docker-compose.zh-CN.yml exec -T database \
   pg_dump -U teslamate -d teslamate -Fc > teslamate-backup.dump
 
 git pull
-docker compose -f docker-compose.zh-CN.yml up -d --build
+TESLAMATE_REVISION="$(git rev-parse HEAD)" docker compose -f docker-compose.zh-CN.yml up -d --build
 ```
 
-更新完成后检查 `ps` 和 TeslaMate 日志。恢复数据库前请停止 TeslaMate，并确认备份文件完整可读。
+Windows PowerShell 在重新构建前先执行 `$env:TESLAMATE_REVISION = git rev-parse HEAD`。更新完成后检查 `ps` 和 TeslaMate 日志。恢复数据库前请停止 TeslaMate，并确认备份文件完整可读。
 
 ## 六、数据导入
 

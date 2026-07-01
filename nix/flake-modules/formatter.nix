@@ -42,7 +42,7 @@
           "*.json.example"
           "*.typos.toml"
           "treefmt.toml"
-          "grafana/dashboards/*.json" # we use the grafana export style
+          "grafana/dashboards/**/*.json" # we use the grafana export style
         ];
         programs.mix-format.enable = true;
         programs.mix-format.package = config.teslamate.elixir;

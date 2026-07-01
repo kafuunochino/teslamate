@@ -22,10 +22,25 @@
   "panels": [
     {
       "gridPos": {
-        "h": 20,
-        "w": 6,
+        "h": 3,
+        "w": 24,
         "x": 0,
         "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "# TeslaMate 中文仪表盘\n按用途选择下方分类。默认统计时间可在进入仪表盘后从右上角调整。",
+        "mode": "markdown"
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 3
       },
       "id": 2,
       "options": {
@@ -37,48 +52,153 @@
         "showFolderNames": false,
         "showHeadings": false,
         "showRecentlyViewed": false,
-        "showSearch": true,
+        "showSearch": false,
         "showStarred": false,
         "tags": []
       },
       "pluginVersion": "13.0.1+security-01",
+      "title": "常用概览",
       "type": "dashlist"
     },
     {
       "gridPos": {
-        "h": 20,
-        "w": 16,
-        "x": 6,
-        "y": 0
-      },
-      "id": 1,
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
-        "content": "<div style=\"background-size: cover; background-image: url(&quot;https://digitalassets.tesla.com/tesla-contents/image/upload/c_pad,dpr_1.0,f_auto,q_auto/c_pad/Group_67?pgw=1&quot;);width:100%;height:734px;background-position:center;\"></div>",
-        "mode": "html"
-      },
-      "pluginVersion": "13.0.1+security-01",
-      "type": "text"
-    },
-    {
-      "gridPos": {
-        "h": 20,
-        "w": 2,
-        "x": 22,
-        "y": 0
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 3
       },
       "id": 3,
       "options": {
-        "feedUrl": "https://api.cors.lol/?url=https://github.com/teslamate-org/teslamate/tags.atom",
-        "showImage": false
+        "folderUID": "tmDrivingCN",
+        "includeVars": false,
+        "keepTime": false,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": false,
+        "showStarred": false,
+        "tags": []
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "发行版本",
-      "type": "news"
+      "title": "行程驾驶",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 3
+      },
+      "id": 4,
+      "options": {
+        "folderUID": "tmChargingCN",
+        "includeVars": false,
+        "keepTime": false,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": false,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "充电费用",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "id": 5,
+      "options": {
+        "folderUID": "tmEnergyCN",
+        "includeVars": false,
+        "keepTime": false,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": false,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "电池能耗",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "id": 6,
+      "options": {
+        "folderUID": "tmAnalysisCN",
+        "includeVars": false,
+        "keepTime": false,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": false,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "统计分析",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 7,
+      "options": {
+        "folderUID": "tmSystemCN",
+        "includeVars": false,
+        "keepTime": false,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": false,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "系统维护",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 8,
+      "options": {
+        "content": "> 如果图表显示为 0，请先扩大右上角时间范围并确认已经选择正确车辆；0 代表该时间段没有符合统计条件的数据。",
+        "mode": "markdown"
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "type": "text"
     }
   ],
   "preload": false,
@@ -97,6 +217,6 @@
   "timezone": "browser",
   "title": "首页",
   "uid": "be2m9kga7b8qoc",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

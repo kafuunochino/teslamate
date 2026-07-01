@@ -1,0 +1,828 @@
+{
+  "title": "⚡ 行车 vs 停车能耗（月度）",
+  "uid": "sentry-drain-cn",
+  "tags": [
+    "tesla",
+    "battery",
+    "efficiency",
+    "简体中文",
+    "只读增强"
+  ],
+  "schemaVersion": 41,
+  "version": 3,
+  "timezone": "browser",
+  "time": {
+    "from": "now-1y",
+    "to": "now"
+  },
+  "refresh": "",
+  "editable": true,
+  "graphTooltip": 0,
+  "fiscalYearStartMonth": 0,
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "TeslaMate"
+        },
+        "definition": "车辆选择器（来自 cars 表）",
+        "includeAll": false,
+        "label": "车辆",
+        "name": "car_id",
+        "options": [],
+        "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
+        "refresh": 1,
+        "regex": "",
+        "type": "query",
+        "regexApplyTo": "value"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "options": {
+        "mode": "markdown",
+        "content": "## ⚡ 行车 vs 停车能耗（月度）\n每月用电分 **🚗 行车** / **🅿️ 停车**；停车再分 **☀️ 醒着掉电**（停 >15 分钟没休眠）/ **😴 休眠掉电**。\n\n- 同时兼容额定续航与理想续航；两者都缺失时，行车电耗按行驶里程估算。\n- 车辆效率缺失时，优先从历史充电记录估算；仍无法估算时使用 153 Wh/km 作为保守参考值。\n- 月度图会补齐空月份；没有符合条件的数据时显示 0，而不是空白。\n\n> 「醒着掉电」包含车内停留、空调、预热和可能的哨兵模式。可结合下方明细中的“空调约开”和“判断”进一步分析。"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "🚗 行车电耗 (kWh)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH eff AS (\n  SELECT COALESCE(\n    NULLIF(c.efficiency, 0),\n    (\n      SELECT percentile_cont(0.5) WITHIN GROUP (\n        ORDER BY cp.charge_energy_added / NULLIF(\n          COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) -\n          COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km),\n          0\n        )\n      )\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.charge_energy_added > 0\n        AND COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) >\n            COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km)\n    ),\n    0.153\n  ) AS e\n  FROM cars c\n  WHERE c.id = $car_id\n),\ndrive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n)\nSELECT COALESCE(\n  ROUND(SUM(d.drive_km * eff.e)::numeric, 1),\n  0\n) AS v\nFROM drive_points d\nCROSS JOIN eff\nWHERE d.end_date IS NOT NULL\n  AND d.drive_km >= 0.1\n  AND $__timeFilter(d.start_date)",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "🅿️ 停车电耗 (kWh)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH eff AS (\n  SELECT COALESCE(\n    NULLIF(c.efficiency, 0),\n    (\n      SELECT percentile_cont(0.5) WITHIN GROUP (\n        ORDER BY cp.charge_energy_added / NULLIF(\n          COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) -\n          COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km),\n          0\n        )\n      )\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.charge_energy_added > 0\n        AND COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) >\n            COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km)\n    ),\n    0.153\n  ) AS e\n  FROM cars c\n  WHERE c.id = $car_id\n),\ndrive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n),\ngaps AS (\n  SELECT\n    d.end_date AS ps,\n    d.r_end AS r0,\n    LEAD(d.start_date) OVER (ORDER BY d.start_date) AS pe,\n    LEAD(d.r_start) OVER (ORDER BY d.start_date) AS r1\n  FROM drive_points d\n  WHERE d.end_date IS NOT NULL\n    AND d.r_start IS NOT NULL\n    AND d.r_end IS NOT NULL\n),\nclean AS (\n  SELECT g.ps, g.pe, GREATEST(g.r0 - g.r1, 0) AS drop_km\n  FROM gaps g\n  WHERE g.pe IS NOT NULL\n    AND g.pe > g.ps\n    AND g.r1 IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.start_date >= g.ps\n        AND cp.start_date < g.pe\n    )\n)\nSELECT COALESCE(\n  ROUND((SUM(c.drop_km * eff.e))::numeric, 1),\n  0\n) AS v\nFROM clean c\nCROSS JOIN eff\nWHERE $__timeFilter(c.ps)",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "🅿️ 停车占总能耗 (%)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH eff AS (\n  SELECT COALESCE(\n    NULLIF(c.efficiency, 0),\n    (\n      SELECT percentile_cont(0.5) WITHIN GROUP (\n        ORDER BY cp.charge_energy_added / NULLIF(\n          COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) -\n          COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km),\n          0\n        )\n      )\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.charge_energy_added > 0\n        AND COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) >\n            COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km)\n    ),\n    0.153\n  ) AS e\n  FROM cars c\n  WHERE c.id = $car_id\n),\ndrive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n),\ndrv AS (\n  SELECT COALESCE(SUM(d.drive_km * eff.e), 0) AS kwh\n  FROM drive_points d\n  CROSS JOIN eff\n  WHERE d.end_date IS NOT NULL\n    AND d.drive_km >= 0.1\n    AND $__timeFilter(d.start_date)\n),\ngaps AS (\n  SELECT\n    d.end_date AS ps,\n    d.r_end AS r0,\n    LEAD(d.start_date) OVER (ORDER BY d.start_date) AS pe,\n    LEAD(d.r_start) OVER (ORDER BY d.start_date) AS r1\n  FROM drive_points d\n  WHERE d.end_date IS NOT NULL\n    AND d.r_start IS NOT NULL\n    AND d.r_end IS NOT NULL\n),\nclean AS (\n  SELECT g.ps, g.pe, GREATEST(g.r0 - g.r1, 0) AS drop_km\n  FROM gaps g\n  WHERE g.pe IS NOT NULL\n    AND g.pe > g.ps\n    AND g.r1 IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.start_date >= g.ps\n        AND cp.start_date < g.pe\n    )\n),\npark AS (\n  SELECT COALESCE(SUM(c.drop_km * eff.e), 0) AS kwh\n  FROM clean c\n  CROSS JOIN eff\n  WHERE $__timeFilter(c.ps)\n)\nSELECT COALESCE(\n  ROUND((park.kwh / NULLIF(drv.kwh + park.kwh, 0) * 100)::numeric, 1),\n  0\n) AS v\nFROM drv CROSS JOIN park",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "☀️ 醒着(未及时休眠)停车 (次)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH drive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n),\ngaps AS (\n  SELECT\n    d.end_date AS ps,\n    d.r_end AS r0,\n    LEAD(d.start_date) OVER (ORDER BY d.start_date) AS pe,\n    LEAD(d.r_start) OVER (ORDER BY d.start_date) AS r1\n  FROM drive_points d\n  WHERE d.end_date IS NOT NULL\n    AND d.r_start IS NOT NULL\n    AND d.r_end IS NOT NULL\n),\nclean AS (\n  SELECT g.ps, g.pe, GREATEST(g.r0 - g.r1, 0) AS drop_km\n  FROM gaps g\n  WHERE g.pe IS NOT NULL\n    AND g.pe > g.ps\n    AND g.r1 IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.start_date >= g.ps\n        AND cp.start_date < g.pe\n    )\n),\npark_online AS (\n  SELECT\n    c.ps,\n    c.pe,\n    c.drop_km,\n    COALESCE(\n      SUM(\n        EXTRACT(\n          EPOCH FROM (\n            LEAST(COALESCE(s.end_date, c.pe), c.pe) -\n            GREATEST(s.start_date, c.ps)\n          )\n        )\n      ) FILTER (WHERE s.state = 'online'),\n      0\n    ) / 3600.0 AS online_h\n  FROM clean c\n  LEFT JOIN states s\n    ON s.car_id = $car_id\n   AND s.start_date < c.pe\n   AND COALESCE(s.end_date, c.pe) > c.ps\n  GROUP BY c.ps, c.pe, c.drop_km\n)\nSELECT COUNT(*) AS v\nFROM park_online\nWHERE online_h > 0.25\n  AND $__timeFilter(ps)",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 6,
+      "type": "piechart",
+      "title": "🥧 总能耗去向",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH eff AS (\n  SELECT COALESCE(\n    NULLIF(c.efficiency, 0),\n    (\n      SELECT percentile_cont(0.5) WITHIN GROUP (\n        ORDER BY cp.charge_energy_added / NULLIF(\n          COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) -\n          COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km),\n          0\n        )\n      )\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.charge_energy_added > 0\n        AND COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) >\n            COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km)\n    ),\n    0.153\n  ) AS e\n  FROM cars c\n  WHERE c.id = $car_id\n),\ndrive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n),\ndrv AS (\n  SELECT COALESCE(SUM(d.drive_km * eff.e), 0) AS kwh\n  FROM drive_points d\n  CROSS JOIN eff\n  WHERE d.end_date IS NOT NULL\n    AND d.drive_km >= 0.1\n    AND $__timeFilter(d.start_date)\n),\ngaps AS (\n  SELECT\n    d.end_date AS ps,\n    d.r_end AS r0,\n    LEAD(d.start_date) OVER (ORDER BY d.start_date) AS pe,\n    LEAD(d.r_start) OVER (ORDER BY d.start_date) AS r1\n  FROM drive_points d\n  WHERE d.end_date IS NOT NULL\n    AND d.r_start IS NOT NULL\n    AND d.r_end IS NOT NULL\n),\nclean AS (\n  SELECT g.ps, g.pe, GREATEST(g.r0 - g.r1, 0) AS drop_km\n  FROM gaps g\n  WHERE g.pe IS NOT NULL\n    AND g.pe > g.ps\n    AND g.r1 IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.start_date >= g.ps\n        AND cp.start_date < g.pe\n    )\n),\npark AS (\n  SELECT COALESCE(SUM(c.drop_km * eff.e), 0) AS kwh\n  FROM clean c\n  CROSS JOIN eff\n  WHERE $__timeFilter(c.ps)\n)\nSELECT\n  ROUND(drv.kwh::numeric, 1) AS \"🚗 行车\",\n  ROUND(park.kwh::numeric, 1) AS \"🅿️ 停车\"\nFROM drv CROSS JOIN park",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "🚗 行车"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "🅿️ 停车"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "pieType": "donut",
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "displayLabels": []
+      },
+      "pluginVersion": "12.4.0",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 8,
+        "h": 9
+      }
+    },
+    {
+      "id": 7,
+      "type": "barchart",
+      "title": "📊 月度能耗：行车 vs 停车 (kWh)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH eff AS (\n  SELECT COALESCE(\n    NULLIF(c.efficiency, 0),\n    (\n      SELECT percentile_cont(0.5) WITHIN GROUP (\n        ORDER BY cp.charge_energy_added / NULLIF(\n          COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) -\n          COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km),\n          0\n        )\n      )\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.charge_energy_added > 0\n        AND COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) >\n            COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km)\n    ),\n    0.153\n  ) AS e\n  FROM cars c\n  WHERE c.id = $car_id\n),\ndrive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n),\nmonths AS (\n  SELECT generate_series(\n    date_trunc('month', timezone('$__timezone', $__timeFrom())),\n    date_trunc('month', timezone('$__timezone', $__timeTo())),\n    interval '1 month'\n  ) AS m\n),\ndrive_m AS (\n  SELECT\n    date_trunc('month', timezone('$__timezone', timezone('UTC', d.start_date))) AS m,\n    SUM(d.drive_km * eff.e) AS kwh\n  FROM drive_points d\n  CROSS JOIN eff\n  WHERE d.end_date IS NOT NULL\n    AND d.drive_km >= 0.1\n    AND $__timeFilter(d.start_date)\n  GROUP BY 1\n),\ngaps AS (\n  SELECT\n    d.end_date AS ps,\n    d.r_end AS r0,\n    LEAD(d.start_date) OVER (ORDER BY d.start_date) AS pe,\n    LEAD(d.r_start) OVER (ORDER BY d.start_date) AS r1\n  FROM drive_points d\n  WHERE d.end_date IS NOT NULL\n    AND d.r_start IS NOT NULL\n    AND d.r_end IS NOT NULL\n),\nclean AS (\n  SELECT g.ps, g.pe, GREATEST(g.r0 - g.r1, 0) AS drop_km\n  FROM gaps g\n  WHERE g.pe IS NOT NULL\n    AND g.pe > g.ps\n    AND g.r1 IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.start_date >= g.ps\n        AND cp.start_date < g.pe\n    )\n),\npark_m AS (\n  SELECT\n    date_trunc('month', timezone('$__timezone', timezone('UTC', c.ps))) AS m,\n    SUM(c.drop_km * eff.e) AS kwh\n  FROM clean c\n  CROSS JOIN eff\n  WHERE $__timeFilter(c.ps)\n  GROUP BY 1\n)\nSELECT\n  to_char(months.m, 'YYYY-MM') AS \"月份\",\n  ROUND(COALESCE(drive_m.kwh, 0)::numeric, 1) AS \"行车电耗\",\n  ROUND(COALESCE(park_m.kwh, 0)::numeric, 1) AS \"停车电耗\"\nFROM months\nLEFT JOIN drive_m ON drive_m.m = months.m\nLEFT JOIN park_m ON park_m.m = months.m\nORDER BY months.m",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "kWh",
+            "axisPlacement": "auto",
+            "fillOpacity": 85,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "unit": "none",
+          "decimals": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "行车电耗"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "停车电耗"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "auto",
+        "xField": "月份",
+        "showValue": "auto",
+        "stacking": "normal",
+        "barWidth": 0.9,
+        "groupWidth": 0.7,
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        },
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "pluginVersion": "12.4.0",
+      "gridPos": {
+        "x": 8,
+        "y": 8,
+        "w": 16,
+        "h": 9
+      }
+    },
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "🅿️ 月度停车拆分：醒着掉电 vs 休眠掉电 (kWh)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH eff AS (\n  SELECT COALESCE(\n    NULLIF(c.efficiency, 0),\n    (\n      SELECT percentile_cont(0.5) WITHIN GROUP (\n        ORDER BY cp.charge_energy_added / NULLIF(\n          COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) -\n          COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km),\n          0\n        )\n      )\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.charge_energy_added > 0\n        AND COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) >\n            COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km)\n    ),\n    0.153\n  ) AS e\n  FROM cars c\n  WHERE c.id = $car_id\n),\ndrive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n),\nmonths AS (\n  SELECT generate_series(\n    date_trunc('month', timezone('$__timezone', $__timeFrom())),\n    date_trunc('month', timezone('$__timezone', $__timeTo())),\n    interval '1 month'\n  ) AS m\n),\ngaps AS (\n  SELECT\n    d.end_date AS ps,\n    d.r_end AS r0,\n    LEAD(d.start_date) OVER (ORDER BY d.start_date) AS pe,\n    LEAD(d.r_start) OVER (ORDER BY d.start_date) AS r1\n  FROM drive_points d\n  WHERE d.end_date IS NOT NULL\n    AND d.r_start IS NOT NULL\n    AND d.r_end IS NOT NULL\n),\nclean AS (\n  SELECT g.ps, g.pe, GREATEST(g.r0 - g.r1, 0) AS drop_km\n  FROM gaps g\n  WHERE g.pe IS NOT NULL\n    AND g.pe > g.ps\n    AND g.r1 IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.start_date >= g.ps\n        AND cp.start_date < g.pe\n    )\n),\npark_online AS (\n  SELECT\n    c.ps,\n    c.pe,\n    c.drop_km,\n    COALESCE(\n      SUM(\n        EXTRACT(\n          EPOCH FROM (\n            LEAST(COALESCE(s.end_date, c.pe), c.pe) -\n            GREATEST(s.start_date, c.ps)\n          )\n        )\n      ) FILTER (WHERE s.state = 'online'),\n      0\n    ) / 3600.0 AS online_h\n  FROM clean c\n  LEFT JOIN states s\n    ON s.car_id = $car_id\n   AND s.start_date < c.pe\n   AND COALESCE(s.end_date, c.pe) > c.ps\n  GROUP BY c.ps, c.pe, c.drop_km\n),\npark_m AS (\n  SELECT\n    date_trunc('month', timezone('$__timezone', timezone('UTC', p.ps))) AS m,\n    SUM(p.drop_km * eff.e) FILTER (WHERE p.online_h > 0.25) AS awake_kwh,\n    SUM(p.drop_km * eff.e) FILTER (WHERE p.online_h <= 0.25) AS sleep_kwh\n  FROM park_online p\n  CROSS JOIN eff\n  WHERE $__timeFilter(p.ps)\n  GROUP BY 1\n)\nSELECT\n  to_char(months.m, 'YYYY-MM') AS \"月份\",\n  ROUND(COALESCE(park_m.awake_kwh, 0)::numeric, 1) AS \"☀️ 醒着掉电\",\n  ROUND(COALESCE(park_m.sleep_kwh, 0)::numeric, 1) AS \"😴 休眠掉电\"\nFROM months\nLEFT JOIN park_m ON park_m.m = months.m\nORDER BY months.m",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "kWh",
+            "axisPlacement": "auto",
+            "fillOpacity": 85,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "unit": "none",
+          "decimals": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "☀️ 醒着掉电"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "😴 休眠掉电"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "auto",
+        "xField": "月份",
+        "showValue": "auto",
+        "stacking": "normal",
+        "barWidth": 0.9,
+        "groupWidth": 0.7,
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        },
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "pluginVersion": "12.4.0",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 9
+      },
+      "description": "醒着掉电 = 停车 >15 分钟没休眠时掉的电（你坐车里/空调/预热/哨兵的混合）；休眠掉电 = 车正常休眠待机时的耗电。"
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "🔍 醒着停车明细（停 >15 分钟没休眠）",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "rawSql": "WITH eff AS (\n  SELECT COALESCE(\n    NULLIF(c.efficiency, 0),\n    (\n      SELECT percentile_cont(0.5) WITHIN GROUP (\n        ORDER BY cp.charge_energy_added / NULLIF(\n          COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) -\n          COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km),\n          0\n        )\n      )\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.charge_energy_added > 0\n        AND COALESCE(cp.end_rated_range_km, cp.end_ideal_range_km) >\n            COALESCE(cp.start_rated_range_km, cp.start_ideal_range_km)\n    ),\n    0.153\n  ) AS e\n  FROM cars c\n  WHERE c.id = $car_id\n),\ndrive_points AS (\n  SELECT\n    d.*,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km\n      ELSE d.start_ideal_range_km\n    END AS r_start,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.end_rated_range_km\n      ELSE d.end_ideal_range_km\n    END AS r_end,\n    CASE\n      WHEN d.start_rated_range_km IS NOT NULL AND d.end_rated_range_km IS NOT NULL\n        THEN d.start_rated_range_km - d.end_rated_range_km\n      WHEN d.start_ideal_range_km IS NOT NULL AND d.end_ideal_range_km IS NOT NULL\n        THEN d.start_ideal_range_km - d.end_ideal_range_km\n      ELSE d.distance\n    END AS drive_km\n  FROM drives d\n  WHERE d.car_id = $car_id\n),\ngaps AS (\n  SELECT\n    d.end_date AS ps,\n    d.r_end AS r0,\n    LEAD(d.start_date) OVER (ORDER BY d.start_date) AS pe,\n    LEAD(d.r_start) OVER (ORDER BY d.start_date) AS r1\n  FROM drive_points d\n  WHERE d.end_date IS NOT NULL\n    AND d.r_start IS NOT NULL\n    AND d.r_end IS NOT NULL\n),\nclean AS (\n  SELECT g.ps, g.pe, GREATEST(g.r0 - g.r1, 0) AS drop_km\n  FROM gaps g\n  WHERE g.pe IS NOT NULL\n    AND g.pe > g.ps\n    AND g.r1 IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1\n      FROM charging_processes cp\n      WHERE cp.car_id = $car_id\n        AND cp.start_date >= g.ps\n        AND cp.start_date < g.pe\n    )\n),\npark_online AS (\n  SELECT\n    c.ps,\n    c.pe,\n    c.drop_km,\n    COALESCE(\n      SUM(\n        EXTRACT(\n          EPOCH FROM (\n            LEAST(COALESCE(s.end_date, c.pe), c.pe) -\n            GREATEST(s.start_date, c.ps)\n          )\n        )\n      ) FILTER (WHERE s.state = 'online'),\n      0\n    ) / 3600.0 AS online_h\n  FROM clean c\n  LEFT JOIN states s\n    ON s.car_id = $car_id\n   AND s.start_date < c.pe\n   AND COALESCE(s.end_date, c.pe) > c.ps\n  GROUP BY c.ps, c.pe, c.drop_km\n),\ntop AS (\n  SELECT ps, pe, drop_km, online_h\n  FROM park_online\n  WHERE online_h > 0.25\n    AND $__timeFilter(ps)\n  ORDER BY drop_km DESC\n  LIMIT 30\n)\nSELECT\n  to_char(timezone('$__timezone', timezone('UTC', top.ps)), 'YYYY-MM-DD HH24:MI') AS \"停车开始\",\n  ROUND((EXTRACT(EPOCH FROM (top.pe - top.ps)) / 3600)::numeric, 1) AS \"停车时长(h)\",\n  ROUND((top.online_h * 60)::numeric, 0) AS \"醒着(分钟)\",\n  ROUND(((cs.n_clim::numeric / NULLIF(cs.n, 0)) * top.online_h * 60)::numeric, 0) AS \"空调约开(分钟)\",\n  ROUND(cs.out_t::numeric, 0) AS \"室外温度℃\",\n  CASE\n    WHEN cs.n = 0 THEN '无温度数据'\n    WHEN cs.n_clim::float / NULLIF(cs.n, 0) < 0.15 THEN '空调基本没开·可能哨兵'\n    WHEN cs.in_clim > cs.out_clim + 2 THEN '制热·可能有人在车'\n    ELSE '制冷·过热或开AC'\n  END AS \"判断\",\n  ROUND((top.drop_km * eff.e)::numeric, 2) AS \"停车电耗(kWh)\"\nFROM top\nCROSS JOIN eff\nLEFT JOIN LATERAL (\n  SELECT\n    COUNT(*) AS n,\n    COUNT(*) FILTER (WHERE p.is_climate_on) AS n_clim,\n    AVG(p.outside_temp) AS out_t,\n    AVG(p.inside_temp) FILTER (WHERE p.is_climate_on) AS in_clim,\n    AVG(p.outside_temp) FILTER (WHERE p.is_climate_on) AS out_clim\n  FROM positions p\n  WHERE p.car_id = $car_id\n    AND p.date >= top.ps\n    AND p.date <= top.pe\n) cs ON TRUE\nORDER BY top.drop_km DESC",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          },
+          "noValue": "暂无符合条件的停车记录"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "停车电耗(kWh)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "yellow",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "判断"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "制热·可能有人在车": {
+                        "color": "orange",
+                        "index": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "制冷·过热或开AC": {
+                        "color": "blue",
+                        "index": 1
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "空调基本没开·可能哨兵": {
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "停车电耗(kWh)",
+            "desc": true
+          }
+        ]
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 10
+      },
+      "description": "「空调约开(分钟)」= 估算空调实际开了多久（≠醒着时长）。判断：空调开得久且制热≈有人在车；制冷≈过热/AC；空调基本没开但车长时间醒着≈可能哨兵或车不休眠。"
+    }
+  ],
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "battery"
+      ],
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "中文文档",
+      "tooltip": "",
+      "type": "link",
+      "url": "https://github.com/kafuunochino/teslamate"
+    }
+  ]
+}

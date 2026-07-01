@@ -1,5 +1,7 @@
 FROM elixir:1.19.5-otp-28 AS builder
 
+ARG TESLAMATE_REVISION
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update \
@@ -18,7 +20,8 @@ RUN apt-get update \
 RUN mix local.rebar --force && \
     mix local.hex --force
 
-ENV MIX_ENV=prod
+ENV MIX_ENV=prod \
+    TESLAMATE_REVISION=${TESLAMATE_REVISION}
 WORKDIR /opt/app
 
 COPY mix.exs mix.lock ./

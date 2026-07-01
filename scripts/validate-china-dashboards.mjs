@@ -10,39 +10,50 @@ const projectRoot = path.resolve(
 const dashboardRoot = path.join(projectRoot, "grafana", "dashboards");
 
 const importedFiles = new Set([
-  "amortization.json",
-  "annual-summary.json",
-  "charging-costs-stats.json",
-  "charging-curve-stats.json",
-  "charging-health.json",
-  "continuous-trips.json",
-  "cost-savings.json",
-  "current-charge.json",
-  "current-drive.json",
-  "current-state.json",
-  "dc-charging-curves-carrier.json",
-  "driving-patterns.json",
-  "driving-score.json",
-  "incomplete-data.json",
-  "mileage-stats.json",
-  "range-degradation.json",
-  "regen-braking.json",
-  "sentry-drain.json",
-  "speed-rates.json",
-  "speed-temperature.json",
-  "station-ranking.json",
-  "tire-pressure.json",
-  "tracking-drives.json",
-  "vehicle-comparison.json",
-  "weather-efficiency.json",
+  "analysis/amortization.json",
+  "analysis/cost-savings.json",
+  "analysis/vehicle-comparison.json",
+  "charging/charging-costs-stats.json",
+  "charging/charging-curve-stats.json",
+  "charging/charging-health.json",
+  "charging/dc-charging-curves-carrier.json",
+  "charging/station-ranking.json",
+  "driving/annual-summary.json",
+  "driving/continuous-trips.json",
+  "driving/driving-patterns.json",
+  "driving/driving-score.json",
+  "driving/mileage-stats.json",
+  "driving/speed-rates.json",
+  "driving/tracking-drives.json",
+  "energy/range-degradation.json",
+  "energy/regen-braking.json",
+  "energy/sentry-drain.json",
+  "energy/speed-temperature.json",
+  "energy/tire-pressure.json",
+  "energy/weather-efficiency.json",
+  "overview/current-charge.json",
+  "overview/current-drive.json",
+  "overview/current-state.json",
+  "system/incomplete-data.json",
 ]);
 
 const officialMapFiles = new Set([
-  "charging-stats.json",
-  "trip.json",
-  "visited.json",
+  "charging/charging-stats.json",
+  "driving/trip.json",
+  "driving/visited.json",
   "internal/charge-details.json",
   "internal/drive-details.json",
+]);
+
+const dashboardCategories = new Set([
+  "analysis",
+  "charging",
+  "driving",
+  "energy",
+  "internal",
+  "overview",
+  "reports",
+  "system",
 ]);
 
 const amapUrl =
@@ -99,22 +110,32 @@ function dashboardFiles(directory, prefix = "") {
   });
 }
 
-for (const file of dashboardFiles(dashboardRoot)) {
+const allDashboardFiles = dashboardFiles(dashboardRoot).map((file) =>
+  file.split(path.sep).join("/"),
+);
+
+for (const normalizedFile of allDashboardFiles) {
+  const [category, name] = normalizedFile.split("/");
+
+  if (!name || !dashboardCategories.has(category)) {
+    errors.push(`${normalizedFile}: dashboard is not in a supported category`);
+  }
+
   try {
     const dashboard = JSON.parse(
-      fs.readFileSync(path.join(dashboardRoot, file), "utf8"),
+      fs.readFileSync(path.join(dashboardRoot, normalizedFile), "utf8"),
     );
     if (!dashboard.uid) {
-      errors.push(`${file}: dashboard UID is missing`);
+      errors.push(`${normalizedFile}: dashboard UID is missing`);
     } else if (seenUids.has(dashboard.uid)) {
       errors.push(
-        `${file}: duplicate UID ${dashboard.uid} also used by ${seenUids.get(dashboard.uid)}`,
+        `${normalizedFile}: duplicate UID ${dashboard.uid} also used by ${seenUids.get(dashboard.uid)}`,
       );
     } else {
-      seenUids.set(dashboard.uid, file);
+      seenUids.set(dashboard.uid, normalizedFile);
     }
   } catch (error) {
-    errors.push(`${file}: invalid JSON: ${error.message}`);
+    errors.push(`${normalizedFile}: invalid JSON: ${error.message}`);
   }
 }
 
@@ -234,9 +255,130 @@ function validateDashboard(
   }
 }
 
-for (const file of importedFiles) validateDashboard(file, { imported: true });
-for (const file of officialMapFiles) {
-  validateDashboard(file, { officialMap: true });
+for (const file of allDashboardFiles) {
+  validateDashboard(file, {
+    imported: importedFiles.has(file),
+    officialMap: officialMapFiles.has(file),
+  });
+}
+
+const sentryFile = "energy/sentry-drain.json";
+const sentryDashboard = JSON.parse(
+  fs.readFileSync(path.join(dashboardRoot, sentryFile), "utf8"),
+);
+const sentrySql = (sentryDashboard.panels ?? [])
+  .flatMap((panel) => panel.targets ?? [])
+  .map((target) => target.rawSql ?? "")
+  .join("\n");
+
+for (const requiredSql of [
+  "NULLIF(c.efficiency, 0)",
+  "start_ideal_range_km",
+  "end_ideal_range_km",
+  "ELSE d.distance",
+  "generate_series(",
+  "COALESCE(s.end_date, c.pe)",
+]) {
+  if (!sentrySql.includes(requiredSql)) {
+    errors.push(`${sentryFile}: missing no-data fallback ${requiredSql}`);
+  }
+}
+
+for (const panelId of [2, 3, 4, 5]) {
+  const panel = sentryDashboard.panels?.find(({ id }) => id === panelId);
+  if (panel?.fieldConfig?.defaults?.noValue !== "0") {
+    errors.push(`${sentryFile}: panel ${panelId} does not render no-data as zero`);
+  }
+}
+
+const categoryPaths = [
+  "overview",
+  "driving",
+  "charging",
+  "energy",
+  "analysis",
+  "system",
+  "internal",
+  "reports",
+];
+
+const homeDashboard = JSON.parse(
+  fs.readFileSync(path.join(dashboardRoot, "internal", "home.json"), "utf8"),
+);
+const homeFolderUids = new Set(
+  (homeDashboard.panels ?? [])
+    .filter(({ type }) => type === "dashlist")
+    .map((panel) => panel.options?.folderUID),
+);
+for (const folderUid of [
+  "Nr4ofiDZk",
+  "tmDrivingCN",
+  "tmChargingCN",
+  "tmEnergyCN",
+  "tmAnalysisCN",
+  "tmSystemCN",
+]) {
+  if (!homeFolderUids.has(folderUid)) {
+    errors.push(`internal/home.json: missing category ${folderUid}`);
+  }
+}
+const homeText = JSON.stringify(homeDashboard);
+if (homeText.includes("https://") || homeText.includes("http://")) {
+  errors.push("internal/home.json: external content remains on the default home page");
+}
+
+for (const [configFile, pathPrefix] of [
+  ["grafana/dashboards.yml", "/dashboards"],
+  ["grafana/dashboards-native.yml", "$TESLAMATE_DASHBOARDS_PATH"],
+]) {
+  const config = fs.readFileSync(path.join(projectRoot, configFile), "utf8");
+  for (const category of categoryPaths) {
+    if (!config.includes(`path: ${pathPrefix}/${category}`)) {
+      errors.push(`${configFile}: missing provider for ${category}`);
+    }
+  }
+}
+
+const dockerDatasource = fs.readFileSync(
+  path.join(projectRoot, "grafana", "datasource.yml"),
+  "utf8",
+);
+if (!/^\s+uid: TeslaMate$/m.test(dockerDatasource)) {
+  errors.push("grafana/datasource.yml: stable TeslaMate datasource UID is missing");
+}
+
+const layoutView = fs.readFileSync(
+  path.join(projectRoot, "lib", "teslamate_web", "views", "layout_view.ex"),
+  "utf8",
+);
+if (layoutView.includes('Path.wildcard("grafana/dashboards/*.json")')) {
+  errors.push("layout_view.ex: dashboard navigation still scans only the old root directory");
+}
+for (const category of categoryPaths.slice(0, 6)) {
+  if (!layoutView.includes(category)) {
+    errors.push(`layout_view.ex: dashboard navigation omits ${category}`);
+  }
+}
+
+for (const formatterFile of [
+  "treefmt.toml",
+  "nix/flake-modules/formatter.nix",
+]) {
+  const formatter = fs.readFileSync(path.join(projectRoot, formatterFile), "utf8");
+  if (!formatter.includes("grafana/dashboards/**/*.json")) {
+    errors.push(`${formatterFile}: categorized dashboards are not excluded from reformatting`);
+  }
+}
+
+for (const [revisionFile, revisionMarker] of [
+  ["Dockerfile", "ARG TESLAMATE_REVISION"],
+  ["docker-compose.zh-CN.yml", "TESLAMATE_REVISION: ${TESLAMATE_REVISION:-}"],
+  [".github/actions/build/action.yml", "TESLAMATE_REVISION=${{ github.sha }}"],
+]) {
+  const content = fs.readFileSync(path.join(projectRoot, revisionFile), "utf8");
+  if (!content.includes(revisionMarker)) {
+    errors.push(`${revisionFile}: Docker update checks cannot identify the build revision`);
+  }
 }
 
 if (errors.length > 0) {
@@ -245,5 +387,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Validated ${importedFiles.size} sanitized read-only dashboards and ${officialMapFiles.size} official China map dashboards.`,
+  `Validated all ${allDashboardFiles.length} dashboards (${importedFiles.size} imported enhancements and ${officialMapFiles.size} official China map dashboards).`,
 );

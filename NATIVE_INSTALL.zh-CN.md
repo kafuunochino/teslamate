@@ -175,12 +175,13 @@ GRAFANA_DATABASE_USER=teslamate_grafana
 GRAFANA_DATABASE_PASS=上一步的只读账户密码
 GRAFANA_DATABASE_SSL_MODE=disable
 TESLAMATE_DASHBOARDS_PATH=项目绝对路径/grafana/dashboards
-TESLAMATE_INTERNAL_DASHBOARDS_PATH=项目绝对路径/grafana/dashboards/internal
-TESLAMATE_REPORT_DASHBOARDS_PATH=项目绝对路径/grafana/dashboards/reports
 GF_USERS_DEFAULT_LANGUAGE=zh-Hans
 GF_AUTH_ANONYMOUS_ENABLED=false
 GF_USERS_ALLOW_SIGN_UP=false
 ```
+
+仪表盘会按 `overview`、`driving`、`charging`、`energy`、`analysis`、`system`、
+`internal` 和 `reports` 子目录装入对应的中文分类，无需再为子目录设置额外环境变量。
 
 把以下两个文件复制到 Grafana provisioning 目录：
 

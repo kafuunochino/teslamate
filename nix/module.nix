@@ -298,6 +298,7 @@ in
             # extracted from ../grafana/datasource.yml
             {
               name = "TeslaMate";
+              uid = "TeslaMate";
               type = "postgres";
               url = "${cfg.postgres.host}:${toString cfg.postgres.port}";
               user = cfg.postgres.user;
@@ -321,27 +322,92 @@ in
             apiVersion = 1;
             providers = [
               {
-                name = "teslamate";
+                name = "teslamate_overview";
                 orgId = 1;
-                folder = "TeslaMate";
+                folder = "TeslaMate · 常用概览";
                 folderUid = "Nr4ofiDZk";
                 type = "file";
                 disableDeletion = false;
                 allowUiUpdates = true;
-                updateIntervalSeconds = 86400;
-                options.path = lib.sources.sourceByRegex
-                  ../grafana/dashboards
-                  [ "^[^\/]*\.json$" ];
+                updateIntervalSeconds = 60;
+                options.path = lib.sources.sourceFilesBySuffices
+                  ../grafana/dashboards/overview
+                  [ ".json" ];
+              }
+              {
+                name = "teslamate_driving";
+                orgId = 1;
+                folder = "TeslaMate · 行程驾驶";
+                folderUid = "tmDrivingCN";
+                type = "file";
+                disableDeletion = false;
+                allowUiUpdates = true;
+                updateIntervalSeconds = 60;
+                options.path = lib.sources.sourceFilesBySuffices
+                  ../grafana/dashboards/driving
+                  [ ".json" ];
+              }
+              {
+                name = "teslamate_charging";
+                orgId = 1;
+                folder = "TeslaMate · 充电费用";
+                folderUid = "tmChargingCN";
+                type = "file";
+                disableDeletion = false;
+                allowUiUpdates = true;
+                updateIntervalSeconds = 60;
+                options.path = lib.sources.sourceFilesBySuffices
+                  ../grafana/dashboards/charging
+                  [ ".json" ];
+              }
+              {
+                name = "teslamate_energy";
+                orgId = 1;
+                folder = "TeslaMate · 电池能耗";
+                folderUid = "tmEnergyCN";
+                type = "file";
+                disableDeletion = false;
+                allowUiUpdates = true;
+                updateIntervalSeconds = 60;
+                options.path = lib.sources.sourceFilesBySuffices
+                  ../grafana/dashboards/energy
+                  [ ".json" ];
+              }
+              {
+                name = "teslamate_analysis";
+                orgId = 1;
+                folder = "TeslaMate · 统计分析";
+                folderUid = "tmAnalysisCN";
+                type = "file";
+                disableDeletion = false;
+                allowUiUpdates = true;
+                updateIntervalSeconds = 60;
+                options.path = lib.sources.sourceFilesBySuffices
+                  ../grafana/dashboards/analysis
+                  [ ".json" ];
+              }
+              {
+                name = "teslamate_system";
+                orgId = 1;
+                folder = "TeslaMate · 系统维护";
+                folderUid = "tmSystemCN";
+                type = "file";
+                disableDeletion = false;
+                allowUiUpdates = true;
+                updateIntervalSeconds = 60;
+                options.path = lib.sources.sourceFilesBySuffices
+                  ../grafana/dashboards/system
+                  [ ".json" ];
               }
               {
                 name = "teslamate_internal";
                 orgId = 1;
-                folder = "Internal";
+                folder = "TeslaMate · 内部明细";
                 folderUid = "Nr5ofiDZk";
                 type = "file";
                 disableDeletion = false;
                 allowUiUpdates = true;
-                updateIntervalSeconds = 86400;
+                updateIntervalSeconds = 60;
                 options.path = lib.sources.sourceFilesBySuffices
                   ../grafana/dashboards/internal
                   [ ".json" ];
@@ -349,12 +415,12 @@ in
               {
                 name = "teslamate_reports";
                 orgId = 1;
-                folder = "Reports";
+                folder = "TeslaMate · 专题报告";
                 folderUid = "Nr6ofiDZk";
                 type = "file";
                 disableDeletion = false;
                 allowUiUpdates = true;
-                updateIntervalSeconds = 86400;
+                updateIntervalSeconds = 60;
                 options.path = lib.sources.sourceFilesBySuffices
                   ../grafana/dashboards/reports
                   [ ".json" ];

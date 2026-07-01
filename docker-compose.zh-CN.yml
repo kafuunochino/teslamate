@@ -2,6 +2,8 @@ services:
   teslamate:
     build:
       context: .
+      args:
+        TESLAMATE_REVISION: ${TESLAMATE_REVISION:-}
     restart: always
     environment:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?请在 .env 中设置 ENCRYPTION_KEY}

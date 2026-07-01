@@ -15,7 +15,7 @@ ENV GF_ANALYTICS_REPORTING_ENABLED=false \
     GF_DATABASE_HIGH_AVAILABILITY=false \
     GF_USERS_ALLOW_SIGN_UP=false \
     GF_USERS_DEFAULT_LANGUAGE=zh-Hans \
-    GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/dashboards_internal/home.json \
+    GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/dashboards/internal/home.json \
     GF_DATE_FORMATS_USE_BROWSER_LOCALE=true \
     GF_PLUGINS_PREINSTALL_DISABLED=true \
     GF_UNIFIED_ALERTING_ENABLED=false \
@@ -41,8 +41,6 @@ COPY apple-touch-icon.png /usr/share/grafana/public/build/img/apple-touch-icon.p
 
 COPY datasource.yml /etc/grafana/provisioning/datasources/
 COPY dashboards.yml /etc/grafana/provisioning/dashboards/
-COPY dashboards/internal/*.json /dashboards_internal/
-COPY dashboards/reports/*.json /dashboards_reports/
-COPY dashboards/*.json /dashboards/
+COPY dashboards/ /dashboards/
 
 EXPOSE 3000
