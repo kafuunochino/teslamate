@@ -5,6 +5,7 @@
 ### New features
 
 - feat: add service mode to webview and reduce log when car is Unlocked at service mode (#5289 - @NirKli)
+- feat: add Sun roof and individual window status via MQTT (#5393 - @nebhale)
 
 ### Improvements and bug fixes
 
@@ -26,6 +27,13 @@
 - build(deps-dev): bump esbuild from 0.28.0 to 0.28.1 in /assets (#5444)
 - sec(deps): add joi override to version 17.13.4 in /website (#5448 - @JakobLichterfeld)
 - build(deps): update flake.lock (#5449)
+- build(deps): bump the actions-deps group across 3 directories with 9 updates (#5469)
+- build(deps): bump ex_cldr_plugs from 1.3.4 to 1.4.0 (#5465)
+- build(deps): bump react and react-dom from 19.2.6 to 19.2.7 in /website (#5466)
+- build(deps): bump @geoman-io/leaflet-geoman-free from 2.19.3 to 2.20.0 in /assets (#5464)
+- build(deps-dev): bump sass from 1.100.0 to 1.101.0 in /assets (#5462)
+- build(deps): bump plug_cowboy from 2.8.1 to 2.9.0 (#5463)
+- build(deps): bump floki from 0.38.3 to 0.38.4 (#5461)
 
 #### Dashboards
 
