@@ -304,8 +304,8 @@
         ]
       },
       "gridPos": {
-        "h": 17,
-        "w": 12,
+        "h": 16,
+        "w": 24,
         "x": 0,
         "y": 2
       },
@@ -499,10 +499,10 @@
         ]
       },
       "gridPos": {
-        "h": 17,
-        "w": 12,
-        "x": 12,
-        "y": 2
+        "h": 16,
+        "w": 24,
+        "x": 0,
+        "y": 18
       },
       "id": 15,
       "options": {
@@ -684,10 +684,10 @@
         ]
       },
       "gridPos": {
-        "h": 15,
-        "w": 6,
+        "h": 13,
+        "w": 12,
         "x": 0,
-        "y": 19
+        "y": 34
       },
       "id": 16,
       "options": {
@@ -915,10 +915,10 @@
         ]
       },
       "gridPos": {
-        "h": 15,
-        "w": 6,
-        "x": 6,
-        "y": 19
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 34
       },
       "id": 27,
       "options": {
@@ -1159,10 +1159,10 @@
         ]
       },
       "gridPos": {
-        "h": 15,
-        "w": 6,
-        "x": 12,
-        "y": 19
+        "h": 13,
+        "w": 12,
+        "x": 0,
+        "y": 47
       },
       "id": 22,
       "options": {
@@ -1377,10 +1377,10 @@
         ]
       },
       "gridPos": {
-        "h": 15,
-        "w": 6,
-        "x": 18,
-        "y": 19
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 47
       },
       "id": 28,
       "options": {
@@ -1496,7 +1496,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 60
       },
       "id": 19,
       "panels": [],
@@ -1654,10 +1654,10 @@
         ]
       },
       "gridPos": {
-        "h": 17,
-        "w": 12,
+        "h": 16,
+        "w": 24,
         "x": 0,
-        "y": 35
+        "y": 61
       },
       "id": 24,
       "options": {
@@ -1842,10 +1842,10 @@
         ]
       },
       "gridPos": {
-        "h": 17,
-        "w": 6,
-        "x": 12,
-        "y": 35
+        "h": 13,
+        "w": 12,
+        "x": 0,
+        "y": 77
       },
       "id": 14,
       "options": {
@@ -1990,10 +1990,10 @@
         ]
       },
       "gridPos": {
-        "h": 17,
-        "w": 6,
-        "x": 18,
-        "y": 35
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 77
       },
       "id": 11,
       "options": {
@@ -2063,7 +2063,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 90
       },
       "id": 21,
       "panels": [],
@@ -2171,7 +2171,7 @@
         "h": 13,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 91
       },
       "id": 9,
       "options": {
@@ -2464,7 +2464,7 @@
         "h": 13,
         "w": 12,
         "x": 12,
-        "y": 53
+        "y": 91
       },
       "id": 23,
       "options": {
@@ -2573,17 +2573,21 @@
         "type": "query"
       },
       {
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "75",
+          "value": "75"
+        },
         "datasource": {
           "type": "grafana-postgresql-datasource",
           "uid": "TeslaMate"
         },
-        "definition": "WITH Aux AS\n(SELECT car_id,\n\t\tCOALESCE(efficiency, \n\t\t(SELECT efficiency\n\t\t\tFROM cars WHERE id = $car_id) * 100) AS efficiency\n\tFROM (\n\t\tSELECT ROUND((charge_energy_added / NULLIF(end_rated_range_km - start_rated_range_km, 0))::numeric, 3) * 100 as efficiency,\n\t\t\tCOUNT(*) as count, $car_id AS car_id \n\t\tFROM charging_processes\n\t\tWHERE car_id = $car_id\n\t\t\tAND duration_min > 10\n\t\t\tAND end_battery_level <= 95\n\t\t\tAND start_rated_range_km IS NOT NULL\n\t\t\tAND end_rated_range_km IS NOT NULL\n\t\t\tAND charge_energy_added > 0\n\t\tGROUP BY 1\n\t\tORDER BY 2 DESC\n\t\tLIMIT 1\n\t) AS DerivatedEfficiency\n),\nCurrentCapacity\t AS\n(\n\tSELECT AVG(Capacity) AS Capacity\nFROM (\nSELECT \n\tc.rated_battery_range_km * aux.efficiency / c.usable_battery_level AS Capacity\n\tFROM charging_processes cp\n\t\tINNER JOIN charges c\n\t\tON c.charging_process_id = cp.id \n                INNER JOIN aux ON cp.car_id = aux.car_id\n\tWHERE cp.car_id = $car_id\n\t\tAND cp.end_date IS NOT NULL\n\t\tAND cp.charge_energy_added >= aux.efficiency\n\t\tAND c.usable_battery_level > 0\n\t ORDER BY cp.end_date DESC LIMIT 10) AS lastCharges\n)\nSELECT Capacity FROM CurrentCapacity",
+        "definition": "WITH Aux AS\n(SELECT car_id,\n\t\tCOALESCE(efficiency, \n\t\t(SELECT efficiency\n\t\t\tFROM cars WHERE id = $car_id) * 100) AS efficiency\n\tFROM (\n\t\tSELECT ROUND((charge_energy_added / NULLIF(end_rated_range_km - start_rated_range_km, 0))::numeric, 3) * 100 as efficiency,\n\t\t\tCOUNT(*) as count, $car_id AS car_id \n\t\tFROM charging_processes\n\t\tWHERE car_id = $car_id\n\t\t\tAND duration_min > 10\n\t\t\tAND end_battery_level <= 95\n\t\t\tAND start_rated_range_km IS NOT NULL\n\t\t\tAND end_rated_range_km IS NOT NULL\n\t\t\tAND charge_energy_added > 0\n\t\tGROUP BY 1\n\t\tORDER BY 2 DESC\n\t\tLIMIT 1\n\t) AS DerivatedEfficiency\n),\nCurrentCapacity\t AS\n(\n\tSELECT AVG(Capacity) AS Capacity\nFROM (\nSELECT \n\tc.rated_battery_range_km * aux.efficiency / c.usable_battery_level AS Capacity\n\tFROM charging_processes cp\n\t\tINNER JOIN charges c\n\t\tON c.charging_process_id = cp.id \n                INNER JOIN aux ON cp.car_id = aux.car_id\n\tWHERE cp.car_id = $car_id\n\t\tAND cp.end_date IS NOT NULL\n\t\tAND cp.charge_energy_added >= aux.efficiency\n\t\tAND c.usable_battery_level > 0\n\t ORDER BY cp.end_date DESC LIMIT 10) AS lastCharges\n)\nSELECT COALESCE(ROUND(Capacity::numeric, 1), 75) AS Capacity FROM CurrentCapacity",
         "hide": 2,
         "includeAll": false,
         "name": "current_capacity",
         "options": [],
-        "query": "WITH Aux AS\n(SELECT car_id,\n\t\tCOALESCE(efficiency, \n\t\t(SELECT efficiency\n\t\t\tFROM cars WHERE id = $car_id) * 100) AS efficiency\n\tFROM (\n\t\tSELECT ROUND((charge_energy_added / NULLIF(end_rated_range_km - start_rated_range_km, 0))::numeric, 3) * 100 as efficiency,\n\t\t\tCOUNT(*) as count, $car_id AS car_id \n\t\tFROM charging_processes\n\t\tWHERE car_id = $car_id\n\t\t\tAND duration_min > 10\n\t\t\tAND end_battery_level <= 95\n\t\t\tAND start_rated_range_km IS NOT NULL\n\t\t\tAND end_rated_range_km IS NOT NULL\n\t\t\tAND charge_energy_added > 0\n\t\tGROUP BY 1\n\t\tORDER BY 2 DESC\n\t\tLIMIT 1\n\t) AS DerivatedEfficiency\n),\nCurrentCapacity\t AS\n(\n\tSELECT AVG(Capacity) AS Capacity\nFROM (\nSELECT \n\tc.rated_battery_range_km * aux.efficiency / c.usable_battery_level AS Capacity\n\tFROM charging_processes cp\n\t\tINNER JOIN charges c\n\t\tON c.charging_process_id = cp.id \n                INNER JOIN aux ON cp.car_id = aux.car_id\n\tWHERE cp.car_id = $car_id\n\t\tAND cp.end_date IS NOT NULL\n\t\tAND cp.charge_energy_added >= aux.efficiency\n\t\tAND c.usable_battery_level > 0\n\t ORDER BY cp.end_date DESC LIMIT 10) AS lastCharges\n)\nSELECT Capacity FROM CurrentCapacity",
+        "query": "WITH Aux AS\n(SELECT car_id,\n\t\tCOALESCE(efficiency, \n\t\t(SELECT efficiency\n\t\t\tFROM cars WHERE id = $car_id) * 100) AS efficiency\n\tFROM (\n\t\tSELECT ROUND((charge_energy_added / NULLIF(end_rated_range_km - start_rated_range_km, 0))::numeric, 3) * 100 as efficiency,\n\t\t\tCOUNT(*) as count, $car_id AS car_id \n\t\tFROM charging_processes\n\t\tWHERE car_id = $car_id\n\t\t\tAND duration_min > 10\n\t\t\tAND end_battery_level <= 95\n\t\t\tAND start_rated_range_km IS NOT NULL\n\t\t\tAND end_rated_range_km IS NOT NULL\n\t\t\tAND charge_energy_added > 0\n\t\tGROUP BY 1\n\t\tORDER BY 2 DESC\n\t\tLIMIT 1\n\t) AS DerivatedEfficiency\n),\nCurrentCapacity\t AS\n(\n\tSELECT AVG(Capacity) AS Capacity\nFROM (\nSELECT \n\tc.rated_battery_range_km * aux.efficiency / c.usable_battery_level AS Capacity\n\tFROM charging_processes cp\n\t\tINNER JOIN charges c\n\t\tON c.charging_process_id = cp.id \n                INNER JOIN aux ON cp.car_id = aux.car_id\n\tWHERE cp.car_id = $car_id\n\t\tAND cp.end_date IS NOT NULL\n\t\tAND cp.charge_energy_added >= aux.efficiency\n\t\tAND c.usable_battery_level > 0\n\t ORDER BY cp.end_date DESC LIMIT 10) AS lastCharges\n)\nSELECT COALESCE(ROUND(Capacity::numeric, 1), 75) AS Capacity FROM CurrentCapacity",
         "refresh": 1,
         "regex": "",
         "regexApplyTo": "value",
@@ -2751,6 +2755,6 @@
   "timezone": "browser",
   "title": "速度与温度",
   "uid": "jchm_9z40b",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

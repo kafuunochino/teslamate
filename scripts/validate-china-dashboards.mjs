@@ -134,6 +134,32 @@ for (const normalizedFile of allDashboardFiles) {
     } else {
       seenUids.set(dashboard.uid, normalizedFile);
     }
+
+    const visiblePanels = (dashboard.panels ?? []).filter(
+      (panel) => panel.gridPos && panel.type !== "row",
+    );
+    for (const panel of visiblePanels) {
+      const { h, w, x, y } = panel.gridPos;
+      if (h < 1 || w < 1 || x < 0 || y < 0 || x + w > 24) {
+        errors.push(`${normalizedFile}: panel ${panel.id} has an invalid grid position`);
+      }
+    }
+    for (let left = 0; left < visiblePanels.length; left += 1) {
+      for (let right = left + 1; right < visiblePanels.length; right += 1) {
+        const a = visiblePanels[left];
+        const b = visiblePanels[right];
+        if (
+          a.gridPos.x < b.gridPos.x + b.gridPos.w &&
+          b.gridPos.x < a.gridPos.x + a.gridPos.w &&
+          a.gridPos.y < b.gridPos.y + b.gridPos.h &&
+          b.gridPos.y < a.gridPos.y + a.gridPos.h
+        ) {
+          errors.push(
+            `${normalizedFile}: panels ${a.id} and ${b.id} overlap in the dashboard grid`,
+          );
+        }
+      }
+    }
   } catch (error) {
     errors.push(`${normalizedFile}: invalid JSON: ${error.message}`);
   }
@@ -291,6 +317,36 @@ for (const panelId of [2, 3, 4, 5]) {
   }
 }
 
+const speedTemperatureFile = "energy/speed-temperature.json";
+const speedTemperatureDashboard = JSON.parse(
+  fs.readFileSync(path.join(dashboardRoot, speedTemperatureFile), "utf8"),
+);
+const capacityVariable = speedTemperatureDashboard.templating?.list?.find(
+  ({ name }) => name === "current_capacity",
+);
+if (
+  capacityVariable?.current?.value !== "75" ||
+  !capacityVariable?.query?.includes("COALESCE(ROUND(Capacity::numeric, 1), 75)")
+) {
+  errors.push(`${speedTemperatureFile}: battery-capacity fallback is missing`);
+}
+for (const [panelId, minimumWidth] of [
+  [26, 24],
+  [15, 24],
+  [24, 24],
+  [16, 12],
+  [27, 12],
+  [22, 12],
+  [28, 12],
+  [14, 12],
+  [11, 12],
+]) {
+  const panel = speedTemperatureDashboard.panels?.find(({ id }) => id === panelId);
+  if ((panel?.gridPos?.w ?? 0) < minimumWidth) {
+    errors.push(`${speedTemperatureFile}: panel ${panelId} is too narrow`);
+  }
+}
+
 const categoryPaths = [
   "overview",
   "driving",
@@ -310,6 +366,13 @@ const homeFolderUids = new Set(
     .filter(({ type }) => type === "dashlist")
     .map((panel) => panel.options?.folderUID),
 );
+if (
+  (homeDashboard.panels ?? []).some(
+    (panel) => panel.type === "dashlist" && panel.gridPos?.w < 12,
+  )
+) {
+  errors.push("internal/home.json: category lists are too narrow");
+}
 for (const folderUid of [
   "Nr4ofiDZk",
   "tmDrivingCN",
@@ -390,6 +453,19 @@ for (const [revisionFile, revisionMarker] of [
   const content = fs.readFileSync(path.join(projectRoot, revisionFile), "utf8");
   if (!content.includes(revisionMarker)) {
     errors.push(`${revisionFile}: Docker update checks cannot identify the build revision`);
+  }
+}
+
+const grafanaDockerfile = fs.readFileSync(
+  path.join(projectRoot, "grafana", "Dockerfile"),
+  "utf8",
+);
+for (const disabledLayoutFlag of [
+  "GF_FEATURE_TOGGLES_newPanelPadding=false",
+  "GF_FEATURE_TOGGLES_dashboardNewLayouts=false",
+]) {
+  if (grafanaDockerfile.includes(disabledLayoutFlag)) {
+    errors.push(`grafana/Dockerfile: Grafana 13 layout disabled by ${disabledLayoutFlag}`);
   }
 }
 

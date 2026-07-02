@@ -24,8 +24,6 @@ ENV GF_ANALYTICS_REPORTING_ENABLED=false \
     GF_CLOUD_MIGRATION_ENABLED=false \
     GF_FEATURE_TOGGLES_provisioning=false \
     GF_FEATURE_TOGGLES_splashScreen=false \
-    GF_FEATURE_TOGGLES_newPanelPadding=false \
-    GF_FEATURE_TOGGLES_dashboardNewLayouts=false \
     DATABASE_PORT=5432 \
     DATABASE_SSL_MODE=disable
 
