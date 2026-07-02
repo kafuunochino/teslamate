@@ -147,7 +147,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Mileage"
+                "value": "里程"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "odometer"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程表"
               }
             ]
           }

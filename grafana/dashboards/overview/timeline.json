@@ -118,6 +118,10 @@
                     "url": "/d/FkUpJpQZk/trip?from=${__data.fields.start_date_ts}&to=${__data.fields.end_date_ts}&var-car_id=$car_id"
                   }
                 ]
+              },
+              {
+                "id": "displayName",
+                "value": "开始"
               }
             ]
           },
@@ -134,6 +138,10 @@
               {
                 "id": "unit",
                 "value": "percent"
+              },
+              {
+                "id": "displayName",
+                "value": "电池电量（SoC）"
               }
             ]
           },
@@ -150,6 +158,10 @@
               {
                 "id": "unit",
                 "value": "percent"
+              },
+              {
+                "id": "displayName",
+                "value": "电量变化（SoC）"
               }
             ]
           },
@@ -190,6 +202,10 @@
               {
                 "id": "custom.filterable",
                 "value": true
+              },
+              {
+                "id": "displayName",
+                "value": "状态"
               }
             ]
           },
@@ -213,7 +229,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Energy Diff"
+                "value": "电量变化"
               }
             ]
           },
@@ -230,6 +246,10 @@
               {
                 "id": "custom.width",
                 "value": 100
+              },
+              {
+                "id": "displayName",
+                "value": "时长"
               }
             ]
           },
@@ -256,6 +276,10 @@
               {
                 "id": "custom.minWidth",
                 "value": 200
+              },
+              {
+                "id": "displayName",
+                "value": "起点地址"
               }
             ]
           },
@@ -282,6 +306,10 @@
               {
                 "id": "custom.minWidth",
                 "value": 200
+              },
+              {
+                "id": "displayName",
+                "value": "终点地址"
               }
             ]
           },
@@ -377,7 +405,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Odometer"
+                "value": "里程表"
               },
               {
                 "id": "custom.width",
@@ -393,7 +421,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               },
               {
                 "id": "custom.width",
@@ -413,7 +441,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range Diff"
+                "value": "续航变化"
               },
               {
                 "id": "custom.width",
@@ -433,7 +461,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temp"
+                "value": "温度"
               },
               {
                 "id": "custom.width",
@@ -453,7 +481,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range"
+                "value": "续航里程"
               },
               {
                 "id": "custom.width",
@@ -488,6 +516,18 @@
               {
                 "id": "custom.hideFrom.viz",
                 "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "End"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "结束"
               }
             ]
           }
@@ -577,17 +617,17 @@
             },
             "renameByName": {
               "action": "",
-              "end_address": "End",
+              "end_address": "终点",
               "km_diff": "Km",
               "kwh": "",
-              "minutediff": "Time",
+              "minutediff": "时间",
               "odometer": "",
-              "outside_temp_avg": "Temperature",
-              "rangediff": "Range Difference",
+              "outside_temp_avg": "温度",
+              "rangediff": "续航变化",
               "soc": "",
-              "soc_diff": "SoC Difference",
-              "start_address": "Start",
-              "start_date": "Date",
+              "soc_diff": "电量变化（SoC）",
+              "start_address": "起点",
+              "start_date": "日期",
               "start_date_ts": ""
             }
           }

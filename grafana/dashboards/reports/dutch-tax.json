@@ -154,7 +154,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Start Time"
+                "value": "开始时间"
               }
             ]
           },
@@ -170,7 +170,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Start Odometer"
+                "value": "起始里程表"
               }
             ]
           },
@@ -186,7 +186,7 @@
               },
               {
                 "id": "displayName",
-                "value": "End Odometer"
+                "value": "结束里程表"
               }
             ]
           },
@@ -198,7 +198,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "End Time"
+                "value": "结束时间"
               }
             ]
           },
@@ -225,7 +225,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Duration"
+                "value": "时长"
               },
               {
                 "id": "custom.width",
@@ -245,7 +245,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               }
             ]
           },
@@ -261,7 +261,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               }
             ]
           },
@@ -273,7 +273,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Start Address"
+                "value": "起点地址"
               }
             ]
           },
@@ -285,7 +285,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "End Address"
+                "value": "终点地址"
               }
             ]
           }

@@ -296,7 +296,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               },
               {
                 "id": "custom.minWidth",
@@ -316,7 +316,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Temp"
+                "value": "平均温度"
               },
               {
                 "id": "thresholds",
@@ -358,7 +358,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               },
               {
                 "id": "unit",
@@ -386,7 +386,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "平均净能耗"
               }
             ]
           },
@@ -398,7 +398,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (gross)"
+                "value": "平均总能耗"
               },
               {
                 "id": "unit",
@@ -418,7 +418,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "平均净能耗"
               },
               {
                 "id": "unit",
@@ -438,7 +438,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (gross)"
+                "value": "平均总能耗"
               },
               {
                 "id": "unit",
@@ -458,7 +458,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Temp"
+                "value": "平均温度"
               },
               {
                 "id": "unit",
@@ -1084,31 +1084,31 @@
               "sum_energy_used_kwh": 7
             },
             "renameByName": {
-              "avg_cost_km": "Ø Cost / 100 km",
-              "avg_cost_kwh": "Ø Cost / kWh",
-              "avg_cost_mi": "Ø Cost / 100 mi",
-              "avg_energy_charged_kwh": "Ø Energy used / Charge",
+              "avg_cost_km": "每百公里平均费用",
+              "avg_cost_kwh": "每千瓦时平均费用（Cost/kWh）",
+              "avg_cost_mi": "每百英里平均费用",
+              "avg_energy_charged_kwh": "每次充电平均用电量",
               "avg_outside_temp_c": "",
               "avg_outside_temp_f": "",
-              "cnt": "# of Drives",
-              "cnt_charges": "# of Charges",
+              "cnt": "行程次数",
+              "cnt_charges": "充电次数",
               "consumption_gross_km": "",
               "consumption_gross_mi": "",
               "consumption_net_km": "",
               "consumption_net_mi": "",
-              "cost_charges": "Costs",
+              "cost_charges": "费用",
               "date": "",
               "date_from": "",
               "date_to": "",
-              "display": "Period",
-              "efficiency": "Driving Efficiency",
-              "is_incomplete": "Data Complete",
-              "overhead_pct_km": "Consumption OH",
-              "overhead_pct_mi": "Consumption OH",
+              "display": "周期",
+              "efficiency": "行驶效率",
+              "is_incomplete": "数据是否完整",
+              "overhead_pct_km": "额外能耗（Overhead）",
+              "overhead_pct_mi": "额外能耗（Overhead）",
               "sum_distance_km": "",
               "sum_distance_mi": "",
-              "sum_duration_h": "Time driven",
-              "sum_energy_used_kwh": "Energy used"
+              "sum_duration_h": "行驶时长",
+              "sum_energy_used_kwh": "使用电量"
             }
           }
         }

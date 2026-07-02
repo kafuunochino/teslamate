@@ -401,7 +401,20 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "时间"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,

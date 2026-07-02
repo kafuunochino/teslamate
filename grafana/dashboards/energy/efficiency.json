@@ -97,6 +97,18 @@
                 "value": "Wh/mi"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "consumption_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "平均能耗（Wh/$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -335,6 +347,18 @@
                 "value": "mi"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "行驶距离（$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -442,7 +466,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temperature"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -462,7 +486,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temperature"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -482,7 +506,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Driving Efficiency"
+                "value": "行驶效率"
               },
               {
                 "id": "unit",
@@ -537,7 +561,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "平均净能耗"
               },
               {
                 "id": "unit",
@@ -557,7 +581,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "平均净能耗"
               },
               {
                 "id": "unit",
@@ -577,7 +601,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               },
               {
                 "id": "unit",
@@ -597,7 +621,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               },
               {
                 "id": "unit",
@@ -617,7 +641,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Speed"
+                "value": "平均速度"
               },
               {
                 "id": "unit",
@@ -637,7 +661,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Speed"
+                "value": "平均速度"
               },
               {
                 "id": "unit",
@@ -746,6 +770,18 @@
                 "value": "Wh/mi"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "efficiency_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "额定能效（Wh/$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -851,7 +887,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "效率"
               },
               {
                 "id": "unit",
@@ -867,11 +903,23 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "效率"
               },
               {
                 "id": "unit",
                 "value": "Wh/mi"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "efficiency_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "额定能效（Wh/$length_unit）"
               }
             ]
           }
@@ -964,7 +1012,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "效率"
               }
             ]
           },
@@ -976,11 +1024,23 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "效率"
               },
               {
                 "id": "unit",
                 "value": "Wh/mi"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "efficiency_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "额定能效（Wh/$length_unit）"
               }
             ]
           }

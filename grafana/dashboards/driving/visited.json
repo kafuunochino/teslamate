@@ -224,7 +224,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mileage"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 2,
@@ -318,6 +331,10 @@
               {
                 "id": "unit",
                 "value": "kwatth"
+              },
+              {
+                "id": "displayName",
+                "value": "累计充入电量"
               }
             ]
           },
@@ -330,6 +347,10 @@
               {
                 "id": "unit",
                 "value": "kwatth"
+              },
+              {
+                "id": "displayName",
+                "value": "累计使用电量"
               }
             ]
           },
@@ -342,6 +363,10 @@
               {
                 "id": "unit",
                 "value": "percent"
+              },
+              {
+                "id": "displayName",
+                "value": "充电效率"
               }
             ]
           }
@@ -428,7 +453,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Charging Cost"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "累计充电费用"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 2,

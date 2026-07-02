@@ -92,7 +92,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Energy added:"
+                "value": "累计充入电量："
               }
             ]
           }
@@ -190,7 +190,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Energy used:"
+                "value": "累计使用电量："
               }
             ]
           }
@@ -289,7 +289,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Charging Cost:"
+                "value": "累计充电费用："
               }
             ]
           }
@@ -388,7 +388,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Duration:"
+                "value": "平均时长："
               }
             ]
           }
@@ -493,7 +493,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Date"
+                "value": "日期"
               },
               {
                 "id": "links",
@@ -523,7 +523,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy added"
+                "value": "充入电量"
               },
               {
                 "id": "decimals",
@@ -543,7 +543,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "% Start"
+                "value": "开始电量"
               },
               {
                 "id": "unit",
@@ -567,7 +567,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "% End"
+                "value": "结束电量"
               },
               {
                 "id": "unit",
@@ -591,7 +591,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Duration"
+                "value": "时长"
               },
               {
                 "id": "unit",
@@ -615,7 +615,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temp"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -665,7 +665,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Cost"
+                "value": "费用"
               },
               {
                 "id": "decimals",
@@ -723,7 +723,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Location"
+                "value": "地点"
               },
               {
                 "id": "links",
@@ -749,7 +749,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range gained"
+                "value": "增加的续航"
               },
               {
                 "id": "decimals",
@@ -773,7 +773,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range gained"
+                "value": "增加的续航"
               },
               {
                 "id": "decimals",
@@ -797,7 +797,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Power"
+                "value": "平均功率"
               },
               {
                 "id": "unit",
@@ -847,7 +847,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Charge rate"
+                "value": "平均充电速度"
               },
               {
                 "id": "unit",
@@ -871,7 +871,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temp"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -921,7 +921,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Charge rate"
+                "value": "平均充电速度"
               },
               {
                 "id": "unit",
@@ -957,7 +957,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy used"
+                "value": "使用电量"
               },
               {
                 "id": "decimals",
@@ -977,7 +977,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "效率"
               },
               {
                 "id": "unit",
@@ -1042,7 +1042,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Cost / kWh"
+                "value": "每千瓦时费用（Cost/kWh）"
               },
               {
                 "id": "decimals",
@@ -1066,7 +1066,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Type"
+                "value": "类型"
               },
               {
                 "id": "custom.cellOptions",
@@ -1114,7 +1114,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Odometer"
+                "value": "里程表"
               },
               {
                 "id": "custom.minWidth",
@@ -1138,7 +1138,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Odometer"
+                "value": "里程表"
               },
               {
                 "id": "custom.minWidth",
@@ -1225,7 +1225,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "From here you can check if you have \nincomplete data of **Charges** (charges without ending date)\nIf so, you may follow the official \nguide by <a href='https://docs.teslamate.org/docs/maintenance/manually_fixing_data' target='_blank'>Manually fixing data</a>",
+        "content": "这里可以检查是否存在**未完成的充电记录**（缺少结束时间）。\n如有此类数据，请参阅官方指南：<a href='https://docs.teslamate.org/docs/maintenance/manually_fixing_data' target='_blank'>手动修复数据</a>。",
         "mode": "markdown"
       },
       "pluginVersion": "13.0.1+security-01",
@@ -1263,7 +1263,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Charging Process ID"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电记录 ID"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,

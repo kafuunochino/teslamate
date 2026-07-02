@@ -1067,7 +1067,7 @@
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 200
       },
-      "title": "时速区间 vs 平均回收功率(kW)",
+      "title": "时速区间与平均回收功率(kW)",
       "type": "barchart",
       "targets": [
         {
@@ -1093,7 +1093,7 @@
       },
       "id": 104,
       "panels": [],
-      "title": "行程明细（回收率 TOP20）",
+      "title": "行程明细（回收率 前 20 名）",
       "type": "row"
     },
     {
@@ -1282,7 +1282,7 @@
           }
         ]
       },
-      "title": "行程回收明细 TOP20（时间范围内）",
+      "title": "行程回收明细 前 20 名（时间范围内）",
       "description": "回收率 = 回收电量 / (行驶消耗 + 回收电量)。可查看固件版本与回收率的关联。",
       "type": "table",
       "targets": [

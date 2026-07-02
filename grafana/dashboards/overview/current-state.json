@@ -856,7 +856,7 @@
             "minZoom": 3,
             "maxZoom": 18
           },
-          "name": "Layer 0",
+          "name": "底图图层",
           "type": "xyz"
         },
         "controls": {

@@ -439,7 +439,7 @@
           "sort": "none"
         }
       },
-      "description": "每周取最高推算满电续航，与电池健康度计算口径一致（使用 usable_battery_level）",
+      "description": "每周取最高推算满电续航，与电池健康度计算口径一致（使用可用电量字段（usable_battery_level））",
       "title": "满电续航退化趋势（按周）",
       "type": "timeseries",
       "transformations": [
@@ -744,7 +744,7 @@
           "sort": "none"
         }
       },
-      "description": "每个点代表一次充电会话的最高推算满电续航，点越分散说明数据噪声越大（受温度、SOC校准影响）",
+      "description": "每个点代表一次充电会话的最高推算满电续航，点越分散说明数据噪声越大（受温度、电量（SOC）校准影响）",
       "title": "推算满电续航散点（每次充电取最高值）",
       "type": "timeseries",
       "transformations": [

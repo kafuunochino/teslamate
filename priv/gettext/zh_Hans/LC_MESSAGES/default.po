@@ -24,7 +24,7 @@ msgstr "速度"
 #: lib/teslamate_web/live/car_live/summary.html.heex:372
 #, elixir-autogen, elixir-format
 msgid "State of Charge"
-msgstr "电池电量"
+msgstr "电池电量（SOC）"
 
 #: lib/teslamate_web/live/car_live/summary.html.heex:306
 #, elixir-autogen, elixir-format
@@ -69,7 +69,7 @@ msgstr "已锁定"
 #: lib/teslamate_web/live/car_live/summary.html.heex:130
 #, elixir-autogen, elixir-format
 msgid "Sentry Mode"
-msgstr "哨兵模式"
+msgstr "哨兵模式（Sentry Mode）"
 
 #: lib/teslamate_web/live/car_live/index.ex:15
 #: lib/teslamate_web/live/charge_live/cost.html.heex:3
@@ -147,7 +147,7 @@ msgstr "已创建地理围栏“%{name}”"
 #: lib/teslamate_web/templates/layout/root.html.heex:113
 #, elixir-autogen, elixir-format
 msgid "Geo-Fences"
-msgstr "地理围栏"
+msgstr "地理围栏（Geofence）"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:74
 #, elixir-autogen, elixir-format
@@ -216,12 +216,12 @@ msgstr "新建"
 #: lib/teslamate_web/live/car_live/summary.html.heex:57
 #, elixir-autogen, elixir-format
 msgid "Preconditioning"
-msgstr "预调节"
+msgstr "提前调节温度（Preconditioning）"
 
 #: lib/teslamate_web/live/car_live/summary.ex:145
 #, elixir-autogen, elixir-format
 msgid "Sentry mode is enabled"
-msgstr "哨兵模式已启用"
+msgstr "哨兵模式（Sentry Mode）已启用"
 
 #: lib/teslamate_web/live/car_live/summary.ex:148
 #: lib/teslamate_web/live/car_live/summary.html.heex:81
@@ -242,7 +242,7 @@ msgstr "尝试休眠"
 #: lib/teslamate_web/live/car_live/summary.html.heex:293
 #, elixir-autogen, elixir-format
 msgid "Range (est.)"
-msgstr "续航里程（预估）"
+msgstr "预计续航（Estimated Range）"
 
 #: lib/teslamate_web/live/car_live/summary.html.heex:233
 #, elixir-autogen, elixir-format
@@ -262,7 +262,7 @@ msgstr "车辆必须上锁"
 #: lib/teslamate_web/live/car_live/summary.html.heex:273
 #, elixir-autogen, elixir-format
 msgid "Range (rated)"
-msgstr "续航里程（额定）"
+msgstr "额定续航（Rated Range）"
 
 #: lib/teslamate_web/live/car_live/summary.html.heex:312
 #, elixir-autogen, elixir-format
@@ -292,7 +292,7 @@ msgstr "额定"
 #: lib/teslamate_web/live/car_live/summary.html.heex:272
 #, elixir-autogen, elixir-format
 msgid "Range (ideal)"
-msgstr "续航里程（理想）"
+msgstr "理想续航（Ideal Range）"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:189
 #, elixir-autogen, elixir-format
@@ -535,7 +535,7 @@ msgstr "里程"
 #: lib/teslamate_web/live/settings_live/index.html.heex:141
 #, elixir-autogen, elixir-format
 msgid "Streaming API"
-msgstr "流式 API"
+msgstr "流式接口（Streaming API）"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:449
 #, elixir-autogen, elixir-format
@@ -583,12 +583,12 @@ msgstr "退出登录"
 #: lib/teslamate_web/live/signin_live/index.html.heex:19
 #, elixir-autogen, elixir-format
 msgid "Access Token"
-msgstr "访问令牌"
+msgstr "访问令牌（Access Token）"
 
 #: lib/teslamate_web/live/signin_live/index.html.heex:35
 #, elixir-autogen, elixir-format
 msgid "Refresh Token"
-msgstr "刷新令牌"
+msgstr "刷新令牌（Refresh Token）"
 
 #: lib/teslamate_web/live/signin_live/index.ex:58
 #, elixir-autogen, elixir-format
@@ -673,12 +673,12 @@ msgstr "电池"
 #: lib/teslamate_web/live/settings_live/index.html.heex:163
 #, elixir-autogen, elixir-format
 msgid "LFP Battery"
-msgstr "磷酸铁锂电池"
+msgstr "磷酸铁锂电池（LFP）"
 
 #: lib/teslamate_web/live/car_live/summary.html.heex:138
 #, elixir-autogen, elixir-format
 msgid "Sentry Mode recording"
-msgstr "哨兵模式正在录像"
+msgstr "哨兵模式（Sentry Mode）正在录像"
 
 #: lib/teslamate_web/live/car_live/summary.html.heex:107
 #, elixir-autogen, elixir-format

@@ -96,7 +96,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Start"
+                "value": "起点"
               },
               {
                 "id": "unit",
@@ -126,7 +126,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "End"
+                "value": "终点"
               },
               {
                 "id": "unit",
@@ -146,7 +146,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range loss"
+                "value": "续航损失"
               },
               {
                 "id": "unit",
@@ -170,7 +170,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Period"
+                "value": "周期"
               },
               {
                 "id": "unit",
@@ -216,7 +216,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Range loss / h"
+                "value": "每小时平均续航损失"
               },
               {
                 "id": "unit",
@@ -252,7 +252,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Standby"
+                "value": "待机时长"
               },
               {
                 "id": "unit",
@@ -302,7 +302,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy drained"
+                "value": "消耗电量"
               },
               {
                 "id": "unit",
@@ -326,7 +326,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Power"
+                "value": "平均功率"
               },
               {
                 "id": "unit",
@@ -350,7 +350,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Range loss / h"
+                "value": "每小时平均续航损失"
               },
               {
                 "id": "unit",
@@ -374,7 +374,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range loss"
+                "value": "续航损失"
               },
               {
                 "id": "unit",
@@ -398,7 +398,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "SoC Diff"
+                "value": "电量变化（SoC）"
               },
               {
                 "id": "unit",

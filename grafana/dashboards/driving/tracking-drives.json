@@ -571,7 +571,7 @@
             "minZoom": 3,
             "maxZoom": 18
           },
-          "name": "Layer 0",
+          "name": "底图图层",
           "type": "xyz"
         },
         "controls": {
@@ -1496,7 +1496,8 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query",
-        "regexApplyTo": "value"
+        "regexApplyTo": "value",
+        "label": "年份"
       },
       {
         "current": {},
@@ -1516,7 +1517,8 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query",
-        "regexApplyTo": "value"
+        "regexApplyTo": "value",
+        "label": "月份"
       },
       {
         "current": {},
@@ -1536,7 +1538,8 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query",
-        "regexApplyTo": "value"
+        "regexApplyTo": "value",
+        "label": "日期"
       },
       {
         "current": {},

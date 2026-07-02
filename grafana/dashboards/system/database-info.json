@@ -59,7 +59,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Logged"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "已记录里程"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Odometer"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程表"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -140,7 +165,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Charges"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电记录"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Drives"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "行程记录"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -249,7 +299,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Nº Car Updates"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "车辆更新次数"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Current Car Firmware"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "当前车辆固件"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -359,7 +434,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Charges not closed"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "未结束的充电记录"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Drives not closed"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "未结束的行程记录"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -590,6 +690,46 @@
               {
                 "id": "custom.minWidth",
                 "value": 160
+              },
+              {
+                "id": "displayName",
+                "value": "数据表"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "数据大小"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Indexes"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "索引大小"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "总大小"
               }
             ]
           }
@@ -689,6 +829,22 @@
               {
                 "id": "custom.minWidth",
                 "value": 100
+              },
+              {
+                "id": "displayName",
+                "value": "记录行数"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Table Name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "数据表名称"
               }
             ]
           }
@@ -789,6 +945,10 @@
               {
                 "id": "custom.minWidth",
                 "value": 100
+              },
+              {
+                "id": "displayName",
+                "value": "索引大小"
               }
             ]
           },
@@ -805,6 +965,10 @@
               {
                 "id": "custom.minWidth",
                 "value": 160
+              },
+              {
+                "id": "displayName",
+                "value": "数据表"
               }
             ]
           },
@@ -821,6 +985,10 @@
               {
                 "id": "custom.minWidth",
                 "value": 350
+              },
+              {
+                "id": "displayName",
+                "value": "索引"
               }
             ]
           },
@@ -833,6 +1001,34 @@
               {
                 "id": "custom.minWidth",
                 "value": 130
+              },
+              {
+                "id": "displayName",
+                "value": "获取行数"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Index Scans"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "索引扫描次数"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tuples Read"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "读取行数"
               }
             ]
           }
@@ -906,7 +1102,20 @@
           },
           "unit": "bytes"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "大小"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 3,
@@ -1315,7 +1524,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "Check the [contribution docs](https://docs.teslamate.org/docs/development#enable-pg_stat_statements-to-collect-query-statistics) on how to enable tracking planning and execution statistics of all SQL statements executed by a server.\n",
+        "content": "请参阅[贡献指南](https://docs.teslamate.org/docs/development#enable-pg_stat_statements-to-collect-query-statistics)，了解如何启用 SQL 语句规划与执行统计。\n",
         "mode": "markdown"
       },
       "pluginVersion": "13.0.1+security-01",

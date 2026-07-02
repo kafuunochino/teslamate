@@ -98,7 +98,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Energy consumed (net):"
+                "value": "累计净耗电量："
               }
             ]
           }
@@ -197,7 +197,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Duration:"
+                "value": "累计时长："
               }
             ]
           }
@@ -299,7 +299,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Total Distance logged:"
+                "value": "累计记录里程："
               }
             ]
           },
@@ -315,7 +315,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Total Distance logged:"
+                "value": "累计记录里程："
               }
             ]
           }
@@ -419,7 +419,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net):"
+                "value": "平均净能耗："
               }
             ]
           },
@@ -435,7 +435,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net):"
+                "value": "平均净能耗："
               }
             ]
           }
@@ -578,7 +578,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Date"
+                "value": "日期"
               },
               {
                 "id": "unit",
@@ -608,7 +608,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "平均净能耗"
               },
               {
                 "id": "unit",
@@ -628,7 +628,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "平均净能耗"
               },
               {
                 "id": "unit",
@@ -648,7 +648,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               },
               {
                 "id": "unit",
@@ -672,7 +672,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy consumed (net)"
+                "value": "净耗电量"
               },
               {
                 "id": "unit",
@@ -722,7 +722,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Start"
+                "value": "起点"
               },
               {
                 "id": "links",
@@ -748,7 +748,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Destination"
+                "value": "目的地"
               },
               {
                 "id": "links",
@@ -774,7 +774,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temp"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -824,7 +824,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Duration"
+                "value": "时长"
               },
               {
                 "id": "unit",
@@ -848,7 +848,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "效率"
               },
               {
                 "id": "unit",
@@ -924,7 +924,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Speed"
+                "value": "平均速度"
               },
               {
                 "id": "unit",
@@ -948,7 +948,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "行驶距离"
               },
               {
                 "id": "unit",
@@ -972,7 +972,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temp"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -1022,7 +1022,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Speed"
+                "value": "平均速度"
               },
               {
                 "id": "unit",
@@ -1046,7 +1046,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "max Speed"
+                "value": "最高速度"
               },
               {
                 "id": "unit",
@@ -1070,7 +1070,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "max Speed"
+                "value": "最高速度"
               },
               {
                 "id": "unit",
@@ -1139,6 +1139,10 @@
               {
                 "id": "custom.minWidth",
                 "value": 75
+              },
+              {
+                "id": "displayName",
+                "value": "开始电量"
               }
             ]
           },
@@ -1159,6 +1163,10 @@
               {
                 "id": "custom.minWidth",
                 "value": 65
+              },
+              {
+                "id": "displayName",
+                "value": "结束电量"
               }
             ]
           },
@@ -1228,7 +1236,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "max Power"
+                "value": "最大功率"
               },
               {
                 "id": "unit",
@@ -1315,7 +1323,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "From here you can check if you have \nincomplete data of **Drives** (drives without ending date)\nIf so, you may follow the official \nguide by <a href='https://docs.teslamate.org/docs/maintenance/manually_fixing_data' target='_blank'>Manually fixing data</a>",
+        "content": "这里可以检查是否存在**未完成的行程记录**（缺少结束时间）。\n如有此类数据，请参阅官方指南：<a href='https://docs.teslamate.org/docs/maintenance/manually_fixing_data' target='_blank'>手动修复数据</a>。",
         "mode": "markdown"
       },
       "pluginVersion": "13.0.1+security-01",
@@ -1353,7 +1361,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Drive ID"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "行程 ID"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,

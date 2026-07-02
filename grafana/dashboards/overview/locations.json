@@ -399,7 +399,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# of Addresses"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "地址数量"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -493,7 +506,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# of Addresses"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "地址数量"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -613,6 +639,10 @@
               {
                 "id": "custom.width",
                 "value": 210
+              },
+              {
+                "id": "displayName",
+                "value": "日期"
               }
             ]
           },
@@ -624,6 +654,22 @@
             "properties": [
               {
                 "id": "custom.width"
+              },
+              {
+                "id": "displayName",
+                "value": "城市"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Address"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "地址"
               }
             ]
           }
@@ -727,7 +773,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Updated at"
+                "value": "更新时间"
               },
               {
                 "id": "unit",
@@ -746,7 +792,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Name"
+                "value": "名称"
               },
               {
                 "id": "unit",
@@ -779,7 +825,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Neighbourhood"
+                "value": "街区"
               },
               {
                 "id": "unit",
@@ -802,7 +848,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "City"
+                "value": "城市"
               },
               {
                 "id": "unit",
@@ -825,7 +871,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "State"
+                "value": "省/州"
               },
               {
                 "id": "unit",
@@ -848,7 +894,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Country"
+                "value": "国家/地区"
               },
               {
                 "id": "unit",
@@ -980,7 +1026,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Time"
+                "value": "时间"
               },
               {
                 "id": "unit",
@@ -999,7 +1045,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Name"
+                "value": "名称"
               },
               {
                 "id": "unit",

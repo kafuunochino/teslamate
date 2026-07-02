@@ -3898,20 +3898,20 @@
               "sum_distance_km": 2
             },
             "renameByName": {
-              "avg_consumption_kwh": "Avg charged",
+              "avg_consumption_kwh": "平均充入电量",
               "avg_outside_temp_c": "",
-              "cnt": "# drives",
-              "cnt_charges": "# charges",
-              "cost_charges": "Costs",
-              "date": "Starting at",
+              "cnt": "行程次数",
+              "cnt_charges": "充电次数",
+              "cost_charges": "费用",
+              "date": "开始时间",
               "date_from": "",
               "date_to": "",
-              "display": "Period",
-              "efficiency": "Efficiency",
+              "display": "周期",
+              "efficiency": "效率",
               "efficiency_net_km": "",
-              "sum_consumption_kwh": "Energy charged",
+              "sum_consumption_kwh": "充入电量",
               "sum_distance_km": "",
-              "sum_duration_h": "Time driven"
+              "sum_duration_h": "行驶时长"
             }
           }
         }

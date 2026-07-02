@@ -180,7 +180,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Speed"
+                "value": "速度"
               }
             ]
           },
@@ -200,7 +200,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Power"
+                "value": "功率"
               }
             ]
           },
@@ -212,7 +212,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Battery Heater"
+                "value": "电池加热器"
               },
               {
                 "id": "unit",
@@ -232,7 +232,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range (ideal)"
+                "value": "理想续航（Ideal Range）"
               },
               {
                 "id": "min",
@@ -248,7 +248,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range (rated)"
+                "value": "额定续航（Rated Range）"
               },
               {
                 "id": "min",
@@ -268,7 +268,7 @@
               },
               {
                 "id": "displayName",
-                "value": "SOC"
+                "value": "电池电量（SOC）"
               },
               {
                 "id": "custom.axisPlacement",
@@ -284,7 +284,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Usable SOC"
+                "value": "可用电量（Usable SOC）"
               },
               {
                 "id": "unit",
@@ -304,7 +304,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range (est.)"
+                "value": "预计续航（Estimated Range）"
               },
               {
                 "id": "custom.axisPlacement",
@@ -748,7 +748,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Elevation"
+                "value": "海拔"
               },
               {
                 "id": "color",
@@ -951,7 +951,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Outside Temperature"
+                "value": "车外温度"
               }
             ]
           },
@@ -970,7 +970,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Inside Temperature"
+                "value": "车内温度"
               }
             ]
           },
@@ -982,7 +982,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Driver Temperature"
+                "value": "驾驶位温度"
               }
             ]
           },
@@ -994,7 +994,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Passenger Temperature"
+                "value": "副驾驶位温度"
               }
             ]
           },
@@ -1014,7 +1014,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Climate"
+                "value": "空调状态"
               }
             ]
           },
@@ -1026,7 +1026,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Fan status"
+                "value": "风扇状态"
               },
               {
                 "id": "custom.axisPlacement",
@@ -1172,7 +1172,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Left"
+                "value": "左前"
               }
             ]
           },
@@ -1188,7 +1188,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Right"
+                "value": "右前"
               }
             ]
           },
@@ -1204,7 +1204,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Left"
+                "value": "左后"
               }
             ]
           },
@@ -1220,7 +1220,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Right"
+                "value": "右后"
               }
             ]
           },
@@ -1236,7 +1236,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Left"
+                "value": "左前"
               }
             ]
           },
@@ -1252,7 +1252,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Right"
+                "value": "右前"
               }
             ]
           },
@@ -1268,7 +1268,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Left"
+                "value": "左后"
               }
             ]
           },
@@ -1284,7 +1284,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Right"
+                "value": "右后"
               }
             ]
           }
@@ -1395,7 +1395,20 @@
           },
           "unit": "none"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Odometer"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程表"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 3,
@@ -1690,6 +1703,34 @@
               {
                 "id": "decimals",
                 "value": 0
+              },
+              {
+                "id": "displayName",
+                "value": "经过时长"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Speed"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "速度"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "时间"
               }
             ]
           }
@@ -1915,7 +1956,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UP"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "上升"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DOWN"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "下降"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 3,

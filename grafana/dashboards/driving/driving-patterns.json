@@ -58,7 +58,7 @@
       },
       "id": 100,
       "panels": [],
-      "title": "工作日 vs 周末",
+      "title": "工作日与周末",
       "type": "row",
       "fieldConfig": {
         "defaults": {},

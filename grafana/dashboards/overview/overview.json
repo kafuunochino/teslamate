@@ -262,7 +262,20 @@
           },
           "unit": "volt"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Charging Voltage [V]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电电压［V］"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -358,7 +371,20 @@
           },
           "unit": "kwatt"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Power [kW]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "功率［kW］"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -533,7 +559,20 @@
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SOC"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电池电量（SOC）"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
@@ -648,6 +687,18 @@
                 "value": "Wh/mi"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "consumption_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "平均能耗（Wh/$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -755,6 +806,18 @@
               {
                 "id": "unit",
                 "value": "Wh/mi"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "consumption_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "平均能耗（Wh/$length_unit）"
               }
             ]
           }
@@ -983,6 +1046,18 @@
                 "value": "lengthmi"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "range_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "续航里程（$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -1199,6 +1274,18 @@
                 "value": "mi"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "odometer_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程表（$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -1347,6 +1434,10 @@
               {
                 "id": "max",
                 "value": 250
+              },
+              {
+                "id": "displayName",
+                "value": "充电电压［V］"
               }
             ]
           },
@@ -1358,7 +1449,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Power"
+                "value": "功率"
               },
               {
                 "id": "unit",
@@ -1378,7 +1469,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Battery heater"
+                "value": "电池加热器"
               },
               {
                 "id": "custom.axisPlacement",
@@ -1398,7 +1489,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Current"
+                "value": "电流"
               },
               {
                 "id": "unit",
@@ -1418,7 +1509,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy added"
+                "value": "充入电量"
               },
               {
                 "id": "unit",
@@ -1550,7 +1641,32 @@
           },
           "unit": "degree"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Driver Temperature [°$temp_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "驾驶位温度［°$temp_unit］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Inside Temperature [°$temp_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "车内温度［°$temp_unit］"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -1657,7 +1773,20 @@
           },
           "unit": "degree"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Outside Temperature [°$temp_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "车外温度［°$temp_unit］"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -1896,7 +2025,20 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "时间"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 5,

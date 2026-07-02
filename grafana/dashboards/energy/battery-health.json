@@ -70,7 +70,44 @@
           },
           "unit": "kwatth"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usable (new)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "新车可用容量"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usable (now)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "当前可用容量"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Difference"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "差值"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -185,7 +222,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Max range (new)"
+                "value": "新车最大续航"
               }
             ]
           },
@@ -197,7 +234,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Max range (now)"
+                "value": "当前最大续航"
               }
             ]
           },
@@ -209,7 +246,43 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range lost"
+                "value": "已损失续航"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "maxrange_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "新车最大续航（$length_unit）"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "currentrange_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "当前最大续航（$length_unit）"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "range_lost_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "损失续航（$length_unit）"
               }
             ]
           }
@@ -295,7 +368,56 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Logged"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "已记录里程"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mileage"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Odometer"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程表"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data lost (not logged)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "未记录的里程"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -712,7 +834,20 @@
           },
           "unit": "%"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Battery Health (%)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电池健康度（Battery Health）"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 3,
@@ -808,6 +943,10 @@
               {
                 "id": "unit",
                 "value": "kwatth"
+              },
+              {
+                "id": "displayName",
+                "value": "累计充入电量"
               }
             ]
           },
@@ -820,6 +959,10 @@
               {
                 "id": "unit",
                 "value": "kwatth"
+              },
+              {
+                "id": "displayName",
+                "value": "累计使用电量"
               }
             ]
           },
@@ -832,6 +975,34 @@
               {
                 "id": "unit",
                 "value": "percentunit"
+              },
+              {
+                "id": "displayName",
+                "value": "充电效率"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# of Charges"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电次数"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# of Charging cycles"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电循环次数"
               }
             ]
           }
@@ -1466,7 +1637,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Mileage"
+                "value": "里程"
               }
             ]
           },
@@ -1478,11 +1649,23 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Battery Capacity"
+                "value": "电池容量（Battery Capacity）"
               },
               {
                 "id": "unit",
                 "value": "kwatth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Date"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "日期"
               }
             ]
           }

@@ -183,7 +183,7 @@
           "refId": "A"
         }
       ],
-      "title": "回本曲线（综合资产 vs 购车成本）",
+      "title": "回本曲线（综合资产与购车成本）",
       "transformations": [
         {
           "id": "filterFieldsByName",

@@ -256,7 +256,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Date"
+                "value": "日期"
               },
               {
                 "id": "unit",
@@ -276,7 +276,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Duration"
+                "value": "时长"
               },
               {
                 "id": "unit",
@@ -296,7 +296,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Since Previous Update"
+                "value": "距上次更新"
               }
             ]
           },
@@ -308,7 +308,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Installed Version"
+                "value": "已安装版本"
               },
               {
                 "id": "custom.align",
@@ -350,7 +350,7 @@
               },
               {
                 "id": "displayName",
-                "value": "# of Charges"
+                "value": "充电次数"
               }
             ]
           },
@@ -374,7 +374,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Ideal range"
+                "value": "平均理想续航（Ideal Range）"
               }
             ]
           },
@@ -398,7 +398,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Rated range"
+                "value": "平均额定续航（Rated Range）"
               }
             ]
           },
@@ -422,7 +422,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Ideal range"
+                "value": "平均理想续航（Ideal Range）"
               }
             ]
           },
@@ -446,7 +446,19 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Rated range"
+                "value": "平均额定续航（Rated Range）"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "battery_rng"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电池续航"
               }
             ]
           }

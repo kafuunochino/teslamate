@@ -114,7 +114,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Charging Voltage"
+                "value": "充电电压"
               },
               {
                 "id": "unit",
@@ -134,7 +134,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "SOC"
+                "value": "电池电量（SOC）"
               },
               {
                 "id": "unit",
@@ -150,7 +150,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Power"
+                "value": "功率"
               },
               {
                 "id": "unit",
@@ -170,7 +170,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Battery heater"
+                "value": "电池加热器"
               },
               {
                 "id": "unit",
@@ -222,7 +222,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range"
+                "value": "续航里程"
               }
             ]
           },
@@ -234,7 +234,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Current"
+                "value": "电流"
               },
               {
                 "id": "unit",
@@ -254,7 +254,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Current (pilot)"
+                "value": "引导电流（Pilot Current）"
               },
               {
                 "id": "unit",
@@ -306,7 +306,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Outdoor Temperature"
+                "value": "室外温度"
               }
             ]
           },
@@ -318,7 +318,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Phases"
+                "value": "充电相数"
               },
               {
                 "id": "custom.axisPlacement",
@@ -511,7 +511,20 @@
           },
           "unit": "clocks"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Duration"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "时长"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -754,6 +767,34 @@
               {
                 "id": "unit",
                 "value": "%"
+              },
+              {
+                "id": "displayName",
+                "value": "效率"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Added"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "增加量"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "使用量"
               }
             ]
           }
@@ -1065,7 +1106,44 @@
           },
           "unit": "%"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "开始"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Added"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "增加量"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "End"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "结束"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -1205,7 +1283,20 @@
           },
           "unit": "kwatt"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Power"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "功率"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -1429,7 +1520,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Start"
+                "value": "起点"
               }
             ]
           },
@@ -1441,7 +1532,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Added"
+                "value": "增加量"
               }
             ]
           },
@@ -1453,7 +1544,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "End"
+                "value": "终点"
               }
             ]
           }
@@ -1648,6 +1739,30 @@
                   "fixedColor": "blue",
                   "mode": "fixed"
                 }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SOC [%]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电池电量（SOC）［%］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Power [kW]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "功率［kW］"
               }
             ]
           }

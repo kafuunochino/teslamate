@@ -1022,6 +1022,18 @@
                 "value": "车辆ID"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "efficiency_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "额定能效（Wh/$length_unit）"
+              }
+            ]
           }
         ]
       },

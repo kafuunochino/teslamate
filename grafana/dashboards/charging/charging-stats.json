@@ -904,6 +904,10 @@
               {
                 "id": "custom.fillBelowTo",
                 "value": "End SOC"
+              },
+              {
+                "id": "displayName",
+                "value": "开始电量（SOC）"
               }
             ]
           },
@@ -927,6 +931,10 @@
               {
                 "id": "custom.lineWidth",
                 "value": 0
+              },
+              {
+                "id": "displayName",
+                "value": "结束电量（SOC）"
               }
             ]
           }
@@ -1574,6 +1582,10 @@
               {
                 "id": "unit",
                 "value": "kwatt"
+              },
+              {
+                "id": "displayName",
+                "value": "功率"
               }
             ]
           },
@@ -1586,6 +1598,58 @@
               {
                 "id": "unit",
                 "value": "percent"
+              },
+              {
+                "id": "displayName",
+                "value": "电池电量（SoC）"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "charging_process_id"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电记录 ID"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "start_date"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "开始时间"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "end_date"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "结束时间"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Charge"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充电记录"
               }
             ]
           }
@@ -1772,7 +1836,7 @@
               },
               {
                 "id": "displayName",
-                "value": "SOC"
+                "value": "电池电量（SOC）"
               },
               {
                 "id": "custom.cellOptions",
@@ -1794,7 +1858,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "# of Charges"
+                "value": "充电次数"
               },
               {
                 "id": "custom.cellOptions",
@@ -1963,7 +2027,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "SOC"
+                "value": "电池电量（SOC）"
               },
               {
                 "id": "unit",
@@ -2009,7 +2073,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "# of Discharges"
+                "value": "放电次数"
               },
               {
                 "id": "custom.cellOptions",
@@ -2117,7 +2181,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Location"
+                "value": "地点"
               }
             ]
           },
@@ -2129,7 +2193,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Charged"
+                "value": "充入电量"
               },
               {
                 "id": "custom.width",
@@ -2237,7 +2301,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Location"
+                "value": "地点"
               }
             ]
           },
@@ -2249,7 +2313,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Cost"
+                "value": "费用"
               },
               {
                 "id": "custom.width",

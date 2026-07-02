@@ -166,6 +166,18 @@
                 "value": "mi"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "行驶距离（$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -369,6 +381,18 @@
               {
                 "id": "unit",
                 "value": "mi"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "行驶距离（$length_unit）"
               }
             ]
           }
@@ -1015,6 +1039,34 @@
               {
                 "id": "decimals",
                 "value": 1
+              },
+              {
+                "id": "displayName",
+                "value": "经过时长"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Speed"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "速度"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "时间"
               }
             ]
           }
@@ -1143,6 +1195,18 @@
               {
                 "id": "unit",
                 "value": "mi"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mileage_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程（$length_unit）"
               }
             ]
           }

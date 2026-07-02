@@ -680,6 +680,18 @@
                 "value": "车辆ID"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "efficiency_$length_unit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "额定能效（Wh/$length_unit）"
+              }
+            ]
           }
         ]
       },
@@ -1816,7 +1828,7 @@
             "minZoom": 3,
             "maxZoom": 18
           },
-          "name": "Layer 0",
+          "name": "底图图层",
           "type": "xyz"
         },
         "controls": {

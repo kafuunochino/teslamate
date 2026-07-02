@@ -31,7 +31,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "标注与告警（Annotations & Alerts）",
         "type": "dashboard"
       }
     ]
@@ -496,7 +496,7 @@
     {
       "id": 8,
       "type": "table",
-      "title": "📈 最近 30 天 vs 之前的桩单价对比（红 = 涨价，绿 = 降价）",
+      "title": "📈 最近 30 天与之前的桩单价对比（红 = 涨价，绿 = 降价）",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
@@ -619,7 +619,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latitude"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "纬度"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "longitude"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "经度"
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "view": {
@@ -638,7 +663,7 @@
         },
         "basemap": {
           "type": "xyz",
-          "name": "Layer 0",
+          "name": "底图图层",
           "config": {
             "url": "${map_url}",
             "attribution": "${map_url:text} contributors",

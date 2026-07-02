@@ -149,6 +149,30 @@
                 "id": "min"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Projected ${preferred_range} range [$length_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "预计${preferred_range}续航［$length_unit］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mileage [$length_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "里程［$length_unit］"
+              }
+            ]
           }
         ]
       },
@@ -324,6 +348,54 @@
               {
                 "id": "custom.axisLabel",
                 "value": "Battery Level"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Projected Range (using usable_battery_level) [$length_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "预计续航（按可用电量计算）［$length_unit］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Projected Range (using battery_level)[$length_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "预计续航（按电池电量计算）［$length_unit］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Battery Level [%]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电池电量（SOC）［%］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usable Battery Level [%]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "可用电量（Usable SOC）［%］"
               }
             ]
           }
@@ -530,6 +602,42 @@
                   "fixedColor": "#C8F2C2",
                   "mode": "fixed"
                 }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Projected Range (using usable_battery_level) [$length_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "预计续航（按可用电量计算）［$length_unit］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Projected Range (using battery_level)[$length_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "预计续航（按电池电量计算）［$length_unit］"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Outdoor Temperature [°$temp_unit]"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "室外温度［°$temp_unit］"
               }
             ]
           }

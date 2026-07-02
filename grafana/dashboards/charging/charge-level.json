@@ -112,7 +112,80 @@
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Battery Level"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电池电量"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usable Battery Level"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "可用电池电量"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "$days_moving_average_percentiles Day Moving 7.5% Percentile (${bucket_width:text} buckets)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "$days_moving_average_percentiles 天移动 7.5% 分位数（${bucket_width:text} 个区间）"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "$days_moving_average_percentiles Day Moving Average (${bucket_width:text} buckets)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "$days_moving_average_percentiles 天移动平均值（${bucket_width:text} 个区间）"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "$days_moving_average_percentiles Day Moving Median (${bucket_width:text} buckets)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "$days_moving_average_percentiles 天移动中位数（${bucket_width:text} 个区间）"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "$days_moving_average_percentiles Day Moving 92.5% Percentile (${bucket_width:text} buckets)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "$days_moving_average_percentiles 天移动 92.5% 分位数（${bucket_width:text} 个区间）"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 21,

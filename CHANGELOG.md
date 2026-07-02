@@ -37,6 +37,7 @@
 
 #### Dashboards
 
+- fix: complete Simplified Chinese localization for dashboard labels, query results, help text, and technical terms
 - fix: restore Grafana 13 layout defaults, widen crowded dashboard panels, and handle missing battery-capacity samples
 - fix: preserve existing Grafana datasource identities during Docker and NixOS upgrades
 - fix: reorganize Grafana dashboards and make monthly driving/parking energy panels resilient to missing range and efficiency data
