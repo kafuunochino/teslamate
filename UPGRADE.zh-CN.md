@@ -12,6 +12,37 @@
 | Grafana 是否需要走 `/dashboards/*` 反向代理 | 无 | 是（导航自动使用） | `EMBED_GRAFANA=true`（默认） |
 | Grafana "No data" 的根因 | provisioning 文件缺 `uid` | 修复后正常 | 无需配置 |
 
+## ⚠️ Grafana 13 容器无法启动的修复
+
+如果升级后 Grafana 容器进入 `Restarting` 状态，docker logs 末尾显示：
+
+```
+Error: ✗ *provisioning.ProvisioningServiceImpl run error:
+       Datasource provisioning error: data source not found
+```
+
+**根因**：Grafana 13 在启动时检查 `grafana.db` 里已有的 `data_source` 行，如果 UID 与 provisioning YAML 不一致会**直接 fatal**。你的卷里存了老 Grafana 12 写的行，UID 是随机生成的（如 `P4169E866C3094E38`），新版 provisioning 用 `uid: TeslaMate`，两者不匹配。
+
+**修复（推荐，不丢配置）**：
+
+```bash
+cd /opt/teslamate-cn
+git pull
+docker compose -f docker-compose.1panel.yml down
+docker compose -f docker-compose.1panel.yml run --rm --entrypoint /bin/sh grafana -c \
+  "sqlite3 /var/lib/grafana/grafana.db 'DELETE FROM data_source;' && echo cleared"
+docker compose -f docker-compose.1panel.yml build --no-cache grafana
+docker compose -f docker-compose.1panel.yml up -d --build
+```
+
+**修复（彻底重置，会丢 alert 和用户偏好）**：
+
+```bash
+docker compose -f docker-compose.1panel.yml down
+docker volume rm teslamate-cn_teslamate-grafana-data
+docker compose -f docker-compose.1panel.yml up -d --build
+```
+
 ## 为什么默认保持兼容
 
 很多旧用户把 TeslaMate 跑在内网或单用户场景，长期不会手动重新登录 Tesla 账号。如果升级后立刻把所有页面强制登录，老用户会在 token 失效或重启后突然被挡在门外，体验差。
