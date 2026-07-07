@@ -17,6 +17,7 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   """
 
   import Plug.Conn
+  import Phoenix.Controller, only: [redirect: 2]
   require Logger
 
   alias TeslaMate.HTTP
