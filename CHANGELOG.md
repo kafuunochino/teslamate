@@ -6,12 +6,15 @@
 
 - feat: add service mode to webview and reduce log when car is Unlocked at service mode (#5289 - @NirKli)
 - feat: add Sun roof and individual window status via MQTT (#5393 - @nebhale)
+- feat: embed Grafana behind `/dashboards/*` and protect every TeslaMate screen behind the Tesla sign-in when `TESLAMATE_STRICT_AUTH=true`
 
 ### Improvements and bug fixes
 
 - fix(webview): show charging finish time in browser local time (#5436 - @Ashok28)
 - fix(vehicle): use streaming-aware interval when a drive starts (#5417 - @evanclan)
 - fix(mqtt): retry failed value publications (#5429 - @ciyahu)
+- fix(grafana): declare a stable `uid: TeslaMate` on the provisioned datasource so dashboards stop reporting "No data" after the move from inline provisioning to `provisioning/datasources`
+- fix(ci): the GitHub Actions Docker build now references the correct step output id (`steps.meta`) instead of `steps.docker_meta`, fixing image publishing since v1.40
 
 #### Build, CI, internal
 

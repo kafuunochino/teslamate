@@ -69,7 +69,7 @@ runs:
           TESLAMATE_REVISION=${{ github.sha }}
         platforms: ${{ matrix.platform }}
         labels: ${{ steps.meta.outputs.labels }}
-        tags: ${{ steps.docker_meta.outputs.tags }}
+        tags: ${{ steps.meta.outputs.tags }}
         cache-from: |
           type=registry,ref=ghcr.io/${{ inputs.repository }}:buildcache-${{ matrix.cache_id }}-${{ steps.normalize_version.outputs.normalized_version }}
           type=registry,ref=ghcr.io/${{ inputs.repository }}:buildcache-${{ matrix.cache_id }}-main

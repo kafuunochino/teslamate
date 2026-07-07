@@ -39,18 +39,24 @@ services:
       - teslamate-db:/var/lib/postgresql
 
   grafana:
+    # Only exposed inside the docker network. TeslaMate (port 4000) is the only
+    # entry point and reverse-proxies /dashboards/* here after the user is signed
+    # in (see lib/teslamate_web/plugs/grafana_proxy.ex).
     build:
       context: ./grafana
     restart: always
+    expose:
+      - "3000"
     environment:
       DATABASE_USER: teslamate
       DATABASE_PASS: ${DATABASE_PASS:?请在 .env 中设置 DATABASE_PASS}
       DATABASE_NAME: teslamate
       DATABASE_HOST: database
+      DATABASE_PORT: 5432
+      DATABASE_SSL_MODE: disable
       GF_USERS_DEFAULT_LANGUAGE: zh-Hans
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost:4000/dashboards}
       TZ: ${TZ:-Asia/Shanghai}
-    ports:
-      - "3000:3000"
     volumes:
       - teslamate-grafana-data:/var/lib/grafana
     depends_on:

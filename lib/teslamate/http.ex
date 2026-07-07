@@ -77,22 +77,25 @@ defmodule TeslaMate.HTTP do
   end
 
   def get(url, opts \\ []) do
-    {headers, opts} =
-      opts
-      |> Keyword.put_new(:pool_timeout, @pool_timeout)
-      |> Keyword.pop(:headers, [])
-
-    Finch.build(:get, url, headers, nil)
-    |> Finch.request(__MODULE__, opts)
+    do_request(:get, url, nil, opts)
   end
 
   def post(url, body \\ nil, opts \\ []) do
+    do_request(:post, url, body, opts)
+  end
+
+  def request(method, url, opts \\ []) when is_atom(method) do
+    {body, opts} = Keyword.pop(opts, :body, "")
+    do_request(method, url, body, opts)
+  end
+
+  defp do_request(method, url, body, opts) do
     {headers, opts} =
       opts
       |> Keyword.put_new(:pool_timeout, @pool_timeout)
       |> Keyword.pop(:headers, [])
 
-    Finch.build(:post, url, headers, body)
+    Finch.build(method, url, headers, body)
     |> Finch.request(__MODULE__, opts)
   end
 end
