@@ -96,9 +96,10 @@
                 </a>
                 <div class="navbar-dropdown is-boxed">
                   <%= for %{"title" => title, "uid" => uid} <- list_dashboards() do %>
-                    <%!-- proxy: /dashboards/...; fallback: external Grafana URL --> <%
-                    proxy_enabled =
-                      System.get_env("EMBED_GRAFANA", "true") in ~w(1 true yes on) %>
+                    <%
+                      proxy_enabled =
+                        System.get_env("EMBED_GRAFANA", "true") in ~w(1 true yes on)
+                    %>
                     <%= if proxy_enabled do %>
                       <%= link(title,
                         to: "/dashboards/d/#{uid}",
