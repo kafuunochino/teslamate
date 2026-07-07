@@ -21,25 +21,58 @@ Error: ✗ *provisioning.ProvisioningServiceImpl run error:
        Datasource provisioning error: data source not found
 ```
 
-**根因**：Grafana 13 在启动时检查 `grafana.db` 里已有的 `data_source` 行，如果 UID 与 provisioning YAML 不一致会**直接 fatal**。你的卷里存了老 Grafana 12 写的行，UID 是随机生成的（如 `P4169E866C3094E38`），新版 provisioning 用 `uid: TeslaMate`，两者不匹配。
+**根因**：Grafana 13 在启动时检查 `grafana.db` 里已有的 `data_source` 行，如果 UID 与 provisioning YAML 不一致会**直接 fatal**。你的卷里存了老 Grafana 12 写的行，UID 是随机生成的（如 `P4169E866C3094E38`），新版 provisioning 用 `uid: TeslaMate`，两者不匹配（Grafana 上游 issue grafana/grafana#110740）。
 
-**修复（推荐，不丢配置）**：
+### 修复步骤（保留 alert、user preferences、dashboard）
+
+`grafana/grafana` 官方镜像里没有 `sqlite3`。我们用 Grafana 自带的 SQLite driver 通过 Grafana API 间接处理，但更简单的是**直接在宿主机上装 sqlite3 操作 docker 卷里的 db 文件**。
 
 ```bash
 cd /opt/teslamate-cn
 git pull
 docker compose -f docker-compose.1panel.yml down
-docker compose -f docker-compose.1panel.yml run --rm --entrypoint /bin/sh grafana -c \
-  "sqlite3 /var/lib/grafana/grafana.db 'DELETE FROM data_source;' && echo cleared"
+
+# 把 sqlite 文件拷到临时位置，用宿主机 sqlite3 操作
+VOL=$(docker volume inspect teslamate-cn_teslamate-grafana-data --format '{{ .Mountpoint }}')
+echo "volume: $VOL"
+
+# 在容器里直接清（推荐，避免宿主机装 sqlite3）
+# 思路: 在 alpine 容器里挂同一个卷，删 data_source 表
+docker run --rm \
+  -v teslamate-cn_teslamate-grafana-data:/var/lib/grafana \
+  alpine:3.19 \
+  sh -c "apk add --no-cache sqlite && sqlite3 /var/lib/grafana/grafana.db 'DELETE FROM data_source;' && echo cleared"
+
+# 启动
 docker compose -f docker-compose.1panel.yml build --no-cache grafana
 docker compose -f docker-compose.1panel.yml up -d --build
+
+# 验证
+docker compose -f docker-compose.1panel.yml ps
+docker compose -f docker-compose.1panel.yml logs --tail=100 grafana | grep -iE "provision|error|started|healthy"
 ```
 
-**修复（彻底重置，会丢 alert 和用户偏好）**：
+### 如果上面 alpine 容器被网络限速跑不通
+
+直接清空卷（会丢 alert 和用户偏好，dashboard JSON 不受影响因为 dashboard 文件存在 `/dashboards`）：
 
 ```bash
 docker compose -f docker-compose.1panel.yml down
 docker volume rm teslamate-cn_teslamate-grafana-data
+docker compose -f docker-compose.1panel.yml up -d --build
+```
+
+### 备选：宿主机装了 sqlite3 的话直接跑
+
+```bash
+# Ubuntu/Debian
+apt-get install -y sqlite3
+# CentOS
+yum install -y sqlite
+
+# 然后：
+VOL=$(docker volume inspect teslamate-cn_teslamate-grafana-data --format '{{ .Mountpoint }}')
+sqlite3 "$VOL/grafana.db" 'DELETE FROM data_source;'
 docker compose -f docker-compose.1panel.yml up -d --build
 ```
 
