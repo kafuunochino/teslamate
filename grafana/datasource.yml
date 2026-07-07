@@ -2,12 +2,6 @@ apiVersion: 1
 
 datasources:
   - name: TeslaMate
-    # `uid: TeslaMate` is required because every dashboard in
-    # `grafana/dashboards/**/*.json` references the datasource by uid
-    # (it is what Grafana persists once a dashboard is saved). Without the
-    # explicit uid, dashboards would fail to find the datasource and show
-    # "No data" even though the datasource itself is healthy. See #4576.
-    uid: TeslaMate
     type: postgres
     url: $DATABASE_HOST:$DATABASE_PORT
     user: $DATABASE_USER
