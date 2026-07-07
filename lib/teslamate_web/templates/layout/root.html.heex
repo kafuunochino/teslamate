@@ -96,11 +96,8 @@
                 </a>
                 <div class="navbar-dropdown is-boxed">
                   <%= for %{"title" => title, "uid" => uid} <- list_dashboards() do %>
-                    <%!-- Use the in-app reverse proxy (`/dashboards/...`) so the user
-                        never has to leave the TeslaMate origin. When the proxy
-                        is disabled (env EMBED_GRAFANA != true) the link falls
-                        back to the configured external URL. -->
-                    <% proxy_enabled =
+                    <%!-- proxy: /dashboards/...; fallback: external Grafana URL --> <%
+                    proxy_enabled =
                       System.get_env("EMBED_GRAFANA", "true") in ~w(1 true yes on) %>
                     <%= if proxy_enabled do %>
                       <%= link(title,

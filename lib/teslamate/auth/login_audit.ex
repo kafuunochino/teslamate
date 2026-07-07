@@ -2,10 +2,11 @@ defmodule TeslaMate.Auth.LoginAudit do
   @moduledoc """
   Append-only in-memory audit log of every `/sign_in` attempt.
 
-  Entries are kept in an ETS ring buffer (default `#{@default_capacity}` rows)
-  so the data structure never grows without bound. The buffer is exposed via
-  `recent/1` so a future UI can show the last few attempts, and so operators
-  can inspect it from `IEx` while debugging.
+  Entries are kept in an ETS ring buffer (default 100 rows, see
+  `TeslaMateWeb.Config.login_audit_capacity/0`) so the data structure
+  never grows without bound. The buffer is exposed via `recent/1` so a
+  future UI can show the last few attempts, and so operators can inspect
+  it from `IEx` while debugging.
 
   We deliberately do not persist this to PostgreSQL because:
 
@@ -20,8 +21,6 @@ defmodule TeslaMate.Auth.LoginAudit do
   """
 
   require Logger
-
-  alias TeslaMateWeb.Config
 
   @table :teslamate_login_audit
 

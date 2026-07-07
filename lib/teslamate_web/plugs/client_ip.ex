@@ -125,9 +125,9 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
     peer_str == entry
   end
 
-  defp mask({a, b, c, d}, prefix) when prefix <= 8, do: {a_band(a, prefix), 0, 0, 0}
-  defp mask({a, b, c, d}, prefix) when prefix <= 16, do: {a, b_band(b, prefix - 8), 0, 0}
-  defp mask({a, b, c, d}, prefix) when prefix <= 24, do: {a, b, c_band(c, prefix - 16), 0}
+  defp mask({a, _b, _c, _d}, prefix) when prefix <= 8, do: {a_band(a, prefix), 0, 0, 0}
+  defp mask({a, b, _c, _d}, prefix) when prefix <= 16, do: {a, b_band(b, prefix - 8), 0, 0}
+  defp mask({a, b, c, _d}, prefix) when prefix <= 24, do: {a, b, c_band(c, prefix - 16), 0}
   defp mask({a, b, c, d}, prefix) when prefix <= 32, do: {a, b, c, d_band(d, prefix - 24)}
   defp mask(_, _), do: nil
 
