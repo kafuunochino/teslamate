@@ -15,6 +15,7 @@ datasources:
     basicAuth: false
     withCredentials: false
     isDefault: true
+    orgId: 1
     secureJsonData:
       password: $DATABASE_PASS
     jsonData:
