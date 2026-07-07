@@ -14,15 +14,29 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   `GF_AUTH_PROXY_HEADER_NAME=X-Teslamate-User` (see `grafana/Dockerfile`).
   Each request signed-in to TeslaMate will therefore appear as
   `X-Teslamate-User: <token>` to Grafana which accepts it via its auth_proxy.
+
+  ## Backward-compatibility switches
+
+  * `EMBED_GRAFANA=false` — disables the proxy entirely. Users hitting
+    `/dashboards/*` are 302-redirected to `GRAFANA_PUBLIC_URL` so the legacy
+    direct port 3000 still works during a migration.
+  * `EMBED_GRAFANA=true` (default) — proxy is active. Unauthenticated users are
+    302-redirected to `/sign_in`.
+
+  No env vars are read at compile time, so changes only require a TeslaMate
+  restart.
   """
 
   import Plug.Conn
-  import Phoenix.Controller, only: [redirect: 2]
   require Logger
 
   alias TeslaMate.HTTP
 
   @upstream System.get_env("GRAFANA_UPSTREAM", "http://grafana:3000")
+  # Public URL the browser can reach when EMBED_GRAFANA=false. Operator may
+  # leave it empty; in that case we render an HTML hint instead of sending the
+  # browser to an unresolvable docker hostname.
+  @public_grafana_url System.get_env("GRAFANA_PUBLIC_URL", "")
   @public_prefix "/dashboards"
   @proxy_user System.get_env("GRAFANA_PROXY_USER", "teslamate@local")
   @enabled_env System.get_env("EMBED_GRAFANA", "true")
@@ -35,23 +49,24 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   def init(opts), do: opts
 
   def call(conn, _opts) do
-    if proxy_enabled?() and conn_signed_in?(conn) do
-      do_proxy(conn)
-    else
-      # Backward-compatible default: a TeslaMate deployment may not have the
-      # reverse-proxy plumbing in place. If proxy is disabled just fall back to
-      # a redirect so the user's browser keeps working (legacy direct port 3000
-      # access). When `EMBED_GRAFANA=true` but the user is signed out, we send
-      # them to /sign_in.
-      cond do
-        not proxy_enabled?() -> redirect_unembedded(conn)
-        true -> redirect_to_sign_in(conn)
-      end
+    cond do
+      not proxy_enabled?() ->
+        redirect_unembedded(conn)
+
+      not conn_signed_in?(conn) ->
+        redirect_to_sign_in(conn)
+
+      true ->
+        do_proxy(conn)
     end
   end
 
+  # ---- routing ------------------------------------------------------------
+
   defp proxy_enabled? do
-    String.downcase(@enabled_env) in ~w(1 true yes on)
+    System.get_env("EMBED_GRAFANA", "true")
+    |> String.downcase()
+    |> then(&(&1 in ~w(1 true yes on)))
   end
 
   defp conn_signed_in?(conn) do
@@ -61,14 +76,14 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
     end
   end
 
-  defp redirect_unembedded(conn) do
-    target = @upstream <> rewrite_path(conn.request_path) <> qs(conn.query_string)
-
-    conn
-    |> put_resp_header("location", target)
-    |> send_resp(302, "")
-    |> halt()
+  defp public_grafana_url do
+    case @public_grafana_url do
+      "" -> nil
+      url -> String.trim_trailing(url, "/")
+    end
   end
+
+  # ---- fallbacks ----------------------------------------------------------
 
   defp redirect_to_sign_in(conn) do
     target = Phoenix.Router.Routes.live_path(conn, TeslaMateWeb.SignInLive.Index)
@@ -79,15 +94,39 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
     |> halt()
   end
 
+  defp redirect_unembedded(conn) do
+    case public_grafana_url() do
+      nil ->
+        body =
+          "<h1>Grafana embedding disabled</h1>" <>
+            "<p>EMBED_GRAFANA is set to <code>false</code> but no " <>
+            "<code>GRAFANA_PUBLIC_URL</code> is configured. Either set " <>
+            "<code>GRAFANA_PUBLIC_URL</code> to the URL your browser can " <>
+            "reach Grafana at, or enable <code>EMBED_GRAFANA=true</code> to " <>
+            "keep everything inside TeslaMate.</p>"
+
+        conn
+        |> put_resp_content_type("text/html")
+        |> send_resp(503, body)
+        |> halt()
+
+      base ->
+        target = base <> rewrite_path(conn.request_path) <> qs(conn.query_string)
+
+        conn
+        |> put_resp_header("location", target)
+        |> send_resp(302, "")
+        |> halt()
+    end
+  end
+
+  # ---- upstream request ---------------------------------------------------
+
   defp do_proxy(conn) do
     target = build_target(conn)
     headers = build_headers(conn)
     body = conn_body(conn)
-
-    method =
-      conn.method
-      |> String.downcase()
-      |> String.to_atom()
+    method = conn.method |> String.downcase() |> String.to_atom()
 
     case HTTP.request(method, target, headers: headers, body: body,
            receive_timeout: 60_000, pool_timeout: 60_000) do
@@ -100,28 +139,19 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
     end
   end
 
-  defp qs(""), do: ""
-  defp qs(qs), do: "?" <> qs
-
-  # ---- helpers ------------------------------------------------------------
-
   defp build_target(conn) do
-    qs = if conn.query_string == "", do: "", else: "?" <> conn.query_string
-    @upstream <> rewrite_path(conn.request_path) <> qs
+    @upstream <> rewrite_path(conn.request_path) <> qs(conn.query_string)
   end
 
   # Rewrite `/dashboards/anything` down to `/anything` before forwarding
-  # upstream and always include a leading slash.
+  # upstream. Always returns a path beginning with a single `/`.
   defp rewrite_path("/" <> _ = path) do
-    case path do
-      @public_prefix ->
-        "/"
-
-      @public_prefix <> rest ->
-        "/" <> String.trim_leading(rest, "/")
-
-      _ ->
-        path
+    cond do
+      path == @public_prefix -> "/"
+      String.starts_with?(path, @public_prefix <> "/") ->
+        rest = path |> String.replace_prefix(@public_prefix, "") |> String.trim_leading("/")
+        if rest == "", do: "/", else: "/" <> rest
+      true -> path
     end
   end
 
@@ -173,6 +203,8 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
     end
   end
 
+  # ---- upstream response --------------------------------------------------
+
   defp send_proxied(conn, status, resp_headers, resp_body) do
     headers =
       for {k, v} <- resp_headers, into: [] do
@@ -190,22 +222,58 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
 
     conn
     |> put_status(status)
-    |> Enum.reduce(headers, fn {k, v}, c -> put_resp_header(c, k, v) end)
+    |> put_resp_headers(headers)
     |> put_resp_header("cache-control", "private, no-store")
     |> put_resp_header("referrer-policy", "same-origin")
     |> send_resp(status, resp_body)
     |> halt()
   end
 
-  # Any relative Location from Grafana is rewritten back under the public prefix.
+  defp put_resp_headers(conn, headers) do
+    Enum.reduce(headers, conn, fn {k, v}, c -> put_resp_header(c, k, v) end)
+  end
+
+  # Rewrites `Location` headers returned by Grafana so the browser always
+  # navigates within TeslaMate's `/dashboards/*` prefix.
+  #
+  #   * relative `/foo`      → `/dashboards/foo`
+  #   * relative `foo`       → `/dashboards/foo`
+  #   * absolute pointing at internal upstream (e.g. `http://grafana:3000/x`
+  #     or the GRAFANA_PUBLIC_URL host) → `/dashboards/x`
+  #   * absolute pointing at any *other* host → returned unchanged so the
+  #     browser follows it normally (cross-origin webhook etc.)
   defp rewrite_location(value) when is_binary(value) do
     case URI.parse(value) do
-      %URI{host: nil} -> @public_prefix <> ensure_leading_slash(value)
-      _ -> value
+      %URI{host: nil, path: path} ->
+        @public_prefix <> ensure_leading_slash(path)
+
+      %URI{} = uri ->
+        if same_origin?(uri) do
+          @public_prefix <>
+            ensure_leading_slash(uri.path || "/") <>
+            qs(uri.query)
+        else
+          value
+        end
     end
   end
 
   defp rewrite_location(other), do: to_string(other)
+
+  defp same_origin?(%URI{host: h, port: p}) do
+    %URI{host: up_host, port: up_port} = URI.parse(@upstream)
+    pub_host = public_grafana_url() || up_host
+    %URI{host: parsed_pub_host, port: pub_port} = URI.parse(pub_host)
+
+    h in [up_host, parsed_pub_host] and
+      (p == up_port or p == pub_port or is_nil(p))
+  end
+
+  # ---- string helpers -----------------------------------------------------
+
+  defp qs(nil), do: ""
+  defp qs(""), do: ""
+  defp qs(qs), do: "?" <> qs
 
   defp ensure_leading_slash("/" <> _ = v), do: v
   defp ensure_leading_slash(v), do: "/" <> v

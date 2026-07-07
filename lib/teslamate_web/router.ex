@@ -37,6 +37,18 @@ defmodule TeslaMateWeb.Router do
     plug TeslaMateWeb.Plugs.RequireSignedIn
   end
 
+  # Reverse-proxy pipeline for the embedded Grafana dashboards. Phoenix does
+  # not allow defining plugs at the scope level, so the proxy plug lives here.
+  pipeline :grafana_proxy do
+    plug TeslaMateWeb.Plugs.GrafanaProxy
+  end
+
+  # Runtime-configurable gate for /api/*. Reads TESLAMATE_PROTECT_API on every
+  # request and either enforces the sign-in check or is a no-op.
+  pipeline :api_gate do
+    plug TeslaMateWeb.Plugs.ApiGate
+  end
+
   scope "/", TeslaMateWeb do
     pipe_through :browser
 
@@ -70,15 +82,12 @@ defmodule TeslaMateWeb.Router do
     end
   end
 
+  # The /api routes use a runtime check inside `TeslaMateWeb.Plugs.ApiGate`
+  # rather than `if`-gating the `pipe_through`, because Phoenix resolves the
+  # pipelines at compile time. Reading the env var at runtime means a user can
+  # flip `TESLAMATE_PROTECT_API` without rebuilding.
   scope "/api", TeslaMateWeb do
-    pipe_through :api
-
-    # Logging endpoints were never auth-gated historically; callers (the car
-    # LiveView + Grafana webhooks) rely on the originating session still being
-    # valid. Keep them open unless `TESLAMATE_PROTECT_API=true` is set.
-    if System.get_env("TESLAMATE_PROTECT_API", "false") == "true" do
-      pipe_through :require_signed_in
-    end
+    pipe_through [:api, :api_gate]
 
     put "/car/:id/logging/resume", CarController, :resume_logging
     put "/car/:id/logging/suspend", CarController, :suspend_logging
@@ -88,8 +97,7 @@ defmodule TeslaMateWeb.Router do
   # plug enforces the same auth gate as the rest of the browser and falls back
   # to a 302 redirect to the legacy port-3000 URL when EMBED_GRAFANA is off.
   scope "/dashboards", TeslaMateWeb do
-    pipe_through [:browser, :require_signed_in]
-    plug TeslaMateWeb.Plugs.GrafanaProxy
+    pipe_through [:browser, :require_signed_in, :grafana_proxy]
   end
 
   def fetch_settings(conn, _opts) do

@@ -4,9 +4,12 @@ defmodule TeslaMateWeb.Plugs.RequireSignedIn do
 
   Used as a plug in `TeslaMateWeb.Router`. To preserve backward compatibility,
   the redirect is only enforced when the operator opts into the new behaviour
-  by setting `TESLAMATE_STRICT_AUTH=true`. With the default (unset / `false`)
+  by setting `TESLAMATE_STRICT_AUTH=true` (or "1"/"yes"/"on"). With the default
   the plug simply annotates `:signed_in?` on the conn and leaves the request
   untouched so existing deployments keep working unchanged.
+
+  The check happens at *run time* on every request, not at compile time, so
+  changing the environment variable only requires a TeslaMate restart.
   """
 
   import Plug.Conn
@@ -14,9 +17,7 @@ defmodule TeslaMateWeb.Plugs.RequireSignedIn do
 
   alias TeslaMate.Api
 
-  @strict String.to_existing_atom(
-            System.get_env("TESLAMATE_STRICT_AUTH", "false") |> String.downcase()
-          )
+  @strict_env_keys ~w(1 true yes on)
 
   def init(opts), do: opts
 
@@ -24,13 +25,19 @@ defmodule TeslaMateWeb.Plugs.RequireSignedIn do
     signed_in = Api.signed_in?()
     conn = assign(conn, :signed_in?, signed_in)
 
-    if @strict == true and not signed_in do
+    if strict_auth?() and not signed_in do
       conn
       |> redirect(to: sign_in_path(conn))
       |> halt()
     else
       conn
     end
+  end
+
+  defp strict_auth? do
+    System.get_env("TESLAMATE_STRICT_AUTH", "")
+    |> String.downcase()
+    |> then(&(&1 in @strict_env_keys))
   end
 
   defp sign_in_path(conn) do
