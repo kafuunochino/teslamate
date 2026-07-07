@@ -11,7 +11,16 @@ defmodule TeslaMateWeb.Endpoint do
   plug TeslaMateWeb.HealthCheck
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options], transport_log: :debug]
+    websocket: [
+      connect_info: [
+        session: @session_options,
+        peer_data: true,
+        # Pull the real client IP from `X-Forwarded-For` when running behind
+        # a reverse proxy (Nginx, Cloudflare, Caddy, etc.).
+        x_headers: true
+      ],
+      transport_log: :debug
+    ]
 
   plug Plug.Static,
     at: "/",
@@ -30,6 +39,16 @@ defmodule TeslaMateWeb.Endpoint do
 
   plug Plug.RequestId
   plug Plug.Logger
+
+  # Optional: redirect HTTP -> HTTPS. Off by default so plain-HTTP LAN
+  # deployments keep working. Enable by setting `TESLAMATE_FORCE_SSL=true`
+  # in `.env` when running behind a TLS-terminating reverse proxy.
+  if TeslaMateWeb.Config.force_ssl?() do
+    plug Plug.SSL,
+      rewrite_on: [:x_forwarded_proto],
+      host: nil,
+      hsts: false
+  end
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],

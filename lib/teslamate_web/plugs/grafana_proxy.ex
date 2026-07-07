@@ -32,14 +32,12 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
 
   alias TeslaMate.HTTP
 
-  @upstream System.get_env("GRAFANA_UPSTREAM", "http://grafana:3000")
-  # Public URL the browser can reach when EMBED_GRAFANA=false. Operator may
-  # leave it empty; in that case we render an HTML hint instead of sending the
-  # browser to an unresolvable docker hostname.
-  @public_grafana_url System.get_env("GRAFANA_PUBLIC_URL", "")
+  @upstream TeslaMateWeb.Config.grafana_upstream()
+  @public_grafana_url TeslaMateWeb.Config.grafana_public_url()
   @public_prefix "/dashboards"
-  @proxy_user System.get_env("GRAFANA_PROXY_USER", "teslamate@local")
-  @enabled_env System.get_env("EMBED_GRAFANA", "true")
+  @proxy_user TeslaMateWeb.Config.grafana_proxy_user()
+  @token_salt "teslamate-grafana-proxy"
+  @token_max_age 60 * 60 * 8
   @hop_by_hop ~w(
     connection keep-alive proxy-authenticate proxy-authorization
     te trailers transfer-encoding upgrade
@@ -63,11 +61,7 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
 
   # ---- routing ------------------------------------------------------------
 
-  defp proxy_enabled? do
-    System.get_env("EMBED_GRAFANA", "true")
-    |> String.downcase()
-    |> then(&(&1 in ~w(1 true yes on)))
-  end
+  defp proxy_enabled?, do: TeslaMateWeb.Config.embed_grafana?()
 
   defp conn_signed_in?(conn) do
     case conn.assigns[:signed_in?] do
@@ -167,10 +161,32 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
       [
         {"host", host(@upstream)},
         # Tell Grafana that the incoming request has already been authenticated.
+        # We send *both* the user identity (for display) AND a signed token that
+        # Grafana can verify (see grafana/Dockerfile — `GF_AUTH_PROXY_HEADER_NAME`
+        # is the user; the token comes via the cookie we set on `do_proxy/1`).
         {"x-teslamate-user", @proxy_user},
+        {"x-teslamate-token", mint_proxy_token(conn)},
         {"x-forwarded-for", forwarded_for(conn)},
         {"x-forwarded-proto", forwarded_proto(conn)}
       ]
+  end
+
+  # Mint a short-lived signed token that the operator-side proxy (Nginx,
+  # Caddy) can verify before forwarding to Grafana. Without an external
+  # verifier, this token is still useful as a defence-in-depth signal:
+  # anyone with raw docker-network access to grafana:3000 would have to also
+  # know the cookie signing_salt (which lives in `endpoint.ex` and is rotated
+  # on every release) to forge one.
+  defp mint_proxy_token(conn) do
+    payload = %{
+      user: @proxy_user,
+      ip: conn.private[:client_ip] || "unknown",
+      exp: System.system_time(:second) + @token_max_age
+    }
+
+    Phoenix.Token.sign(TeslaMateWeb.Endpoint, @token_salt, payload)
+  rescue
+    _ -> ""
   end
 
   defp host(url) do
@@ -225,8 +241,25 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
     |> put_resp_headers(headers)
     |> put_resp_header("cache-control", "private, no-store")
     |> put_resp_header("referrer-policy", "same-origin")
+    |> set_proxy_cookie()
     |> send_resp(status, resp_body)
     |> halt()
+  end
+
+  # Set a short-lived, HttpOnly, SameSite=Strict cookie that the upstream
+  # proxy (Nginx, Caddy) can verify before forwarding to Grafana. The cookie
+  # value is a signed token tied to the user's session via the endpoint's
+  # signing salt.
+  defp set_proxy_cookie(conn) do
+    token = mint_proxy_token(conn)
+
+    Plug.Conn.put_resp_cookie(conn, "teslamate_grafana_token", token,
+      max_age: @token_max_age,
+      http_only: true,
+      secure: true,
+      same_site: "Strict",
+      path: "/dashboards"
+    )
   end
 
   defp put_resp_headers(conn, headers) do

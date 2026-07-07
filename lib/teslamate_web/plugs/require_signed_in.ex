@@ -17,27 +17,19 @@ defmodule TeslaMateWeb.Plugs.RequireSignedIn do
 
   alias TeslaMate.Api
 
-  @strict_env_keys ~w(1 true yes on)
-
   def init(opts), do: opts
 
   def call(conn, _opts) do
     signed_in = Api.signed_in?()
     conn = assign(conn, :signed_in?, signed_in)
 
-    if strict_auth?() and not signed_in do
+    if TeslaMateWeb.Config.strict_auth?() and not signed_in do
       conn
       |> redirect(to: sign_in_path(conn))
       |> halt()
     else
       conn
     end
-  end
-
-  defp strict_auth? do
-    System.get_env("TESLAMATE_STRICT_AUTH", "")
-    |> String.downcase()
-    |> then(&(&1 in @strict_env_keys))
   end
 
   defp sign_in_path(conn) do

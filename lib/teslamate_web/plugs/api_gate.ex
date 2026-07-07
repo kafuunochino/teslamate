@@ -16,7 +16,7 @@ defmodule TeslaMateWeb.Plugs.ApiGate do
   def init(opts), do: opts
 
   def call(conn, _opts) do
-    if protect_api?() and not Api.signed_in?() do
+    if TeslaMateWeb.Config.protect_api?() and not Api.signed_in?() do
       body = ~s({"error":"unauthorized"})
       location = "/sign_in"
 
@@ -28,11 +28,5 @@ defmodule TeslaMateWeb.Plugs.ApiGate do
     else
       conn
     end
-  end
-
-  defp protect_api? do
-    System.get_env("TESLAMATE_PROTECT_API", "")
-    |> String.downcase()
-    |> then(&(&1 in ~w(1 true yes on)))
   end
 end

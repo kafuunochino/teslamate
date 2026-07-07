@@ -5,6 +5,9 @@ defmodule TeslaMateWeb.Router do
 
   pipeline :browser do
     plug :accepts, ["html"]
+    # Resolve the real client IP and stash it in `conn.private[:client_ip]`
+    # and the cookie session (so LiveViews can read it from `mount/3`).
+    plug TeslaMateWeb.Plugs.ClientIP
     plug :fetch_session
     plug :fetch_live_flash
 
@@ -23,6 +26,7 @@ defmodule TeslaMateWeb.Router do
     plug :put_root_layout, {TeslaMateWeb.LayoutView, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug TeslaMateWeb.Plugs.SecurityHeaders
     plug :fetch_settings
   end
 
@@ -47,6 +51,13 @@ defmodule TeslaMateWeb.Router do
   # request and either enforces the sign-in check or is a no-op.
   pipeline :api_gate do
     plug TeslaMateWeb.Plugs.ApiGate
+  end
+
+  # Block cross-origin mutating requests on /api/* unless explicitly
+  # disabled by the operator (e.g. when calling the API via curl from a
+  # different network).
+  pipeline :api_origin_check do
+    plug TeslaMateWeb.Plugs.ApiOriginCheck
   end
 
   scope "/", TeslaMateWeb do
@@ -87,7 +98,7 @@ defmodule TeslaMateWeb.Router do
   # pipelines at compile time. Reading the env var at runtime means a user can
   # flip `TESLAMATE_PROTECT_API` without rebuilding.
   scope "/api", TeslaMateWeb do
-    pipe_through [:api, :api_gate]
+    pipe_through [:api, :api_gate, :api_origin_check]
 
     put "/car/:id/logging/resume", CarController, :resume_logging
     put "/car/:id/logging/suspend", CarController, :suspend_logging

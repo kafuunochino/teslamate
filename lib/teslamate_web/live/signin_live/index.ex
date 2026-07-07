@@ -3,16 +3,34 @@ defmodule TeslaMateWeb.SignInLive.Index do
 
   import Core.Dependency, only: [call: 3]
   alias TeslaMate.{Auth, Api}
+  alias TeslaMate.Auth.LoginAudit
+  alias TeslaMateWeb.Plugs.LoginRateLimit
 
   on_mount {TeslaMateWeb.InitAssigns, :locale}
 
   @impl true
+  def mount(_params, %{"client_ip" => ip} = _session, socket) do
+    assigns = %{
+      api: get_api(socket),
+      page_title: gettext("Sign in"),
+      error: nil,
+      task: nil,
+      client_ip: ip,
+      changeset: Auth.change_tokens(),
+      token: System.get_env("TOKEN", ""),
+      provider: System.get_env("TESLA_AUTH_HOST", "https://auth.tesla.com")
+    }
+
+    {:ok, assign(socket, assigns)}
+  end
+
   def mount(_params, _session, socket) do
     assigns = %{
       api: get_api(socket),
       page_title: gettext("Sign in"),
       error: nil,
       task: nil,
+      client_ip: "unknown",
       changeset: Auth.change_tokens(),
       token: System.get_env("TOKEN", ""),
       provider: System.get_env("TESLA_AUTH_HOST", "https://auth.tesla.com")
@@ -32,14 +50,31 @@ defmodule TeslaMateWeb.SignInLive.Index do
   end
 
   def handle_event("sign_in", _, socket) do
-    tokens = Ecto.Changeset.apply_changes(socket.assigns.changeset)
+    ip = socket.assigns.client_ip
+    email = socket.assigns.changeset |> Ecto.Changeset.apply_changes() |> Map.get(:email)
 
-    task =
-      Task.async(fn ->
-        call(socket.assigns.api, :sign_in, [tokens])
-      end)
+    case LoginRateLimit.check(ip, email) do
+      {:error, :rate_limited, retry_after} ->
+        LoginAudit.record(%{ip: ip, email: email, outcome: :blocked, reason: "rate-limit"})
 
-    {:noreply, assign(socket, task: task)}
+        {:noreply,
+         assign(socket,
+           error: gettext("Too many failed attempts. Try again in %{n}s.", n: retry_after),
+           task: nil
+         )}
+
+      :ok ->
+        tokens = Ecto.Changeset.apply_changes(socket.assigns.changeset)
+
+        task =
+          Task.async(fn ->
+            call(socket.assigns.api, :sign_in, [tokens])
+          end)
+
+        audit_meta = %{ip: ip, email: email}
+
+        {:noreply, assign(socket, task: task, audit_meta: audit_meta)}
+    end
   end
 
   @impl true
@@ -48,10 +83,21 @@ defmodule TeslaMateWeb.SignInLive.Index do
 
     case result do
       :ok ->
+        meta = socket.assigns.audit_meta
+        LoginAudit.record(Map.put(meta, :outcome, :success))
+        # Reset the per-email bucket so a successful login is not penalised
+        # by an earlier typo.
+        LoginRateLimit.record_success(meta.ip, meta.email)
         Process.sleep(250)
         {:noreply, redirect_to_carlive(socket)}
 
       {:error, %TeslaApi.Error{} = e} ->
+        meta = socket.assigns.audit_meta
+        LoginAudit.record(Map.merge(meta, %{outcome: :failure, reason: e.reason}))
+
+        # Increment the failure counter so brute-force is throttled.
+        LoginRateLimit.record_failure(meta.ip, meta.email)
+
         message =
           case e.reason do
             :token_refresh ->

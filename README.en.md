@@ -34,6 +34,39 @@ We have received reports of deceptive websites and unofficial mobile apps (e.g. 
 
 The documentation is available at [https://docs.teslamate.org](https://docs.teslamate.org/)
 
+## Environment variables
+
+All configuration goes through `.env`. A fully-documented `.env.example` is
+checked into this repository — copy it to `.env` and uncomment what you need:
+
+```bash
+cp .env.example .env
+# edit .env
+```
+
+The security-relevant knobs are summarised below. **All default to safe /
+LAN-friendly values** so the upgrade from older versions is transparent.
+
+| Variable                          | Default  | Purpose                                                                  |
+| --------------------------------- | -------- | ------------------------------------------------------------------------ |
+| `TESLAMATE_STRICT_AUTH`           | `false`  | Force `/sign_in` for every browser route                                 |
+| `TESLAMATE_PROTECT_API`           | `false`  | Require session for `/api/car/*/logging/*`                               |
+| `TESLAMATE_API_ORIGIN_CHECK`      | `true`   | Reject cross-origin mutating requests on `/api/*`                        |
+| `TESLAMATE_LOGIN_MAX_PER_IP`      | `10`     | Failed sign-ins per IP per window before 429                             |
+| `TESLAMATE_LOGIN_MAX_PER_EMAIL`   | `5`      | Failed sign-ins per email per window before 429                          |
+| `TESLAMATE_LOGIN_WINDOW_SECONDS`  | `600`    | Rate-limit window                                                        |
+| `TESLAMATE_LOGIN_AUDIT_CAPACITY`  | `100`    | Size of in-memory login-audit ring buffer                                |
+| `TESLAMATE_HSTS`                  | `false`  | Add HSTS header (only when serving exclusively over HTTPS)               |
+| `TESLAMATE_FORCE_SSL`             | `false`  | Redirect HTTP -> HTTPS (disable when a reverse proxy does this)         |
+| `TESLAMATE_TRUSTED_PROXIES`       | `""`     | Comma-separated IPs/CIDRs whose `X-Forwarded-For` is trusted            |
+| `EMBED_GRAFANA`                   | `true`   | Reverse-proxy Grafana at `/dashboards/*`                                 |
+| `GRAFANA_PUBLIC_URL`              | `""`     | Public Grafana URL used when `EMBED_GRAFANA=false`                       |
+| `GRAFANA_PROXY_USER`              | `teslamate@local` | Header user sent to Grafana's `auth_proxy`                     |
+| `GF_SERVER_ROOT_URL`              | `http://localhost:4000/dashboards` | URL Grafana uses for redirects                       |
+
+For full descriptions and security implications see the comments in
+[`.env.example`](.env.example).
+
 ## Features
 
 ### General
