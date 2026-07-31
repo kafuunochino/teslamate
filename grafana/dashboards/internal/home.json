@@ -17,184 +17,1878 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "links": [],
   "panels": [
     {
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 24,
         "x": 0,
         "y": 0
       },
       "id": 1,
       "options": {
-        "content": "# TeslaMate 中文仪表盘\n按用途选择下方分类。默认统计时间可在进入仪表盘后从右上角调整。",
+        "content": "# TeslaMate 数据总览\n当前车辆状态、所选时段核心指标、趋势和最近记录集中展示。右上角时间范围会同时作用于行程与充电统计。\n\n[数据总览](/d/be2m9kga7b8qoc/teslamate-home?var-car_id=$car_id&from=$__from&to=$__to) · [实时总览](/d/tmOverviewHubCN/overview-center?var-car_id=$car_id&from=$__from&to=$__to) · [行程与足迹](/d/tmDrivingHubCN/driving-center?var-car_id=$car_id&from=$__from&to=$__to) · [充电与费用](/d/tmChargingHubCN/charging-center?var-car_id=$car_id&from=$__from&to=$__to) · [电池与能效](/d/tmEnergyHubCN/energy-center?var-car_id=$car_id&from=$__from&to=$__to) · [分析与洞察](/d/tmAnalysisHubCN/analysis-center?var-car_id=$car_id&from=$__from&to=$__to) · [系统与数据](/d/tmSystemHubCN/system-center?var-car_id=$car_id&from=$__from&to=$__to)",
         "mode": "markdown"
       },
       "pluginVersion": "13.0.1+security-01",
       "type": "text"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "asleep": {
+                  "color": "semi-dark-blue",
+                  "text": "休眠中"
+                },
+                "charging": {
+                  "color": "semi-dark-orange",
+                  "text": "充电中"
+                },
+                "driving": {
+                  "color": "semi-dark-green",
+                  "text": "行驶中"
+                },
+                "offline": {
+                  "color": "semi-dark-red",
+                  "text": "离线"
+                },
+                "online": {
+                  "color": "semi-dark-green",
+                  "text": "在线"
+                },
+                "unknown": {
+                  "color": "semi-dark-gray",
+                  "text": "未知"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "noValue": "未知",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 4,
+        "w": 4,
         "x": 0,
-        "y": 3
+        "y": 4
       },
       "id": 2,
       "options": {
-        "folderUID": "Nr4ofiDZk",
-        "includeVars": false,
-        "keepTime": false,
-        "maxItems": 100,
-        "query": "",
-        "showFolderNames": false,
-        "showHeadings": false,
-        "showRecentlyViewed": false,
-        "showSearch": false,
-        "showStarred": false,
-        "tags": []
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "常用概览",
-      "type": "dashlist"
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT state\nFROM (\n  SELECT start_date, CASE state\n    WHEN 'asleep' THEN 'asleep'\n    WHEN 'online' THEN 'online'\n    WHEN 'offline' THEN 'offline'\n    ELSE 'unknown'\n  END AS state\n  FROM states\n  WHERE car_id = $car_id\n  UNION ALL\n  SELECT start_date, 'driving' AS state\n  FROM drives\n  WHERE car_id = $car_id AND end_date IS NULL\n  UNION ALL\n  SELECT start_date, 'charging' AS state\n  FROM charging_processes\n  WHERE car_id = $car_id AND end_date IS NULL\n) activity\nORDER BY start_date DESC\nLIMIT 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "当前状态",
+      "type": "stat"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "noValue": "无数据",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "light-red",
+                "value": null
+              },
+              {
+                "color": "semi-dark-yellow",
+                "value": 10
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 20
+              },
+              {
+                "color": "semi-dark-yellow",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 3
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 4
       },
       "id": 3,
       "options": {
-        "folderUID": "tmDrivingCN",
-        "includeVars": false,
-        "keepTime": false,
-        "maxItems": 100,
-        "query": "",
-        "showFolderNames": false,
-        "showHeadings": false,
-        "showRecentlyViewed": false,
-        "showSearch": false,
-        "showStarred": false,
-        "tags": []
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "行程驾驶",
-      "type": "dashlist"
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT battery_level\nFROM (\n  (SELECT date, battery_level\n   FROM positions\n   WHERE car_id = $car_id AND battery_level IS NOT NULL\n   ORDER BY date DESC LIMIT 1)\n  UNION ALL\n  (SELECT c.date, c.battery_level\n   FROM charges c\n   JOIN charging_processes cp ON cp.id = c.charging_process_id\n   WHERE cp.car_id = $car_id AND c.battery_level IS NOT NULL\n   ORDER BY c.date DESC LIMIT 1)\n) latest\nORDER BY date DESC\nLIMIT 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "电池电量",
+      "type": "gauge"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "无数据",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "range_km"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "续航里程"
+              },
+              {
+                "id": "unit",
+                "value": "km"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "range_mi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "续航里程"
+              },
+              {
+                "id": "unit",
+                "value": "mi"
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 11
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 4
       },
       "id": 4,
       "options": {
-        "folderUID": "tmChargingCN",
-        "includeVars": false,
-        "keepTime": false,
-        "maxItems": 100,
-        "query": "",
-        "showFolderNames": false,
-        "showHeadings": false,
-        "showRecentlyViewed": false,
-        "showSearch": false,
-        "showStarred": false,
-        "tags": []
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "充电费用",
-      "type": "dashlist"
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT convert_km(range_km::numeric, '$length_unit') AS range_$length_unit\nFROM (\n  (SELECT date, [[preferred_range]]_battery_range_km AS range_km\n   FROM positions\n   WHERE car_id = $car_id AND [[preferred_range]]_battery_range_km IS NOT NULL\n   ORDER BY date DESC LIMIT 1)\n  UNION ALL\n  (SELECT c.date, c.[[preferred_range]]_battery_range_km AS range_km\n   FROM charges c\n   JOIN charging_processes cp ON cp.id = c.charging_process_id\n   WHERE cp.car_id = $car_id AND c.[[preferred_range]]_battery_range_km IS NOT NULL\n   ORDER BY c.date DESC LIMIT 1)\n) latest\nORDER BY date DESC\nLIMIT 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "当前续航",
+      "type": "stat"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "无数据",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_km"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "km"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_mi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "mi"
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 4,
+        "w": 4,
         "x": 12,
-        "y": 11
+        "y": 4
       },
       "id": 5,
       "options": {
-        "folderUID": "tmEnergyCN",
-        "includeVars": false,
-        "keepTime": false,
-        "maxItems": 100,
-        "query": "",
-        "showFolderNames": false,
-        "showHeadings": false,
-        "showRecentlyViewed": false,
-        "showSearch": false,
-        "showStarred": false,
-        "tags": []
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "电池能耗",
-      "type": "dashlist"
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT convert_km(odometer::numeric, '$length_unit') AS distance_$length_unit\nFROM positions\nWHERE car_id = $car_id AND odometer IS NOT NULL\nORDER BY date DESC\nLIMIT 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "里程表",
+      "type": "stat"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "无数据",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 4
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(\n  g.name,\n  a.name,\n  NULLIF(CONCAT_WS(' ', a.road, a.house_number), ''),\n  a.city,\n  '未知位置'\n) AS \"位置\"\nFROM drives d\nLEFT JOIN addresses a ON a.id = d.end_address_id\nLEFT JOIN geofences g ON g.id = d.end_geofence_id\nWHERE d.car_id = $car_id AND d.end_date IS NOT NULL\nORDER BY d.end_date DESC\nLIMIT 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "最近位置",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "无数据",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 4
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT split_part(version, ' ', 1) AS \"固件版本\"\nFROM updates\nWHERE car_id = $car_id\nORDER BY start_date DESC\nLIMIT 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "车辆固件",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 8,
+      "panels": [],
+      "title": "所选时段核心数据",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 9
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) AS \"行程数\"\nFROM drives\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "行程数",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_km"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "km"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_mi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "mi"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 9
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(convert_km(SUM(distance)::numeric, '$length_unit'), 0) AS distance_$length_unit\nFROM drives\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "行驶距离",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 9
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(SUM(duration_min), 0) * 60 AS \"驾驶时长\"\nFROM drives\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "驾驶时长",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 9
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) AS \"充电次数\"\nFROM charging_processes\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "充电次数",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "kwatth"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 9
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT ROUND(COALESCE(SUM(charge_energy_added), 0)::numeric, 1) AS \"充入电量\"\nFROM charging_processes\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "充入电量",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "元"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 9
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT ROUND(COALESCE(SUM(tm_effective_cost(id, cost)), 0)::numeric, 2) AS \"充电费用\"\nFROM charging_processes\nWHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL\n  AND $__timeFilter(start_date);",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "充电费用",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_km"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "km"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_mi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "mi"
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 13
       },
-      "id": 6,
+      "id": 15,
       "options": {
-        "folderUID": "tmAnalysisCN",
-        "includeVars": false,
-        "keepTime": false,
-        "maxItems": 100,
-        "query": "",
-        "showFolderNames": false,
-        "showHeadings": false,
-        "showRecentlyViewed": false,
-        "showSearch": false,
-        "showStarred": false,
-        "tags": []
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "统计分析",
-      "type": "dashlist"
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS \"time\",\n  convert_km(SUM(distance)::numeric, '$length_unit') AS distance_$length_unit\nFROM drives\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "每日行驶距离",
+      "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "元"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 13
       },
-      "id": 7,
+      "id": 16,
       "options": {
-        "folderUID": "tmSystemCN",
-        "includeVars": false,
-        "keepTime": false,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS \"time\",\n  ROUND(SUM(tm_effective_cost(id, cost))::numeric, 2) AS \"充电费用\"\nFROM charging_processes\nWHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL\n  AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "每日充电费用",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_km"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "km"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "distance_mi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "距离"
+              },
+              {
+                "id": "unit",
+                "value": "mi"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "speed_km"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "速度"
+              },
+              {
+                "id": "unit",
+                "value": "velocitykmh"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "speed_mi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "速度"
+              },
+              {
+                "id": "unit",
+                "value": "velocitymph"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "id": 17,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  d.start_date AS \"开始时间\",\n  COALESCE(sg.name, sa.name, NULLIF(CONCAT_WS(' ', sa.road, sa.house_number), ''), sa.city, '未知地点') AS \"起点\",\n  COALESCE(eg.name, ea.name, NULLIF(CONCAT_WS(' ', ea.road, ea.house_number), ''), ea.city, '未知地点') AS \"终点\",\n  convert_km(d.distance::numeric, '$length_unit') AS distance_$length_unit,\n  ROUND(d.duration_min::numeric, 0) AS \"时长（分钟）\",\n  convert_km(d.speed_max::numeric, '$length_unit') AS speed_$length_unit\nFROM drives d\nLEFT JOIN addresses sa ON sa.id = d.start_address_id\nLEFT JOIN addresses ea ON ea.id = d.end_address_id\nLEFT JOIN geofences sg ON sg.id = d.start_geofence_id\nLEFT JOIN geofences eg ON eg.id = d.end_geofence_id\nWHERE d.car_id = $car_id AND d.end_date IS NOT NULL AND $__timeFilter(d.start_date)\nORDER BY d.start_date DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "最近 10 次行程",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "TeslaMate"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "id": 18,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "TeslaMate"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  cp.start_date AS \"开始时间\",\n  COALESCE(g.name, a.name, NULLIF(CONCAT_WS(' ', a.road, a.house_number), ''), a.city, '未知地点') AS \"充电地点\",\n  cp.start_battery_level AS \"开始电量\",\n  cp.end_battery_level AS \"结束电量\",\n  ROUND(cp.charge_energy_added::numeric, 1) AS \"充入电量（千瓦时）\",\n  ROUND(tm_effective_cost(cp.id, cp.cost)::numeric, 2) AS \"费用（元）\",\n  ROUND(cp.duration_min::numeric, 0) AS \"时长（分钟）\"\nFROM charging_processes cp\nLEFT JOIN addresses a ON a.id = cp.address_id\nLEFT JOIN geofences g ON g.id = cp.geofence_id\nWHERE cp.car_id = $car_id AND cp.end_date IS NOT NULL AND $__timeFilter(cp.start_date)\nORDER BY cp.start_date DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "最近 10 次充电",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 19,
+      "panels": [],
+      "title": "完整功能分类",
+      "type": "row"
+    },
+    {
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 20,
+      "options": {
+        "folderUID": "Nr4ofiDZk",
+        "includeVars": true,
+        "keepTime": true,
         "maxItems": 100,
         "query": "",
         "showFolderNames": false,
         "showHeadings": false,
         "showRecentlyViewed": false,
-        "showSearch": false,
+        "showSearch": true,
         "showStarred": false,
         "tags": []
       },
       "pluginVersion": "13.0.1+security-01",
-      "title": "系统维护",
+      "title": "实时总览（状态、位置、当前活动）",
       "type": "dashlist"
     },
     {
       "gridPos": {
-        "h": 3,
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 21,
+      "options": {
+        "folderUID": "tmDrivingCN",
+        "includeVars": true,
+        "keepTime": true,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "行程与足迹（记录、统计、评分、年度）",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 22,
+      "options": {
+        "folderUID": "tmChargingCN",
+        "includeVars": true,
+        "keepTime": true,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "充电与费用（记录、曲线、健康、排行）",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 42
+      },
+      "id": 23,
+      "options": {
+        "folderUID": "tmEnergyCN",
+        "includeVars": true,
+        "keepTime": true,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "电池与能效（健康、衰减、温度、静置）",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "id": 24,
+      "options": {
+        "folderUID": "tmAnalysisCN",
+        "includeVars": true,
+        "keepTime": true,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "分析与洞察（成本、省钱、多车、回本）",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "id": 25,
+      "options": {
+        "folderUID": "tmSystemCN",
+        "includeVars": true,
+        "keepTime": true,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "系统与数据（数据库、异常记录、更新）",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 62
+      },
+      "id": 26,
+      "options": {
+        "folderUID": "Nr6ofiDZk",
+        "includeVars": true,
+        "keepTime": true,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "专题报告",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 62
+      },
+      "id": 27,
+      "options": {
+        "folderUID": "Nr5ofiDZk",
+        "includeVars": true,
+        "keepTime": true,
+        "maxItems": 100,
+        "query": "",
+        "showFolderNames": false,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "title": "详细记录",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 4,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 69
       },
-      "id": 8,
+      "id": 28,
       "options": {
-        "content": "> 如果图表显示为 0，请先扩大右上角时间范围并确认已经选择正确车辆；0 代表该时间段没有符合统计条件的数据。",
+        "content": "> 数值为 0 通常表示所选时段没有符合条件的记录。可扩大右上角时间范围；多车用户请先确认“车辆”选择。现有用户若仍跳到“行程”，请在个人偏好中把主仪表板改为“首页”。",
         "mode": "markdown"
       },
       "pluginVersion": "13.0.1+security-01",
@@ -202,21 +1896,76 @@
     }
   ],
   "preload": false,
+  "refresh": "5m",
   "schemaVersion": 42,
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "TeslaMate"
+        },
+        "definition": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL\n      THEN CONCAT(name, ' - ', RIGHT(vin, 6))\n      ELSE COALESCE(name, CONCAT('VIN ', vin))\n    END as __text\nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
+        "hide": 0,
+        "includeAll": false,
+        "label": "车辆",
+        "multi": false,
+        "name": "car_id",
+        "options": [],
+        "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL\n      THEN CONCAT(name, ' - ', RIGHT(vin, 6))\n      ELSE COALESCE(name, CONCAT('VIN ', vin))\n    END as __text\nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
+        "refresh": 1,
+        "regex": "",
+        "regexApplyTo": "value",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "TeslaMate"
+        },
+        "definition": "select unit_of_length from settings limit 1;",
+        "hide": 2,
+        "includeAll": false,
+        "name": "length_unit",
+        "options": [],
+        "query": "select unit_of_length from settings limit 1;",
+        "refresh": 1,
+        "regex": "",
+        "regexApplyTo": "value",
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "TeslaMate"
+        },
+        "definition": "select preferred_range from settings limit 1;",
+        "hide": 2,
+        "includeAll": false,
+        "name": "preferred_range",
+        "options": [],
+        "query": "select preferred_range from settings limit 1;",
+        "refresh": 1,
+        "regex": "",
+        "regexApplyTo": "value",
+        "type": "query"
+      }
+    ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-30d",
     "to": "now"
   },
-  "timepicker": {
-    "hidden": true
-  },
+  "timepicker": {},
   "timezone": "browser",
   "title": "首页",
   "uid": "be2m9kga7b8qoc",
-  "version": 3,
-  "weekStart": ""
+  "version": 4,
+  "weekStart": "monday"
 }

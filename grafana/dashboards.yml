@@ -3,7 +3,7 @@ apiVersion: 1
 providers:
   - name: "teslamate_overview"
     orgId: 1
-    folder: "TeslaMate · 常用概览"
+    folder: "TeslaMate · 实时总览"
     folderUid: Nr4ofiDZk
     type: file
     disableDeletion: false
@@ -13,7 +13,7 @@ providers:
       path: /dashboards/overview
   - name: "teslamate_driving"
     orgId: 1
-    folder: "TeslaMate · 行程驾驶"
+    folder: "TeslaMate · 行程与足迹"
     folderUid: tmDrivingCN
     type: file
     disableDeletion: false
@@ -23,7 +23,7 @@ providers:
       path: /dashboards/driving
   - name: "teslamate_charging"
     orgId: 1
-    folder: "TeslaMate · 充电费用"
+    folder: "TeslaMate · 充电与费用"
     folderUid: tmChargingCN
     type: file
     disableDeletion: false
@@ -33,7 +33,7 @@ providers:
       path: /dashboards/charging
   - name: "teslamate_energy"
     orgId: 1
-    folder: "TeslaMate · 电池能耗"
+    folder: "TeslaMate · 电池与能效"
     folderUid: tmEnergyCN
     type: file
     disableDeletion: false
@@ -43,7 +43,7 @@ providers:
       path: /dashboards/energy
   - name: "teslamate_analysis"
     orgId: 1
-    folder: "TeslaMate · 统计分析"
+    folder: "TeslaMate · 分析与洞察"
     folderUid: tmAnalysisCN
     type: file
     disableDeletion: false
@@ -53,7 +53,7 @@ providers:
       path: /dashboards/analysis
   - name: "teslamate_system"
     orgId: 1
-    folder: "TeslaMate · 系统维护"
+    folder: "TeslaMate · 系统与数据"
     folderUid: tmSystemCN
     type: file
     disableDeletion: false
@@ -63,7 +63,7 @@ providers:
       path: /dashboards/system
   - name: "teslamate_internal"
     orgId: 1
-    folder: "TeslaMate · 内部明细"
+    folder: "TeslaMate · 详细记录"
     folderUid: Nr5ofiDZk
     type: file
     disableDeletion: false

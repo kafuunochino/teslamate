@@ -114,6 +114,15 @@ const allDashboardFiles = dashboardFiles(dashboardRoot).map((file) =>
   file.split(path.sep).join("/"),
 );
 
+const categoryCenters = new Map([
+  ["overview/overview-center.json", ["tmOverviewHubCN", "Nr4ofiDZk"]],
+  ["driving/driving-center.json", ["tmDrivingHubCN", "tmDrivingCN"]],
+  ["charging/charging-center.json", ["tmChargingHubCN", "tmChargingCN"]],
+  ["energy/energy-center.json", ["tmEnergyHubCN", "tmEnergyCN"]],
+  ["analysis/analysis-center.json", ["tmAnalysisHubCN", "tmAnalysisCN"]],
+  ["system/system-center.json", ["tmSystemHubCN", "tmSystemCN"]],
+]);
+
 for (const normalizedFile of allDashboardFiles) {
   const [category, name] = normalizedFile.split("/");
 
@@ -164,6 +173,30 @@ for (const normalizedFile of allDashboardFiles) {
     }
   } catch (error) {
     errors.push(`${normalizedFile}: invalid JSON: ${error.message}`);
+  }
+}
+
+for (const [file, [uid, folderUid]] of categoryCenters) {
+  const fullPath = path.join(dashboardRoot, file);
+  if (!fs.existsSync(fullPath)) {
+    errors.push(`${file}: missing category center`);
+    continue;
+  }
+
+  const center = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+  if (center.uid !== uid) {
+    errors.push(`${file}: category center UID changed`);
+  }
+  if ((center.panels ?? []).filter(({ type }) => type === "stat").length < 5) {
+    errors.push(`${file}: category summary is too narrow`);
+  }
+  if (
+    !(center.panels ?? []).some(
+      (panel) =>
+        panel.type === "dashlist" && panel.options?.folderUID === folderUid,
+    )
+  ) {
+    errors.push(`${file}: missing complete category list`);
   }
 }
 
@@ -399,6 +432,21 @@ if (homeText.includes("https://") || homeText.includes("http://")) {
     "internal/home.json: external content remains on the default home page",
   );
 }
+for (const [panelType, minimum] of [
+  ["stat", 10],
+  ["timeseries", 2],
+  ["table", 2],
+  ["dashlist", 8],
+]) {
+  if (
+    (homeDashboard.panels ?? []).filter(({ type }) => type === panelType)
+      .length < minimum
+  ) {
+    errors.push(
+      `internal/home.json: missing comprehensive ${panelType} panels`,
+    );
+  }
+}
 
 for (const [configFile, pathPrefix] of [
   ["grafana/dashboards.yml", "/dashboards"],
@@ -408,6 +456,28 @@ for (const [configFile, pathPrefix] of [
   for (const category of categoryPaths) {
     if (!config.includes(`path: ${pathPrefix}/${category}`)) {
       errors.push(`${configFile}: missing provider for ${category}`);
+    }
+  }
+}
+
+const categoryFolderTitles = [
+  "TeslaMate · 实时总览",
+  "TeslaMate · 行程与足迹",
+  "TeslaMate · 充电与费用",
+  "TeslaMate · 电池与能效",
+  "TeslaMate · 分析与洞察",
+  "TeslaMate · 系统与数据",
+  "TeslaMate · 详细记录",
+  "TeslaMate · 专题报告",
+];
+for (const configFile of [
+  "grafana/dashboards.yml",
+  "grafana/dashboards-native.yml",
+]) {
+  const config = fs.readFileSync(path.join(projectRoot, configFile), "utf8");
+  for (const folderTitle of categoryFolderTitles) {
+    if (!config.includes(`folder: "${folderTitle}"`)) {
+      errors.push(`${configFile}: missing category folder ${folderTitle}`);
     }
   }
 }

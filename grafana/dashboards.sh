@@ -44,13 +44,13 @@ slugify() {
 
 folder_title_for_category() {
 	case $1 in
-	overview) echo "TeslaMate · 常用概览" ;;
-	driving) echo "TeslaMate · 行程驾驶" ;;
-	charging) echo "TeslaMate · 充电费用" ;;
-	energy) echo "TeslaMate · 电池能耗" ;;
-	analysis) echo "TeslaMate · 统计分析" ;;
-	system) echo "TeslaMate · 系统维护" ;;
-	internal) echo "TeslaMate · 内部明细" ;;
+	overview) echo "TeslaMate · 实时总览" ;;
+	driving) echo "TeslaMate · 行程与足迹" ;;
+	charging) echo "TeslaMate · 充电与费用" ;;
+	energy) echo "TeslaMate · 电池与能效" ;;
+	analysis) echo "TeslaMate · 分析与洞察" ;;
+	system) echo "TeslaMate · 系统与数据" ;;
+	internal) echo "TeslaMate · 详细记录" ;;
 	reports) echo "TeslaMate · 专题报告" ;;
 	*) echo "$1" ;;
 	esac
@@ -58,13 +58,13 @@ folder_title_for_category() {
 
 category_for_folder_title() {
 	case $1 in
-	"TeslaMate · 常用概览") echo "overview" ;;
-	"TeslaMate · 行程驾驶") echo "driving" ;;
-	"TeslaMate · 充电费用") echo "charging" ;;
-	"TeslaMate · 电池能耗") echo "energy" ;;
-	"TeslaMate · 统计分析") echo "analysis" ;;
-	"TeslaMate · 系统维护") echo "system" ;;
-	"TeslaMate · 内部明细") echo "internal" ;;
+	"TeslaMate · 实时总览" | "TeslaMate · 常用概览") echo "overview" ;;
+	"TeslaMate · 行程与足迹" | "TeslaMate · 行程驾驶") echo "driving" ;;
+	"TeslaMate · 充电与费用" | "TeslaMate · 充电费用") echo "charging" ;;
+	"TeslaMate · 电池与能效" | "TeslaMate · 电池能耗") echo "energy" ;;
+	"TeslaMate · 分析与洞察" | "TeslaMate · 统计分析") echo "analysis" ;;
+	"TeslaMate · 系统与数据" | "TeslaMate · 系统维护") echo "system" ;;
+	"TeslaMate · 详细记录" | "TeslaMate · 内部明细") echo "internal" ;;
 	"TeslaMate · 专题报告") echo "reports" ;;
 	*) echo "" ;;
 	esac
