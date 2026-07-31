@@ -29,7 +29,7 @@ jobs:
 
   teslamate_build:
     needs: check_paths
-    if: needs.check_paths.outputs.githubfolder == 'false' || github.event_name == 'schedule'
+    if: needs.check_paths.outputs.nongithub == 'true' || github.event_name == 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -62,7 +62,7 @@ jobs:
     needs:
       - check_paths
       - teslamate_build
-    if: needs.check_paths.outputs.githubfolder == 'false' || github.event_name == 'schedule'
+    if: needs.check_paths.outputs.nongithub == 'true' || github.event_name == 'schedule'
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -83,7 +83,7 @@ jobs:
             type=edge
   grafana:
     needs: check_paths
-    if: needs.check_paths.outputs.githubfolder == 'false' || github.event_name == 'schedule'
+    if: needs.check_paths.outputs.nongithub == 'true' || github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

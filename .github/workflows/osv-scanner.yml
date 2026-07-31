@@ -31,7 +31,7 @@ jobs:
 
   scan-scheduled:
     needs: check_paths
-    if: ( github.event_name == 'push' && needs.check_paths.outputs.githubfolder == 'false' ) || github.event_name == 'schedule'
+    if: ( github.event_name == 'push' && needs.check_paths.outputs.nongithub == 'true' ) || github.event_name == 'schedule'
     uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@fa4ff678dd5d0a4fa3d628e57af8162873e93cd6" # v2.3.8
     with:
       # Don't fail on push to main / scheduled runs: vulnerabilities are still
@@ -44,7 +44,7 @@ jobs:
 
   scan-pr:
     needs: check_paths
-    if: ( github.event_name == 'pull_request' && needs.check_paths.outputs.githubfolder == 'false' ) || ( github.event_name == 'merge_group' && needs.check_paths.outputs.githubfolder == 'false' )
+    if: ( github.event_name == 'pull_request' && needs.check_paths.outputs.nongithub == 'true' ) || ( github.event_name == 'merge_group' && needs.check_paths.outputs.nongithub == 'true' )
     uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@fa4ff678dd5d0a4fa3d628e57af8162873e93cd6" # v2.3.8
     with:
       # Fail on real pull_request runs (catch vulns before merge), but don't fail
