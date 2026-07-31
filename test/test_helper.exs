@@ -3,6 +3,10 @@
 Application.stop(:logger)
 Application.start(:logger)
 
+# Most controller tests exercise the API action itself and do not construct
+# browser Origin/Referer headers. The origin plug has dedicated tests.
+System.put_env("TESLAMATE_API_ORIGIN_CHECK", "false")
+
 Application.load(:teslamate)
 
 for app <- Application.spec(:teslamate, :applications) do
