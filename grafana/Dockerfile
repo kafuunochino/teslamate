@@ -2,8 +2,8 @@
 # https://hub.docker.com/r/grafana/grafana/tags
 FROM grafana/grafana:13.0.1-security-01
 
-# Use Grafana's own login by default. The legacy TeslaMate /dashboards proxy is
-# optional and must explicitly override these authentication settings.
+# The optional legacy container keeps its own direct login and cannot be
+# embedded into the unified platform.
 ENV GF_ANALYTICS_REPORTING_ENABLED=false \
     GF_ANALYTICS_CHECK_FOR_UPDATES=false \
     GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES=false \
@@ -13,7 +13,7 @@ ENV GF_ANALYTICS_REPORTING_ENABLED=false \
     GF_AUTH_PROXY_ENABLED=false \
     GF_AUTH_DISABLE_LOGIN_FORM=false \
     GF_AUTH_DISABLE_SIGNOUT_MENU=false \
-    GF_SECURITY_ALLOW_EMBEDDING=true \
+    GF_SECURITY_ALLOW_EMBEDDING=false \
     GF_SECURITY_COOKIE_SAMESITE=strict \
     GF_SECURITY_DISABLE_GRAVATAR=true \
     GF_SECURITY_XSS_PROTECTION_HEADER=true \

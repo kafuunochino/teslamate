@@ -51,6 +51,34 @@ defmodule TeslaMateWeb.ConnCase do
       Phoenix.ConnTest.build_conn()
       |> Plug.Conn.assign(:signed_in?, !!tags[:signed_in])
 
-    {:ok, conn: conn}
+    {conn, current_user} = maybe_log_in_platform_user(conn, tags)
+
+    {:ok, conn: conn, current_user: current_user}
+  end
+
+  defp maybe_log_in_platform_user(conn, %{auth: false}), do: {conn, nil}
+
+  defp maybe_log_in_platform_user(conn, tags) do
+    suffix = System.unique_integer([:positive, :monotonic])
+    now = DateTime.utc_now() |> DateTime.truncate(:microsecond)
+
+    user =
+      TeslaMate.Repo.insert!(%TeslaMate.Accounts.User{
+        email: "test-admin-#{suffix}@example.com",
+        name: "Test Admin",
+        password_hash: "test-only-not-a-valid-password-hash",
+        password_changed_at: now,
+        role: tags[:platform_role] || :admin,
+        status: :active
+      })
+
+    {:ok, token} = TeslaMate.Accounts.create_session(user)
+
+    conn =
+      conn
+      |> Plug.Test.init_test_session(%{user_session_token: token})
+      |> Plug.Conn.assign(:current_user, user)
+
+    {conn, user}
   end
 end

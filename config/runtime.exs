@@ -50,7 +50,7 @@ defmodule Util do
   end
 
   def choose_http_binding_address() do
-    port = Util.get_env("PORT", prod: "4000", dev: "4000", test: "4002")
+    port = Util.get_env("PORT", prod: "3000", dev: "4000", test: "4002")
     defaults = [transport_options: [socket_opts: [:inet6]], port: port]
 
     case System.get_env("HTTP_BINDING_ADDRESS", "") do
@@ -96,7 +96,25 @@ defmodule Util do
   def get_env(varname, defaults \\ []) do
     System.get_env(varname, defaults[config_env()])
   end
+
+  def fetch_secret!(varname, length) do
+    case config_env() do
+      :prod -> System.fetch_env!(varname)
+      _env -> System.get_env(varname, Util.random_string(length))
+    end
+  end
 end
+
+config :phoenix,
+  filter_parameters: [
+    "password",
+    "password_confirmation",
+    "current_password",
+    "claim_code",
+    "token",
+    "access",
+    "refresh"
+  ]
 
 config :teslamate,
   default_geofence: System.get_env("DEFAULT_GEOFENCE")
@@ -170,9 +188,13 @@ config :teslamate, TeslaMateWeb.Endpoint,
     path: System.get_env("URL_PATH", "/"),
     port: 80
   ],
-  secret_key_base: System.get_env("SECRET_KEY_BASE", Util.random_string(64)),
-  live_view: [signing_salt: System.get_env("SIGNING_SALT", Util.random_string(8))],
-  check_origin: System.get_env("CHECK_ORIGIN", "false") |> Util.parse_check_origin!()
+  secret_key_base: Util.fetch_secret!("SECRET_KEY_BASE", 64),
+  live_view: [
+    signing_salt: Util.fetch_secret!("SIGNING_SALT", 32)
+  ],
+  check_origin:
+    Util.get_env("CHECK_ORIGIN", prod: "true", dev: "false", test: "false")
+    |> Util.parse_check_origin!()
 
 if System.get_env("DISABLE_MQTT") != "true" or config_env() == :test do
   config :teslamate, :mqtt,

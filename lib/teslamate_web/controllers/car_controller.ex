@@ -17,7 +17,8 @@ defmodule TeslaMateWeb.CarController do
     live_render(conn, TeslaMateWeb.CarLive.Index,
       session: %{
         "settings" => conn.assigns[:settings],
-        "locale" => get_session(conn, :locale)
+        "locale" => get_session(conn, :locale),
+        "user_session_token" => get_session(conn, :user_session_token)
       }
     )
   end
@@ -57,8 +58,12 @@ defmodule TeslaMateWeb.CarController do
   end
 
   defp redirect_unless_signed_in(%Plug.Conn{assigns: %{signed_in?: true}} = conn, _), do: conn
-  defp redirect_unless_signed_in(conn, _opts), do: conn |> redirect(to: sign_in(conn)) |> halt()
 
-  defp sign_in(conn), do: Routes.live_path(conn, TeslaMateWeb.SignInLive.Index)
+  defp redirect_unless_signed_in(conn, _opts) do
+    conn
+    |> redirect(to: Routes.live_path(conn, TeslaMateWeb.SignInLive.Index))
+    |> halt()
+  end
+
   defp import_page(conn), do: Routes.live_path(conn, TeslaMateWeb.ImportLive.Index)
 end

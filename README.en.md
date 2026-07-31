@@ -1,158 +1,94 @@
-# TeslaMate
+# TeslaMate CN unified vehicle platform
 
-[简体中文主说明](README.md) · [Windows / Linux / macOS 原生安装（不使用 Docker）](NATIVE_INSTALL.zh-CN.md)
+[简体中文主说明](README.md) · [Lossless 1Panel upgrade guide (Chinese)](UPGRADE.zh-CN.md) · [Security model (Chinese)](PLATFORM_SECURITY.zh-CN.md)
 
-[![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](https://github.com/teslamate-org/teslamate/blob/main/LICENSE)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10859/badge)](https://www.bestpractices.dev/projects/10859)
-[![CI](https://github.com/teslamate-org/teslamate/actions/workflows/devops.yml/badge.svg)](https://github.com/teslamate-org/teslamate/actions/workflows/devops.yml)
-[![Publish Docker images](https://github.com/teslamate-org/teslamate/actions/workflows/buildx.yml/badge.svg)](https://github.com/teslamate-org/teslamate/actions/workflows/buildx.yml)
-[![Coverage](https://coveralls.io/repos/github/teslamate-org/teslamate/badge.svg?branch=main)](https://coveralls.io/github/teslamate-org/teslamate?branch=main)
-[![current version](https://img.shields.io/docker/v/teslamate/teslamate/latest)](https://hub.docker.com/r/teslamate/teslamate)
-[![docker image size](https://img.shields.io/docker/image-size/teslamate/teslamate/latest)](https://hub.docker.com/r/teslamate/teslamate)
-[![docker pulls](https://img.shields.io/docker/pulls/teslamate/teslamate?color=%23099cec)](https://hub.docker.com/r/teslamate/teslamate)
+This community fork keeps TeslaMate's proven collector, MQTT integration, and PostgreSQL telemetry schema, while providing a new multi-user Phoenix LiveView application. The home dashboard, trips, battery, charging, analytics, accounts, and per-vehicle authorization are served by one application on `127.0.0.1:3000`. Port 4000 and a public Grafana service are no longer part of the default deployment.
 
-A powerful, self-hosted data logger for your Tesla.
+This is not the official `teslamate-org/teslamate` distribution. Review the changes and deployment documentation before giving it Tesla credentials or vehicle location data. The official upstream project and documentation remain available at [github.com/teslamate-org/teslamate](https://github.com/teslamate-org/teslamate) and [docs.teslamate.org](https://docs.teslamate.org/).
 
-- Written in **[Elixir](https://elixir-lang.org/)**
-- Data is stored in a **Postgres** database
-- Visualization and data analysis with **Grafana**
-- Vehicle data is published to a local **[MQTT](https://en.wikipedia.org/wiki/MQTT)** Broker
+## What is included
 
-## ⚠️ Security Warning
+- A responsive, categorized UI for current vehicle data, location, trips, routes, battery trends, charging, cost, and explainable usage analytics.
+- Platform registration and password login. Registration can be disabled at runtime.
+- An administrator role that can see all collected vehicles and manage users.
+- Member accounts that can only query explicitly assigned vehicles.
+- One-time, expiring vehicle claim codes. The raw code is shown once and only a SHA-256 hash is stored.
+- Authorization-aware trip and GPX queries to prevent cross-tenant IDOR access.
+- Additive migrations in the existing `private` PostgreSQL schema; existing cars, positions, drives, charges, geofences, addresses, and encrypted Tesla tokens are retained.
+- A disabled `legacy-grafana` Compose profile that preserves the existing `teslamate-grafana-data` volume without publishing a host port.
 
-> [!CAUTION]
-> **Use Official Versions Only**
+## Runtime architecture
 
-To protect yourself from malicious forks, malware, and data theft, please ensure you only obtain TeslaMate from the official source:
+| Component   | Default deployment                                                 |
+| ----------- | ------------------------------------------------------------------ |
+| `teslamate` | Collector plus unified web application on container/host port 3000 |
+| PostgreSQL  | Existing external `postgres:5432` for the 1Panel Compose file      |
+| Mosquitto   | Internal Docker network only; no host port                         |
+| Grafana     | Disabled compatibility profile; no host port                       |
 
-- Official Repository: [https://github.com/teslamate-org/teslamate](https://github.com/teslamate-org/teslamate)
-- Official Documentation: [https://docs.teslamate.org](https://docs.teslamate.org/)
+The 1Panel Compose file never creates or replaces PostgreSQL. It joins `${PANEL_NETWORK:-1panel-network}` so that the existing `postgres` hostname remains resolvable.
 
-We have received reports of deceptive websites and unofficial mobile apps (e.g. on the App Store) using the TeslaMate name to distribute modified or harmful versions. If you are using a version from another source, your Tesla account credentials and vehicle data may be at risk.
+## Required configuration
 
-## Documentation
+Copy `.env.example` to `.env` and preserve it with mode 600. Production requires stable, independent values for:
 
-The documentation is available at [https://docs.teslamate.org](https://docs.teslamate.org/)
-
-## Environment variables
-
-All configuration goes through `.env`. A fully-documented `.env.example` is
-checked into this repository — copy it to `.env` and uncomment what you need:
-
-```bash
-cp .env.example .env
-# edit .env
+```text
+DATABASE_PASS
+ENCRYPTION_KEY
+SECRET_KEY_BASE
+SIGNING_SALT
 ```
 
-The security-relevant knobs are summarised below. **All default to safe /
-LAN-friendly values** so the upgrade from older versions is transparent.
+Never commit `.env`. Do not change `ENCRYPTION_KEY` on an existing deployment, because it protects the stored Tesla access and refresh tokens.
 
-| Variable                         | Default           | Purpose                                                         |
-| -------------------------------- | ----------------- | --------------------------------------------------------------- |
-| `TESLAMATE_STRICT_AUTH`          | `false`           | Force `/sign_in` for every browser route                        |
-| `TESLAMATE_PROTECT_API`          | `false`           | Require session for `/api/car/*/logging/*`                      |
-| `TESLAMATE_API_ORIGIN_CHECK`     | `true`            | Reject cross-origin mutating requests on `/api/*`               |
-| `TESLAMATE_LOGIN_MAX_PER_IP`     | `10`              | Failed sign-ins per IP per window before 429                    |
-| `TESLAMATE_LOGIN_MAX_PER_EMAIL`  | `5`               | Failed sign-ins per email per window before 429                 |
-| `TESLAMATE_LOGIN_WINDOW_SECONDS` | `600`             | Rate-limit window                                               |
-| `TESLAMATE_LOGIN_AUDIT_CAPACITY` | `100`             | Size of in-memory login-audit ring buffer                       |
-| `TESLAMATE_HSTS`                 | `false`           | Add HSTS header (only when serving exclusively over HTTPS)      |
-| `TESLAMATE_FORCE_SSL`            | `false`           | Redirect HTTP -> HTTPS (disable when a reverse proxy does this) |
-| `TESLAMATE_TRUSTED_PROXIES`      | `""`              | Comma-separated IPs/CIDRs whose `X-Forwarded-For` is trusted    |
-| `EMBED_GRAFANA`                  | `false`           | Opt in to the legacy `/dashboards/*` auth proxy                 |
-| `GRAFANA_PUBLIC_URL`             | `""`              | Public Grafana URL used when `EMBED_GRAFANA=false`              |
-| `GRAFANA_PROXY_USER`             | `teslamate@local` | Header user used only by the optional auth proxy                |
+For an HTTPS reverse proxy, configure the real host/origin and trusted proxy network:
 
-For full descriptions and security implications see the comments in
-[`.env.example`](.env.example).
+```dotenv
+VIRTUAL_HOST=car.example.com
+CHECK_ORIGIN=https://car.example.com
+TESLAMATE_TRUSTED_PROXIES=the proxy IP or CIDR
+TESLAMATE_API_ORIGIN_CHECK=true
+```
 
-## Features
+The only published port is:
 
-### General
+```yaml
+ports:
+  - "127.0.0.1:3000:3000"
+```
 
-- High precision drive data recording
-- No additional vampire drain: the car will fall asleep as soon as possible
-- Automatic address lookup
-- Easy integration into Home Assistant (via MQTT)
-- Easy integration into Node-Red & Telegram (via MQTT)
-- Geo-fencing feature to create custom locations
-- Supports multiple vehicles per Tesla Account
-- Charge cost tracking
-- Import from TeslaFi and tesla-apiscraper
-- Customizable theme mode (light, dark, or system default)
+## First administrator
 
-### Dashboards
+After the container has migrated the database, create or reset the first administrator without putting a plaintext password in shell history:
 
-Sample screenshots of bundled dashboards can be seen by clicking the links below.
+```bash
+read -r -p 'Administrator email: ' ADMIN_EMAIL
+read -r -s -p 'New password (12+ characters): ' ADMIN_PASSWORD
+printf '\n'
 
-- [Battery Health](https://docs.teslamate.org/docs/screenshots/#battery-health)
-- [Charge Level](https://docs.teslamate.org/docs/screenshots/#charge-level)
-- [Charges (Energy added / used)](https://docs.teslamate.org/docs/screenshots#charges)
-- [Charge Details](https://docs.teslamate.org/docs/screenshots#charge-details)
-- [Charging Stats](https://docs.teslamate.org/docs/screenshots#charging-stats)
-- [Database Information](https://docs.teslamate.org/docs/screenshots/#database-information)
-- [Drive Stats](https://docs.teslamate.org/docs/screenshots#drive-stats)
-- [Drives (Distance / Energy consumed (net))](https://docs.teslamate.org/docs/screenshots/#drives)
-- [Drive Details](https://docs.teslamate.org/docs/screenshots/#drive-details)
-- [Efficiency (Consumption (net / gross))](https://docs.teslamate.org/docs/screenshots#efficiency)
-- [Locations (addresses)](https://docs.teslamate.org/docs/screenshots/#location-addresses)
-- [Mileage](https://docs.teslamate.org/docs/screenshots/#mileage)
-- [Overview](https://docs.teslamate.org/docs/screenshots/#overview)
-- [Projected Range (battery degradation)](https://docs.teslamate.org/docs/screenshots#projected-range)
-- [States (see when your car was online or asleep)](https://docs.teslamate.org/docs/screenshots#states)
-- [Statistics](https://docs.teslamate.org/docs/screenshots/#statistics)
-- [Timeline](https://docs.teslamate.org/docs/screenshots/#timeline)
-- [Trip](https://docs.teslamate.org/docs/screenshots/#trip)
-- [Updates (History of installed updates)](https://docs.teslamate.org/docs/screenshots#updates)
-- [Vampire Drain](https://docs.teslamate.org/docs/screenshots#vampire-drain)
-- [Visited (Lifetime driving map)](https://docs.teslamate.org/docs/screenshots/#visited-lifetime-driving-map)
+docker compose -f docker-compose.1panel.yml exec \
+  -e TESLAMATE_ADMIN_EMAIL="$ADMIN_EMAIL" \
+  -e TESLAMATE_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+  -e TESLAMATE_ADMIN_NAME="Platform administrator" \
+  teslamate bin/teslamate eval 'TeslaMate.Release.create_admin_from_env()'
 
-## Screenshots
+unset ADMIN_PASSWORD
+```
 
-Sneak peak into TeslaMate interface and bundled dashboards. See [the docs](https://docs.teslamate.org/docs/screenshots) for additional screenshots.
+Sign in at `/sign_in`. Tesla collector credentials are managed separately on the administrator-only Tesla connection page.
 
-![Web Interface](/website/static/screenshots/web_interface.png)
+## Safety rules
 
-![Drive Details](/website/static/screenshots/drive.png)
+Do not run any of the following during an upgrade:
 
-![Battery Health](/website/static/screenshots/battery-health.png)
+```bash
+docker compose down -v
+docker volume rm teslamate-grafana-data
+rm -rf /var/lib/grafana
+```
 
-## License
+Back up the external PostgreSQL database before pulling or rebuilding. The complete port handover, database verification, account bootstrap, authorization acceptance test, and non-destructive rollback procedure are documented in [UPGRADE.zh-CN.md](UPGRADE.zh-CN.md).
 
-TeslaMate is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
+## License and attribution
 
-This license is designed to ensure that TeslaMate remains free and open for everyone. By using, modifying, or building upon this project, you agree to the following:
-
-- Reciprocal Sharing (Copyleft): If you modify TeslaMate or incorporate it into another project, you must release the entire source code of your version under the same AGPLv3 license.
-- Universal Access to Source: This requirement applies regardless of how you provide the software to others—whether you distribute it as a downloadable application (e.g., in an App Store), as a pre-packaged image, or provide access to its functionality via a network service (SaaS).
-- No Closed-Source Derivatives: We do not permit the use of TeslaMate or its components in closed-source commercial products. If your software interacts with or relies on TeslaMate, it must be open-source. If you build upon this project, you are expected to contribute back to the community.
-
-For the full legal terms, please refer to the [LICENSE](https://github.com/teslamate-org/teslamate/blob/main/LICENSE) file.
-
-Key Requirements:
-
-- Copyleft: If you modify TeslaMate and distribute it (e.g., as an app, binary, or package) or offer it as a service over a network (SaaS), you must make your modified source code available to all users under the same AGPLv3 license.
-- No "Closed" Forks: This license ensures that improvements made by commercial entities or third parties remain open to the entire community.
-- Attribution: You must keep all original copyright notices and license information intact.
-
-**Trademark Policy**: The use of the TeslaMate name and logo is governed by our [Trademark Policy](https://github.com/teslamate-org/teslamate/blob/main/TRADEMARK.md).
-
-**Contributions:** All contributors must sign our [Contributor License Agreement](https://github.com/teslamate-org/legal/blob/main/CLA.md). This is handled via cla-assistant.io automatically on first PR and does not take long. **Why do we need this?** It guarantees that TeslaMate will **always remain Free Software** (AGPL-3.0) and allows the [teslamate-org](https://github.com/teslamate-org) to legally defend the project against license violations.
-
-## Star History
-
-<!-- markdownlint-disable MD033 -->
-<a href="https://www.star-history.com/#teslamate-org/teslamate&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=teslamate-org/teslamate&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=teslamate-org/teslamate&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=teslamate-org/teslamate&type=date&legend=top-left" />
- </picture>
-</a>
-<!-- markdownlint-enable MD033 -->
-
-## Credits
-
-- Initial Author: Adrian Kumpf
-- List of Contributors:
-- [![TeslaMate Contributors](https://contrib.rocks/image?repo=teslamate-org/teslamate)](https://github.com/teslamate-org/teslamate/graphs/contributors)
+TeslaMate and this fork are licensed under the [GNU Affero General Public License v3.0](LICENSE). Original copyright, license, and trademark notices remain in the repository. The TeslaMate name and logo are subject to the upstream [Trademark Policy](TRADEMARK.md).

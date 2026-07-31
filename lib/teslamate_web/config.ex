@@ -1,17 +1,15 @@
 defmodule TeslaMateWeb.Config do
   @moduledoc """
-  Centralised runtime configuration for TeslaMate's security and embedding
-  switches. Every getter reads its env var with a documented default and
+  Centralised runtime configuration for TeslaMate's security switches.
+  Every getter reads its env var with a documented default and
   normalises the value to `true | false | string`. This guarantees that the
   `TESLAMATE_*` flags behave the same regardless of where they are consulted
   (router, plugs, LiveView, layout).
 
   ## Defaults policy
 
-  Defaults favour **compatibility** for LAN deployments and **safety** for
-  internet-facing deployments. The single switch you MUST set when going
-  public is `TESLAMATE_TRUSTED_PROXIES` (otherwise `X-Forwarded-For` is
-  trusted from any caller).
+  The unified platform always requires a platform session for vehicle data
+  and always restricts control APIs to active administrators.
 
   See `.env.example` for the canonical list and recommended values.
   """
@@ -31,24 +29,6 @@ defmodule TeslaMateWeb.Config do
   def truthy?(_), do: false
 
   # ---- individual switches ----------------------------------------------
-
-  @doc """
-  Strict auth gate for browser routes. Default: `false` (backward
-  compatibility with TeslaMate 1.x).
-
-  Set to `true` when deploying behind a TLS reverse proxy on the internet.
-  """
-  def strict_auth?, do: truthy?(System.get_env("TESLAMATE_STRICT_AUTH", "false"))
-
-  @doc """
-  Require an authenticated session for `/api/car/:id/logging/{resume,suspend}`.
-  Default: `false` (backward compatibility — those endpoints were public).
-
-  Set to `true` for hardening. Note: the LiveView's UI depends on calling
-  these endpoints, so as long as the browser has a session cookie the
-  requests still succeed.
-  """
-  def protect_api?, do: truthy?(System.get_env("TESLAMATE_PROTECT_API", "false"))
 
   @doc """
   Reject mutating `/api/*` requests whose `Origin` or `Referer` does not
@@ -76,13 +56,12 @@ defmodule TeslaMateWeb.Config do
   """
   def hsts?, do: truthy?(System.get_env("TESLAMATE_HSTS", "false"))
 
-  @doc """
-  Reverse-proxy Grafana under `/dashboards/*`. Default: `false`.
+  @doc "Allow creation of member accounts. New accounts have no vehicle access."
+  def account_sign_up?, do: truthy?(System.get_env("TESLAMATE_ALLOW_SIGN_UP", "true"))
 
-  Enable only when the Grafana auth proxy settings are explicitly configured.
-  Direct Grafana login on port 3000 is the default.
-  """
-  def embed_grafana?, do: truthy?(System.get_env("EMBED_GRAFANA", "false"))
+  @doc "Lifetime of a platform login session in days."
+  def account_session_days,
+    do: env_int("TESLAMATE_ACCOUNT_SESSION_DAYS", 30) |> min(90)
 
   # ---- rate limiting ----------------------------------------------------
 
@@ -96,12 +75,6 @@ defmodule TeslaMateWeb.Config do
   def login_window_seconds, do: env_int("TESLAMATE_LOGIN_WINDOW_SECONDS", @default_window_seconds)
   def login_audit_capacity, do: env_int("TESLAMATE_LOGIN_AUDIT_CAPACITY", @default_audit_capacity)
 
-  # ---- Grafana integration ---------------------------------------------
-
-  def grafana_upstream, do: System.get_env("GRAFANA_UPSTREAM", "http://grafana:3000")
-  def grafana_public_url, do: System.get_env("GRAFANA_PUBLIC_URL", "")
-  def grafana_proxy_user, do: System.get_env("GRAFANA_PROXY_USER", "teslamate@local")
-
   # ---- trusted proxies --------------------------------------------------
 
   @doc """
@@ -114,8 +87,7 @@ defmodule TeslaMateWeb.Config do
 
   # ---- CSP tuning -------------------------------------------------------
 
-  def csp_script_src,
-    do: System.get_env("TESLAMATE_CSP_SCRIPT_SRC", "'self' 'unsafe-inline' 'unsafe-eval'")
+  def csp_script_src, do: System.get_env("TESLAMATE_CSP_SCRIPT_SRC", "'self'")
 
   def csp_style_src, do: System.get_env("TESLAMATE_CSP_STYLE_SRC", "'self' 'unsafe-inline'")
   def csp_frame_ancestors, do: System.get_env("TESLAMATE_CSP_FRAME_ANCESTORS", "'none'")

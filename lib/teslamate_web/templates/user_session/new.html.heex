@@ -1,0 +1,54 @@
+<section class="auth-page" aria-labelledby="login-title">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand-mark"><i class="mdi mdi-car-connected"></i></span>
+      <div>
+        <p class="auth-eyebrow">TESLAMATE CN</p>
+        <h1 id="login-title">欢迎回来</h1>
+        <p>登录后只会看到与你账号绑定的车辆。</p>
+      </div>
+    </div>
+
+    <%= if @error do %>
+      <div class="auth-alert" role="alert"><%= @error %></div>
+    <% end %>
+
+    <%= form_for @conn, Routes.user_session_path(@conn, :create),
+      [as: :user, class: "auth-form"], fn f -> %>
+      <div class="field">
+        <%= label f, :email, "邮箱", class: "label" %>
+        <div class="control has-icons-left">
+          <%= email_input f, :email,
+            value: @email,
+            required: true,
+            autocomplete: "username",
+            inputmode: "email",
+            class: "input",
+            placeholder: "name@example.com" %>
+          <span class="icon is-left"><i class="mdi mdi-email-outline"></i></span>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= label f, :password, "密码", class: "label" %>
+        <div class="control has-icons-left">
+          <%= password_input f, :password,
+            required: true,
+            autocomplete: "current-password",
+            class: "input",
+            placeholder: "至少 12 位" %>
+          <span class="icon is-left"><i class="mdi mdi-lock-outline"></i></span>
+        </div>
+      </div>
+
+      <%= submit "登录", class: "button is-primary is-fullwidth auth-submit" %>
+    <% end %>
+
+    <%= if TeslaMate.Accounts.sign_up_allowed?() do %>
+      <p class="auth-switch">
+        还没有账号？
+        <%= link "创建账号", to: Routes.user_registration_path(@conn, :new) %>
+      </p>
+    <% end %>
+  </div>
+</section>

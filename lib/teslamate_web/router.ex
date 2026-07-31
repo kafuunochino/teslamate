@@ -1,12 +1,18 @@
 defmodule TeslaMateWeb.Router do
   use TeslaMateWeb, :router
 
+  import TeslaMateWeb.UserAuth,
+    only: [
+      fetch_current_user: 2,
+      redirect_if_authenticated: 2,
+      require_admin: 2,
+      require_authenticated_user: 2
+    ]
+
   alias TeslaMate.Settings
 
   pipeline :browser do
     plug :accepts, ["html"]
-    # Resolve the real client IP and stash it in `conn.private[:client_ip]`
-    # and the cookie session (so LiveViews can read it from `mount/3`).
     plug TeslaMateWeb.Plugs.ClientIP
     plug :fetch_session
     plug :fetch_live_flash
@@ -22,68 +28,88 @@ defmodule TeslaMateWeb.Router do
       cldr: TeslaMateWeb.Cldr
 
     plug TeslaMateWeb.Plugs.PutSession
-
     plug :put_root_layout, {TeslaMateWeb.LayoutView, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug TeslaMateWeb.Plugs.SecurityHeaders
     plug :fetch_settings
+    plug :fetch_current_user
   end
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug TeslaMateWeb.Plugs.ClientIP
+    plug :fetch_session
+    plug :fetch_current_user
   end
 
-  # Light-touch auth gate. Always safe to apply (assigns :signed_in? and is a
-  # no-op redirect-wise), so opting in by setting TESLAMATE_STRICT_AUTH=true
-  # does not require any further route changes.
-  pipeline :require_signed_in do
-    plug TeslaMateWeb.Plugs.RequireSignedIn
+  pipeline :redirect_if_authenticated do
+    plug :redirect_if_authenticated
   end
 
-  # Reverse-proxy pipeline for the embedded Grafana dashboards. Phoenix does
-  # not allow defining plugs at the scope level, so the proxy plug lives here.
-  pipeline :grafana_proxy do
-    plug TeslaMateWeb.Plugs.GrafanaProxy
+  pipeline :require_user do
+    plug :require_authenticated_user
   end
 
-  # Runtime-configurable gate for /api/*. Reads TESLAMATE_PROTECT_API on every
-  # request and either enforces the sign-in check or is a no-op.
+  pipeline :require_admin do
+    plug :require_admin
+  end
+
   pipeline :api_gate do
     plug TeslaMateWeb.Plugs.ApiGate
   end
 
-  # Block cross-origin mutating requests on /api/* unless explicitly
-  # disabled by the operator (e.g. when calling the API via curl from a
-  # different network).
   pipeline :api_origin_check do
     plug TeslaMateWeb.Plugs.ApiOriginCheck
   end
 
   scope "/", TeslaMateWeb do
-    pipe_through :browser
+    pipe_through [:browser, :redirect_if_authenticated]
 
-    get "/", CarController, :index
-    get "/drive/:id/gpx", DriveController, :gpx
+    get "/sign_in", UserSessionController, :new
+    post "/sign_in", UserSessionController, :create
+    get "/register", UserRegistrationController, :new
+    post "/register", UserRegistrationController, :create
   end
 
-  # All LiveViews share a single live_session so navigation between pages does
-  # not re-establish the session. The login page itself is always public; the
-  # rest flow through `TeslaMateWeb.Plugs.RequireSignedIn`.
-  #
-  # That plug is a no-op by default and only enforces the redirect when the
-  # operator opts in via `TESLAMATE_STRICT_AUTH=true`, so existing deployments
-  # keep their prior behaviour automatically.
-  live_session :default do
-    scope "/", TeslaMateWeb do
-      pipe_through :browser
+  scope "/", TeslaMateWeb do
+    pipe_through [:browser, :require_user]
 
-      live "/sign_in", SignInLive.Index
+    delete "/sign_out", UserSessionController, :delete
+    get "/account", UserSettingsController, :edit
+    put "/account/profile", UserSettingsController, :update_profile
+    put "/account/password", UserSettingsController, :update_password
+    get "/drive/:id/gpx", DriveController, :gpx
+
+    live_session :platform,
+      on_mount: [
+        {TeslaMateWeb.InitAssigns, :locale},
+        {TeslaMateWeb.UserAuth, :ensure_authenticated}
+      ] do
+      live "/", DashboardLive.Home, :home, as: :dashboard
+      live "/trips", DashboardLive.Trips, :trips, as: :dashboard
+      live "/trips/:id", DashboardLive.Trip, :trip, as: :dashboard
+      live "/battery", DashboardLive.Battery, :battery, as: :dashboard
+      live "/charging", DashboardLive.Charging, :charging, as: :dashboard
+      live "/analysis", DashboardLive.Analysis, :analysis, as: :dashboard
+      live "/vehicles", VehicleLive.Index, :index
     end
+  end
 
-    scope "/", TeslaMateWeb do
-      pipe_through [:browser, :require_signed_in]
+  scope "/admin", TeslaMateWeb do
+    pipe_through [:browser, :require_user, :require_admin]
 
+    # Keep legacy operational pages available to administrators while the
+    # end-user UI is fully served by the unified platform above.
+    get "/collector", CarController, :index
+
+    live_session :platform_admin,
+      on_mount: [
+        {TeslaMateWeb.InitAssigns, :locale},
+        {TeslaMateWeb.UserAuth, :ensure_admin}
+      ] do
+      live "/users", AdminLive.Users, :index
+      live "/tesla-account", SignInLive.Index, :index
       live "/settings", SettingsLive.Index
       live "/geo-fences", GeoFenceLive.Index
       live "/geo-fences/new", GeoFenceLive.Form
@@ -93,22 +119,11 @@ defmodule TeslaMateWeb.Router do
     end
   end
 
-  # The /api routes use a runtime check inside `TeslaMateWeb.Plugs.ApiGate`
-  # rather than `if`-gating the `pipe_through`, because Phoenix resolves the
-  # pipelines at compile time. Reading the env var at runtime means a user can
-  # flip `TESLAMATE_PROTECT_API` without rebuilding.
   scope "/api", TeslaMateWeb do
     pipe_through [:api, :api_gate, :api_origin_check]
 
     put "/car/:id/logging/resume", CarController, :resume_logging
     put "/car/:id/logging/suspend", CarController, :suspend_logging
-  end
-
-  # Anything below /dashboards/* is the embedded Grafana reverse proxy. The
-  # plug enforces the same auth gate as the rest of the browser and falls back
-  # to a 302 redirect to the legacy port-3000 URL when EMBED_GRAFANA is off.
-  scope "/dashboards", TeslaMateWeb do
-    pipe_through [:browser, :require_signed_in, :grafana_proxy]
   end
 
   def fetch_settings(conn, _opts) do

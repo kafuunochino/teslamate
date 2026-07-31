@@ -96,6 +96,7 @@ defmodule TeslaMateWeb do
       import Phoenix.View
 
       import TeslaMateWeb.ErrorHelpers
+      import TeslaMateWeb.PlatformComponents
       use Gettext, backend: TeslaMateWeb.Gettext
       alias TeslaMateWeb.Router.Helpers, as: Routes
 

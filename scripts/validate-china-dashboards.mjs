@@ -502,18 +502,48 @@ if (nixModule.includes('uid = "TeslaMate";')) {
   );
 }
 
-const layoutView = fs.readFileSync(
-  path.join(projectRoot, "lib", "teslamate_web", "views", "layout_view.ex"),
+const rootLayout = fs.readFileSync(
+  path.join(
+    projectRoot,
+    "lib",
+    "teslamate_web",
+    "templates",
+    "layout",
+    "root.html.heex",
+  ),
   "utf8",
 );
-if (layoutView.includes('Path.wildcard("grafana/dashboards/*.json")')) {
-  errors.push(
-    "layout_view.ex: dashboard navigation still scans only the old root directory",
-  );
+for (const [route, label] of [
+  [":home", "首页"],
+  [":trips", "行程轨迹"],
+  [":battery", "电池"],
+  [":charging", "充电"],
+  [":analysis", "分析"],
+  ["VehicleLive.Index", "车辆中心"],
+  ["AdminLive.Users", "用户与权限"],
+]) {
+  if (!rootLayout.includes(route) || !rootLayout.includes(label)) {
+    errors.push(`root.html.heex: unified navigation omits ${label}`);
+  }
 }
-for (const category of categoryPaths.slice(0, 6)) {
-  if (!layoutView.includes(category)) {
-    errors.push(`layout_view.ex: dashboard navigation omits ${category}`);
+
+const router = fs.readFileSync(
+  path.join(projectRoot, "lib", "teslamate_web", "router.ex"),
+  "utf8",
+);
+for (const route of [
+  'get "/sign_in"',
+  'post "/sign_in"',
+  'get "/register"',
+  'live "/trips"',
+  'live "/battery"',
+  'live "/charging"',
+  'live "/analysis"',
+  'live "/vehicles"',
+  'live "/users"',
+]) {
+  if (!router.includes(route)) {
+    errors.push(`router.ex: unified platform route is missing: ${route}`);
   }
 }
 
@@ -556,6 +586,7 @@ for (const directAuthSetting of [
   "GF_AUTH_DISABLE_LOGIN_FORM=false",
   "GF_AUTH_DISABLE_SIGNOUT_MENU=false",
   "GF_USERS_ALLOW_SIGN_UP=false",
+  "GF_SECURITY_ALLOW_EMBEDDING=false",
 ]) {
   if (!grafanaDockerfile.includes(directAuthSetting)) {
     errors.push(
@@ -590,24 +621,67 @@ for (const disabledLayoutFlag of [
   }
 }
 
-const dockerCompose = fs.readFileSync(
-  path.join(projectRoot, "docker-compose.zh-CN.yml"),
+function serviceBlock(compose, serviceName) {
+  const match = compose.match(
+    new RegExp(
+      `^  ${serviceName}:\\n([\\s\\S]*?)(?=^  [a-zA-Z0-9_-]+:\\s*$|^volumes:\\s*$|(?![\\s\\S]))`,
+      "m",
+    ),
+  );
+  return match?.[0] ?? "";
+}
+
+for (const composeFile of [
+  "docker-compose.zh-CN.yml",
+  "docker-compose.1panel.yml",
+]) {
+  const compose = fs.readFileSync(path.join(projectRoot, composeFile), "utf8");
+  const appService = serviceBlock(compose, "teslamate");
+  const grafanaService = serviceBlock(compose, "grafana");
+
+  for (const required of [
+    "PORT: 3000",
+    '"127.0.0.1:3000:3000"',
+    "SECRET_KEY_BASE:",
+    "SIGNING_SALT:",
+  ]) {
+    if (!appService.includes(required)) {
+      errors.push(`${composeFile}: unified service is missing ${required}`);
+    }
+  }
+
+  if (/4000:4000|PORT:\s*4000/.test(compose)) {
+    errors.push(`${composeFile}: legacy port 4000 is still exposed`);
+  }
+  if (!grafanaService.includes('profiles: ["legacy-grafana"]')) {
+    errors.push(`${composeFile}: Grafana must remain an opt-in legacy profile`);
+  }
+  if (/^\s{4}ports:/m.test(grafanaService)) {
+    errors.push(`${composeFile}: legacy Grafana must not publish a host port`);
+  }
+  if (!grafanaService.includes("teslamate-grafana-data:/var/lib/grafana")) {
+    errors.push(`${composeFile}: legacy Grafana data volume is not preserved`);
+  }
+}
+
+const onePanelCompose = fs.readFileSync(
+  path.join(projectRoot, "docker-compose.1panel.yml"),
   "utf8",
 );
-for (const composeSecuritySetting of [
-  '"127.0.0.1:4000:4000"',
-  '"127.0.0.1:3000:3000"',
-  'GF_AUTH_ANONYMOUS_ENABLED: "false"',
-  'GF_AUTH_BASIC_ENABLED: "true"',
-  'GF_AUTH_PROXY_ENABLED: "false"',
-  'GF_AUTH_DISABLE_LOGIN_FORM: "false"',
-  'GF_AUTH_DISABLE_SIGNOUT_MENU: "false"',
-  'GF_USERS_ALLOW_SIGN_UP: "false"',
-  "teslamate-grafana-data:/var/lib/grafana",
+if (/^  database:/m.test(onePanelCompose)) {
+  errors.push(
+    "docker-compose.1panel.yml: must not create or replace PostgreSQL",
+  );
+}
+for (const externalDatabaseSetting of [
+  "DATABASE_HOST: ${DATABASE_HOST:-postgres}",
+  "DATABASE_PORT: ${DATABASE_PORT:-5432}",
+  "external: true",
+  "name: ${PANEL_NETWORK:-1panel-network}",
 ]) {
-  if (!dockerCompose.includes(composeSecuritySetting)) {
+  if (!onePanelCompose.includes(externalDatabaseSetting)) {
     errors.push(
-      `docker-compose.zh-CN.yml: missing security setting ${composeSecuritySetting}`,
+      `docker-compose.1panel.yml: missing external database setting ${externalDatabaseSetting}`,
     );
   }
 }

@@ -1,6 +1,8 @@
 defmodule TeslaMateWeb.SignInLiveTest do
   use TeslaMateWeb.ConnCase
 
+  @moduletag :signed_in
+
   defp start_api(name) do
     api_name = :"api_#{name}"
 
@@ -16,7 +18,7 @@ defmodule TeslaMateWeb.SignInLiveTest do
   end
 
   test "signs in with api tokens", %{conn: conn} do
-    assert {:ok, view, _html} = live(conn, "/sign_in")
+    assert {:ok, view, _html} = live(conn, "/admin/tesla-account")
 
     render_change(view, :validate, %{tokens: %{access: "$access", refresh: "$refresh"}})
     render_submit(view, :sign_in, %{})

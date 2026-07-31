@@ -1,8 +1,29 @@
-document.querySelector(".navbar-burger").addEventListener("click", function () {
-  const $target = document.getElementById(this.dataset.target);
-  $target.classList.toggle("is-active");
-  this.classList.toggle("is-active");
-});
+const navbarBurger = document.querySelector(".navbar-burger");
+if (navbarBurger) {
+  navbarBurger.addEventListener("click", function () {
+    const $target = document.getElementById(this.dataset.target);
+    $target.classList.toggle("is-active");
+    this.classList.toggle("is-active");
+  });
+}
+
+const sidebar = document.getElementById("platform-sidebar");
+const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+const sidebarOpen = document.getElementById("sidebar-open");
+const sidebarClose = document.getElementById("sidebar-close");
+
+function setSidebar(open) {
+  if (!sidebar || !sidebarBackdrop) return;
+  sidebar.classList.toggle("is-open", open);
+  sidebarBackdrop.classList.toggle("is-open", open);
+  document.documentElement.classList.toggle("is-clipped", open);
+}
+
+if (sidebarOpen) sidebarOpen.addEventListener("click", () => setSidebar(true));
+if (sidebarClose)
+  sidebarClose.addEventListener("click", () => setSidebar(false));
+if (sidebarBackdrop)
+  sidebarBackdrop.addEventListener("click", () => setSidebar(false));
 
 for (const navDropdown of document.querySelectorAll(
   ".navbar-item.has-dropdown",

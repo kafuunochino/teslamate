@@ -4,7 +4,8 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
 
   Sets:
     * `Content-Security-Policy` — restricts scripts/styles/connections to the
-      TeslaMate origin and the embedded Grafana proxy (`/dashboards/*`).
+      unified TeslaMate origin. Frames are disabled because the platform does
+      not embed Grafana or any other privileged application.
       `frame-ancestors` is left configurable via
       `TESLAMATE_CSP_FRAME_ANCESTORS` (default `'none'`) so external webhooks
       cannot embed TeslaMate in an iframe.
@@ -42,12 +43,12 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
       [
         "default-src 'self'",
         "base-uri 'self'",
-        "img-src 'self' data: blob:",
+        "img-src 'self' data: blob: https://tile.openstreetmap.org",
         "font-src 'self' data:",
         "script-src #{script_src()}",
         "style-src #{style_src()}",
-        "connect-src 'self' ws: wss: #{grafana_proxy_origin()}",
-        "frame-src #{grafana_proxy_origin()}",
+        "connect-src 'self' ws: wss:",
+        "frame-src 'none'",
         "frame-ancestors #{frame_ancestors()}",
         "form-action 'self'",
         "object-src 'none'"
@@ -73,8 +74,4 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
   defp style_src, do: TeslaMateWeb.Config.csp_style_src()
   defp frame_ancestors, do: TeslaMateWeb.Config.csp_frame_ancestors()
 
-  # The embedded Grafana lives at `/dashboards/*` on the same origin as the
-  # user. As long as it's reverse-proxied in, we just need to allow self. The
-  # operator can override if they keep Grafana on a separate domain.
-  defp grafana_proxy_origin, do: "'self'"
 end

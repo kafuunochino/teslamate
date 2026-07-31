@@ -1,0 +1,67 @@
+<div class="platform-page">
+  <header class="page-heading">
+    <div><p class="page-kicker">健康与能效</p><h1>电池</h1><p>续航估算、长期变化、充电累计和胎压集中查看。</p></div>
+    <.vehicle_picker :if={@report.cars != []} cars={@report.cars} current_car={@report.car} />
+  </header>
+
+  <.no_vehicle :if={!@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
+
+  <%= if @report.car do %>
+    <% live = @report.live %>
+    <% position = @report.position %>
+    <% battery = (live && live.battery_level) || (position && position.battery_level) %>
+    <% rated_range = (live && live.rated_battery_range_km) || (position && position.rated_battery_range_km) %>
+    <% estimated_range = (live && live.est_battery_range_km) || (position && position.est_battery_range_km) %>
+    <.range_picker days={@report.days} />
+
+    <section class="metrics-grid">
+      <.metric_card title="当前电量" value={if battery, do: "#{battery}%", else: "—"} icon="battery-high" tone="green" />
+      <.metric_card title="额定续航" value={distance(rated_range)} icon="map-marker-distance" tone="blue" />
+      <.metric_card title="预计续航" value={distance(estimated_range)} icon="map-clock-outline" tone="violet" />
+      <.metric_card title="估算损耗" value={if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"} hint="基于同电量归一化额定续航趋势，不等同于官方电池检测" icon="battery-heart-variant" tone="amber" />
+      <.metric_card title="充入电量" value={energy(@report.charge_stats.energy_added)} hint={"最近 #{@report.days} 天"} icon="lightning-bolt" tone="cyan" />
+      <.metric_card title="电池类型" value={if @report.car.settings.lfp_battery, do: "LFP", else: "非 LFP / 未标记"} icon="car-battery" tone="slate" />
+    </section>
+
+    <section :if={@report.degradation} class="data-card degradation-card">
+      <div class="data-card__header"><div><p class="section-kicker">长期趋势</p><h2>归一化满电额定续航</h2></div><span>需结合温度、轮胎、软件版本解读</span></div>
+      <div class="degradation-comparison">
+        <div><span>时间范围初期</span><strong><%= distance(@report.degradation.baseline_range) %></strong></div>
+        <i class="mdi mdi-arrow-right"></i>
+        <div><span>时间范围近期</span><strong><%= distance(@report.degradation.current_range) %></strong></div>
+        <div class="degradation-loss"><span>估算变化</span><strong>-<%= percentage(@report.degradation.loss_percent) %></strong></div>
+      </div>
+    </section>
+
+    <.bar_chart
+      title="每日归一化满电额定续航"
+      rows={Enum.map(@report.history, &%{period: &1.period, value: &1.full_range})}
+      unit=" km"
+      empty="当前范围内缺少足够的电量与额定续航样本"
+    />
+
+    <div class="content-grid">
+      <section class="data-card">
+        <div class="data-card__header"><h2>充电累计</h2></div>
+        <div class="detail-grid">
+          <div><span>充电会话</span><strong><%= @report.charge_stats.count %> 次</strong></div>
+          <div><span>充入电量</span><strong><%= energy(@report.charge_stats.energy_added) %></strong></div>
+          <div><span>电网取电</span><strong><%= energy(@report.charge_stats.energy_used) %></strong></div>
+          <div><span>累计费用</span><strong><%= money(@report.charge_stats.cost) %></strong></div>
+          <div><span>平均结束电量</span><strong><%= percentage(@report.charge_stats.average_end_level) %></strong></div>
+          <div><span>累计充电时长</span><strong><%= duration(@report.charge_stats.duration_min) %></strong></div>
+        </div>
+      </section>
+
+      <section class="data-card">
+        <div class="data-card__header"><h2>最近胎压</h2><span><%= date_time(Map.get(@report.pressures, :measured_at)) %></span></div>
+        <div class="tire-grid">
+          <div><span>左前</span><strong><%= pressure(Map.get(@report.pressures, :fl)) %></strong></div>
+          <div><span>右前</span><strong><%= pressure(Map.get(@report.pressures, :fr)) %></strong></div>
+          <div><span>左后</span><strong><%= pressure(Map.get(@report.pressures, :rl)) %></strong></div>
+          <div><span>右后</span><strong><%= pressure(Map.get(@report.pressures, :rr)) %></strong></div>
+        </div>
+      </section>
+    </div>
+  <% end %>
+</div>

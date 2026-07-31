@@ -1,11 +1,18 @@
 defmodule TeslaMateWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :teslamate
 
+  @session_signing_salt Application.compile_env!(:teslamate, TeslaMateWeb.Endpoint)
+                        |> Keyword.fetch!(:live_view)
+                        |> Keyword.fetch!(:signing_salt)
+
   @session_options [
     store: :cookie,
     key: "_teslamate_key",
-    signing_salt: "yt5O3CAQ",
-    same_site: "Strict"
+    signing_salt: @session_signing_salt,
+    same_site: "Strict",
+    secure: Mix.env() == :prod,
+    http_only: true,
+    max_age: 60 * 60 * 24 * 30
   ]
 
   plug TeslaMateWeb.HealthCheck

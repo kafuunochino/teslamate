@@ -2,20 +2,15 @@ defmodule TeslaMateWeb.DriveController do
   use TeslaMateWeb, :controller
 
   require Logger
-  import Ecto.Query
-
-  alias TeslaMate.Log.{Drive, Position}
-  alias TeslaMate.Repo
+  alias TeslaMate.Fleet
 
   def gpx(conn, %{"id" => id}) do
-    drive =
-      Drive
-      |> Repo.get(id)
-      |> Repo.preload(positions: from(p in Position, order_by: p.date))
+    case Fleet.trip(conn.assigns.current_user, id) do
+      nil ->
+        conn |> send_resp(404, gettext("Drive not found"))
 
-    case drive do
-      nil -> conn |> send_resp(404, gettext("Drive not found"))
-      drive -> send_gpx_file(conn, drive)
+      %{drive: drive, positions: positions} ->
+        send_gpx_file(conn, %{drive | positions: positions})
     end
   end
 

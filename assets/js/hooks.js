@@ -114,6 +114,7 @@ import {
   Icon,
   Circle,
   CircleMarker,
+  Polyline,
 } from "leaflet";
 
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -336,6 +337,79 @@ export const SimpleMap = {
     if (this.map) {
       this.map.remove();
     }
+  },
+};
+
+export const PlatformMap = {
+  mounted() {
+    const raw = JSON.parse(this.el.dataset.points || "[]");
+    const points = raw
+      .map((point) => ({
+        ...point,
+        latitude: Number(point.latitude),
+        longitude: Number(point.longitude),
+      }))
+      .filter(
+        (point) =>
+          Number.isFinite(point.latitude) && Number.isFinite(point.longitude),
+      );
+
+    if (points.length === 0) return;
+
+    const map = new M(this.el, { zoomControl: true, preferCanvas: true });
+    this.map = map;
+
+    new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+    }).addTo(map);
+
+    const coordinates = points.map((point) => [
+      point.latitude,
+      point.longitude,
+    ]);
+
+    if (this.el.dataset.mode === "route" && coordinates.length > 1) {
+      const route = new Polyline(coordinates, {
+        color: "#4f7cff",
+        opacity: 0.9,
+        weight: 5,
+      }).addTo(map);
+      new Marker(coordinates[0], { icon }).addTo(map);
+      new Marker(coordinates[coordinates.length - 1], { icon }).addTo(map);
+      map.fitBounds(route.getBounds(), { padding: [28, 28], maxZoom: 16 });
+    } else {
+      new Marker(coordinates[0], { icon }).addTo(map);
+      map.setView(coordinates[0], 15);
+    }
+
+    window.setTimeout(() => map.invalidateSize(), 0);
+  },
+
+  destroyed() {
+    if (this.map) this.map.remove();
+  },
+};
+
+export const CopyText = {
+  mounted() {
+    this.handleClick = async () => {
+      const target = document.getElementById(this.el.dataset.target);
+      if (!target) return;
+
+      await navigator.clipboard.writeText(target.textContent.trim());
+      const original = this.el.innerHTML;
+      this.el.textContent = "已复制";
+      window.setTimeout(() => {
+        this.el.innerHTML = original;
+      }, 1600);
+    };
+
+    this.el.addEventListener("click", this.handleClick);
+  },
+
+  destroyed() {
+    this.el.removeEventListener("click", this.handleClick);
   },
 };
 

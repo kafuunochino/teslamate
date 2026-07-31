@@ -1,6 +1,6 @@
 defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   @moduledoc """
-  Brute-force protection for the `/sign_in` LiveView.
+  Brute-force and registration-abuse protection for platform authentication.
 
   ## How it works
 
@@ -22,9 +22,8 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
 
   ## Lifecycle
 
-  Apply via the `:login_rate_limit` pipeline **before** `TeslaMateWeb.Plugs.RequireSignedIn`
-  on the `/sign_in` route only. This keeps the gating local to authentication
-  and avoids slowing down regular page loads.
+  The platform login and registration controllers call the public functions
+  directly. Regular authenticated page loads do not touch this table.
   """
 
   import Plug.Conn

@@ -1,0 +1,88 @@
+name: teslamate-cn
+
+services:
+  teslamate:
+    build:
+      context: .
+      args:
+        TESLAMATE_REVISION: ${TESLAMATE_REVISION:-}
+    restart: always
+    environment:
+      PORT: 3000
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?请在 .env 中设置 ENCRYPTION_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?请在 .env 中设置 SECRET_KEY_BASE}
+      SIGNING_SALT: ${SIGNING_SALT:?请在 .env 中设置 SIGNING_SALT}
+      DATABASE_USER: ${DATABASE_USER:-teslamate}
+      DATABASE_PASS: ${DATABASE_PASS:?请在 .env 中设置 DATABASE_PASS}
+      DATABASE_NAME: ${DATABASE_NAME:-teslamate}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      MQTT_HOST: mosquitto
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-zh_Hans}
+      TZ: ${TZ:-Asia/Shanghai}
+      VIRTUAL_HOST: ${VIRTUAL_HOST:-localhost}
+      CHECK_ORIGIN: ${CHECK_ORIGIN:-true}
+      TESLAMATE_ALLOW_SIGN_UP: ${TESLAMATE_ALLOW_SIGN_UP:-true}
+      TESLAMATE_ACCOUNT_SESSION_DAYS: ${TESLAMATE_ACCOUNT_SESSION_DAYS:-30}
+      TESLAMATE_TRUSTED_PROXIES: ${TESLAMATE_TRUSTED_PROXIES:-}
+      TESLAMATE_FORCE_SSL: ${TESLAMATE_FORCE_SSL:-false}
+      TESLAMATE_HSTS: ${TESLAMATE_HSTS:-false}
+      TESLAMATE_API_ORIGIN_CHECK: "true"
+      TESLAMATE_LOGIN_MAX_PER_IP: ${TESLAMATE_LOGIN_MAX_PER_IP:-10}
+      TESLAMATE_LOGIN_MAX_PER_EMAIL: ${TESLAMATE_LOGIN_MAX_PER_EMAIL:-5}
+      TESLAMATE_LOGIN_WINDOW_SECONDS: ${TESLAMATE_LOGIN_WINDOW_SECONDS:-600}
+      TESLAMATE_LOGIN_AUDIT_CAPACITY: ${TESLAMATE_LOGIN_AUDIT_CAPACITY:-100}
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./import:/opt/app/import
+    networks:
+      - 1panel-network
+    cap_drop:
+      - all
+    depends_on:
+      - mosquitto
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: always
+    command: mosquitto -c /mosquitto-no-auth.conf
+    volumes:
+      - mosquitto-conf:/mosquitto/config
+      - mosquitto-data:/mosquitto/data
+    networks:
+      - 1panel-network
+
+  # Compatibility only. It is never started by the default compose command
+  # and publishes no host port. Keeping the declaration makes it possible to
+  # inspect or export the old Grafana volume during the transition.
+  grafana:
+    profiles: ["legacy-grafana"]
+    build:
+      context: ./grafana
+    environment:
+      DATABASE_USER: ${DATABASE_USER:-teslamate}
+      DATABASE_PASS: ${DATABASE_PASS:?请在 .env 中设置 DATABASE_PASS}
+      DATABASE_NAME: ${DATABASE_NAME:-teslamate}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_SSL_MODE: ${DATABASE_SSL_MODE:-disable}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_BASIC_ENABLED: "true"
+      GF_AUTH_PROXY_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - teslamate-grafana-data:/var/lib/grafana
+    networks:
+      - 1panel-network
+
+volumes:
+  mosquitto-conf:
+  mosquitto-data:
+  teslamate-grafana-data:
+    name: teslamate-grafana-data
+
+networks:
+  1panel-network:
+    external: true
+    name: ${PANEL_NETWORK:-1panel-network}

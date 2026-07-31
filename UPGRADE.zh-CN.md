@@ -1,145 +1,344 @@
-# 升级迁移指南：从 1.x 升级到当前版本
+# 1Panel 无损升级指南：双端口部署迁移到统一 3000
 
-本指南帮助从之前的 TeslaMate 版本升级而来的用户理解默认行为变化，以及如何安全启用或回退新增功能。升级前必须备份数据库并记录旧提交。
+本指南适用于当前服务器已有以下资源的部署：
 
-## 概览
+- TeslaMate 运行在 `127.0.0.1:4000`；
+- Grafana 运行在 `127.0.0.1:3000`；
+- PostgreSQL 是外部现有服务，容器内使用 `postgres:5432`；
+- Nginx/1Panel 把公网 HTTPS 域名代理到 `127.0.0.1:3000`；
+- 已有 `teslamate-grafana-data` 数据卷。
 
-| 行为                                                          | 之前                                | 默认（升级后）            | 启用新版                     |
-| ------------------------------------------------------------- | ----------------------------------- | ------------------------- | ---------------------------- |
-| TeslaMate 页面是否强制登录才能访问设置/地理围栏               | 否                                  | 否（保持兼容）            | `TESLAMATE_STRICT_AUTH=true` |
-| `POST/GET /api/car/*/logging/{resume,suspend}` 是否检查登录态 | 否                                  | 否                        | `TESLAMATE_PROTECT_API=true` |
-| Grafana 端口 `3000` 是否对公网监听                            | 是（旧 compose）                    | 否（仅 `127.0.0.1:3000`） | 通过 HTTPS 反向代理访问      |
-| Grafana 认证方式                                              | 可能依赖 `/dashboards/*` auth proxy | Grafana 标准账号密码登录  | 旧嵌入代理仅可显式启用       |
-| Grafana 数据源升级                                            | 复用已有数据源                      | 按名称更新并保留原 UID    | 无需配置                     |
+升级后的统一应用接管宿主机 3000，4000 不再发布。旧 Grafana 只停止并移除容器，其数据卷、用户、仪表板和 SQLite 数据均保留。TeslaMate 遥测数据继续使用原 PostgreSQL。
 
-## Grafana 13 数据源升级兼容性
+## 迁移改变了什么
 
-如果升级后 Grafana 容器进入 `Restarting` 状态，docker logs 末尾显示：
+| 项目       | 升级前                            | 升级后                         |
+| ---------- | --------------------------------- | ------------------------------ |
+| 公网应用   | Grafana                           | TeslaMate CN 统一平台          |
+| 宿主机端口 | Grafana 3000 + TeslaMate 4000     | 仅 `127.0.0.1:3000`            |
+| 平台登录   | Grafana 账号或旧 Tesla token 页面 | 独立平台账号、注册与会话       |
+| 车辆权限   | Grafana 组织/全局访问             | 管理员全车；普通用户按车辆授权 |
+| PostgreSQL | 外部 `postgres:5432`              | 原地址、原库、原数据           |
+| Grafana 卷 | 运行中                            | 原名保留，默认不挂载运行       |
 
+新增迁移版本为 `20260801090000`，只创建：
+
+```text
+private.users
+private.user_sessions
+private.user_cars
+private.vehicle_claims
+private.audit_events
 ```
-Error: ✗ *provisioning.ProvisioningServiceImpl run error:
-       Datasource provisioning error: data source not found
-```
 
-**根因**：旧数据卷中已经存在名为 `TeslaMate` 的数据源，但它的 UID 可能由旧版 Grafana 自动生成。provisioning 文件若又强制指定不同的 `uid: TeslaMate`，Grafana 13 会按这个新 UID 查找更新目标，找不到时便以 `data source not found` 终止启动。
+迁移不会 `DELETE`、`TRUNCATE` 或重建 `cars`、`drives`、`positions`、`charging_processes`、`charges`、`addresses`、`geofences`、`tokens`。
 
-修复版不再覆盖已有数据源的身份，而是按 `name: TeslaMate` 更新它并保留原 UID。[Grafana 官方 provisioning 文档](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources)也将 `uid` 定义为可选字段；不指定时由 Grafana 生成，新安装和旧数据卷都可以正常启动。
+## 一、升级前检查与备份
 
-### 修复步骤（不删除数据）
+在服务器执行：
 
 ```bash
 cd /opt/teslamate-cn
-git pull
-docker compose -f docker-compose.zh-CN.yml build --no-cache grafana
-docker compose -f docker-compose.zh-CN.yml up -d --force-recreate grafana
+set -e
 
-# 验证
-docker compose -f docker-compose.zh-CN.yml ps
-docker compose -f docker-compose.zh-CN.yml logs --tail=100 grafana | grep -iE "provision|error|started|healthy"
-```
+OLD_COMMIT="$(git rev-parse HEAD)"
+BACKUP_DIR="/opt/teslamate-upgrade-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
 
-不要执行 `DELETE FROM data_source`，也不要删除 `teslamate-grafana-data` 卷；这不是修复所必需的，还会删除数据源身份及其关联配置。
+printf '%s\n' "$OLD_COMMIT" > "$BACKUP_DIR/old.commit"
+cp -a .env "$BACKUP_DIR/env.before"
+cp -a docker-compose.1panel.yml "$BACKUP_DIR/docker-compose.1panel.before.yml"
+chmod 600 "$BACKUP_DIR"/*
 
-## 为什么默认保持兼容
+docker compose -f docker-compose.1panel.yml config \
+  > "$BACKUP_DIR/compose.effective.before.yml"
+docker compose -f docker-compose.1panel.yml ps \
+  > "$BACKUP_DIR/containers.before.txt"
 
-很多旧用户把 TeslaMate 跑在内网或单用户场景，长期不会手动重新登录 Tesla 账号。如果升级后立刻把所有页面强制登录，老用户会在 token 失效或重启后突然被挡在门外，体验差。
-
-因此本版本的设计原则是：
-
-> **新增能力默认关闭，配置开关开启后再生效**。
-
-需要严格鉴权时，按下文启用即可。
-
-## 启用 TeslaMate 页面鉴权（推荐公网部署）
-
-1. 在 `.env` 中新增：
-   ```bash
-   TESLAMATE_STRICT_AUTH=true
-   EMBED_GRAFANA=false
-   # 可选：将 TeslaMate 与 Grafana 的 API 一起保护
-   # TESLAMATE_PROTECT_API=true
-   ```
-2. 重新 `docker compose pull && docker compose up -d`。
-3. 之后所有非 `/sign_in`、`/health_check`、LiveView WebSocket 升级之外的页面都需要先在 TeslaMate 里登录。
-4. Grafana 继续通过独立 HTTPS 域名使用自己的账号密码登录，不依赖 TeslaMate 的 4000 端口。
-
-旧 `/dashboards/*` 嵌入代理仍保留为兼容功能，但默认关闭。只有同时显式覆盖 Grafana auth proxy 配置时，才可设置 `EMBED_GRAFANA=true`。
-
-## 端口安全
-
-Compose 默认把 TeslaMate 和 Grafana 分别绑定到 `127.0.0.1:4000` 与 `127.0.0.1:3000`。请让 HTTPS 反向代理访问这些本机端口，不要改为 `0.0.0.0` 或省略绑定地址。
-
-## 备份与回滚
-
-本次上游同步包含三项数据库迁移：
-
-- 为历史 `NULL` VIN 写入可识别的兼容占位值，再增加非空约束；
-- 新增可恢复导入所需的检查点和拒绝记录表；
-- 扩大地理围栏与充电费用字段精度。
-
-这些迁移不会删除车辆、行程、充电记录或现有 PostgreSQL 数据源，但旧代码与新 schema 不能视为完全等价。升级前务必记录提交并创建 PostgreSQL 自定义格式备份：
-
-```bash
 git status --short
-git rev-parse HEAD | tee teslamate-before-update.commit
-
-BACKUP="teslamate-before-update-$(date +%Y%m%d-%H%M%S).dump"
-docker compose -f docker-compose.zh-CN.yml exec -T database \
-  pg_dump -U teslamate -d teslamate -Fc > "$BACKUP"
-
-test -s "$BACKUP"
 ```
 
-使用 1Panel 外部 PostgreSQL 时，不要新增 Compose 数据库服务。把上面的备份命令改为对现有 PostgreSQL 容器执行：
+如果 `git status --short` 除 `?? docker-compose.1panel.yml` 外还有输出，先停止升级并保存人工修改。不要让 `git pull` 覆盖未知改动。
+
+确认外部 PostgreSQL 与项目位于同一个 1Panel 网络。默认网络名是 `1panel-network`：
 
 ```bash
-BACKUP="teslamate-before-update-$(date +%Y%m%d-%H%M%S).dump"
-docker exec <PostgreSQL容器名> \
-  pg_dump -U teslamate -d teslamate -Fc > "$BACKUP"
-test -s "$BACKUP"
+docker network inspect 1panel-network >/dev/null
+docker inspect postgres --format '{{json .NetworkSettings.Networks}}'
 ```
 
-代码更新只允许使用 `git pull --ff-only`。如果升级后需要回退，先停止 TeslaMate，检出 `teslamate-before-update.commit` 中记录的提交，并恢复对应的升级前数据库备份；不要只回退镜像后继续写入已经迁移的数据库。Grafana 数据卷应原样保留，不要执行 `docker compose down -v`、`docker volume rm` 或删除 `/var/lib/grafana`。
+若网络名不同，稍后在 `.env` 设置 `PANEL_NETWORK=实际网络名`。
 
-### 1Panel 外部 PostgreSQL 部署
+创建外部 PostgreSQL 自定义格式备份。把 `<PostgreSQL容器名>` 替换为真实容器名；不要改数据库密码、主机或库名：
 
-服务器已有 `docker-compose.1panel.yml` 时应继续使用该文件，不要用仓库中的独立部署 Compose 覆盖它。确认其中没有新增 PostgreSQL 服务，`DATABASE_HOST=postgres`、`DATABASE_PORT=5432` 保持不变，两个 Web 端口仍只监听回环地址。
+```bash
+DB_BACKUP="$BACKUP_DIR/teslamate-before.dump"
+docker exec <PostgreSQL容器名> \
+  pg_dump -U teslamate -d teslamate -Fc > "$DB_BACKUP"
+test -s "$DB_BACKUP"
 
-完成上面的备份后执行：
+docker exec <PostgreSQL容器名> \
+  pg_restore --list - < "$DB_BACKUP" >/dev/null
+```
+
+记录关键遥测行数，升级后对比：
+
+```bash
+docker exec <PostgreSQL容器名> psql -U teslamate -d teslamate -Atc \
+  "SELECT 'cars='||count(*) FROM cars
+   UNION ALL SELECT 'drives='||count(*) FROM drives
+   UNION ALL SELECT 'positions='||count(*) FROM positions
+   UNION ALL SELECT 'charging_processes='||count(*) FROM charging_processes;" \
+  | tee "$BACKUP_DIR/telemetry-counts.before.txt"
+```
+
+确认 Grafana 卷存在：
+
+```bash
+docker volume inspect teslamate-grafana-data \
+  > "$BACKUP_DIR/grafana-volume.before.json"
+```
+
+## 二、处理仓库中的 1Panel Compose 文件
+
+旧服务器的 `docker-compose.1panel.yml` 通常是未跟踪文件；新版本开始由仓库维护同名文件。先把旧文件移出工作树，避免 `git pull` 因“untracked working tree file would be overwritten”失败：
+
+```bash
+if ! git ls-files --error-unmatch docker-compose.1panel.yml >/dev/null 2>&1; then
+  mv docker-compose.1panel.yml "$BACKUP_DIR/docker-compose.1panel.local.yml"
+fi
+
+git fetch origin
+git pull --ff-only origin main
+git rev-parse HEAD | tee "$BACKUP_DIR/new.commit"
+```
+
+若 `git pull --ff-only` 拒绝执行，不要使用 `git reset --hard`。检查本地分支/提交并人工处理。
+
+## 三、补充环境变量
+
+保留原 `.env` 中以下值，绝不重新生成或修改：
+
+```text
+ENCRYPTION_KEY
+DATABASE_PASS
+DATABASE_HOST
+DATABASE_NAME
+```
+
+只为新平台增加两个稳定密钥。以下命令仅在变量不存在时追加，不会覆盖已有值：
+
+```bash
+grep -q '^SECRET_KEY_BASE=' .env || \
+  printf 'SECRET_KEY_BASE=%s\n' "$(openssl rand -base64 64 | tr -d '\n')" >> .env
+
+grep -q '^SIGNING_SALT=' .env || \
+  printf 'SIGNING_SALT=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env
+
+chmod 600 .env
+```
+
+编辑 `.env`，确认或新增：
+
+```dotenv
+DATABASE_USER=teslamate
+DATABASE_HOST=postgres
+DATABASE_PORT=5432
+DATABASE_NAME=teslamate
+PANEL_NETWORK=1panel-network
+
+VIRTUAL_HOST=你的公网域名
+CHECK_ORIGIN=https://你的公网域名
+TESLAMATE_API_ORIGIN_CHECK=true
+TESLAMATE_TRUSTED_PROXIES=1Panel反向代理容器IP或网段
+
+# 首次切换时先关闭，管理员创建并验证后再开启
+TESLAMATE_ALLOW_SIGN_UP=false
+TESLAMATE_ACCOUNT_SESSION_DAYS=30
+```
+
+不要把 `.env`、数据库备份或上面的 `$BACKUP_DIR` 提交到 Git。
+
+## 四、切换端口并启动统一平台
+
+先验证新 Compose。它必须只列出外部 PostgreSQL 连接，不能有 `database` 服务：
 
 ```bash
 COMPOSE_FILE=docker-compose.1panel.yml
 
-git fetch origin
-git pull --ff-only origin main
-
-docker compose -f "$COMPOSE_FILE" config
-docker volume inspect teslamate-grafana-data >/dev/null
-
-TESLAMATE_REVISION="$(git rev-parse HEAD)" \
-  docker compose -f "$COMPOSE_FILE" build --no-cache teslamate grafana
-
-docker compose -f "$COMPOSE_FILE" up -d --no-deps --force-recreate grafana
-docker compose -f "$COMPOSE_FILE" up -d --no-deps --force-recreate teslamate
+docker compose -f "$COMPOSE_FILE" config > /tmp/teslamate-compose-check.yml
+docker compose -f "$COMPOSE_FILE" config --services
+grep -n '127.0.0.1:3000' /tmp/teslamate-compose-check.yml
+if grep -n '4000:4000' /tmp/teslamate-compose-check.yml; then
+  echo '检测到旧 4000 映射，停止升级'
+  exit 1
+fi
 ```
 
-上述命令不会重建外部 PostgreSQL，也不会删除 Grafana 数据卷。启动后按“Grafana 13 数据源升级兼容性”一节检查日志，并确认 `/login` 不返回 `500`、未登录访问 `/` 会跳转到登录页。
+构建统一应用。此时旧容器仍在服务，不会提前中断：
 
-## Docker 发布流水线
+```bash
+TESLAMATE_REVISION="$(git rev-parse HEAD)" \
+  docker compose -f "$COMPOSE_FILE" build --no-cache teslamate
+```
 
-发布的 Docker 镜像名和 tag 规则未改变，只是 CI 中 step id 之前引用错了（`steps.docker_meta.outputs.tags`），所以从某个版本开始发布的镜像是缺失 `tags` 的，会出现 push 失败或者打不出 label。新版本修复了这个问题；如果你的 fork 也有同样的问题，请对照 `.github/actions/build/action.yml` 把 `docker_meta` 改成 `meta`。
+旧 Grafana 占用宿主机 3000，必须先停止并移除该容器。下列操作不接触数据卷：
 
-## Grafana "No data"
+```bash
+docker compose -f "$COMPOSE_FILE" --profile legacy-grafana stop grafana
+docker compose -f "$COMPOSE_FILE" --profile legacy-grafana rm -f grafana
+docker volume inspect teslamate-grafana-data >/dev/null
+```
 
-先在 Grafana 的 **Connections → Data sources → TeslaMate** 中执行 **Save & test**，再检查数据库是否已有车辆记录。不要通过给升级中的 provisioning 文件强加 UID 来处理；这会使已有随机 UID 的数据卷在 Grafana 13 启动时发生冲突。
+只重新创建应用和 MQTT；入口脚本会自动执行增量数据库迁移：
 
-## 常见问题
+```bash
+docker compose -f "$COMPOSE_FILE" up -d --force-recreate mosquitto teslamate
+docker compose -f "$COMPOSE_FILE" ps
+docker compose -f "$COMPOSE_FILE" logs --tail=200 teslamate
+```
 
-**Q: 启用了 `TESLAMATE_STRICT_AUTH=true`，但 token 过期后我不想再次登录，怎么办？**
-A: 不要启用这个开关。或者在 `ENCRYPTION_KEY` 不变的前提下重新跑 `/sign_in`，Tesla tokens 会被加密存储在数据库中，下次启动自动续期。`ENCRYPTION_KEY` 必须固定，否则数据库里的 token 都解不出来。
+不要执行 `docker compose down -v`。
 
-**Q: 启用 `EMBED_GRAFANA=true` 后嵌不进去？**
-A: 这是兼容模式，必须另外显式配置 Grafana auth proxy。默认镜像使用标准账号密码登录，不会自动启用代理认证。
+## 五、创建首个平台管理员
 
-**Q: 之前仪表盘直接打开 `:3000`，现在如何访问？**
-A: 服务器本机可使用 `http://127.0.0.1:3000/login`；远程使用反向代理后的 HTTPS 域名。
+管理员命令可重复执行：邮箱已存在时会把该账号恢复为有效管理员并更新密码。密码通过临时环境变量传入，不会写进仓库或 shell 历史：
+
+```bash
+read -r -p '管理员邮箱: ' ADMIN_EMAIL
+read -r -s -p '管理员新密码（至少 12 位）: ' ADMIN_PASSWORD
+printf '\n'
+
+docker compose -f "$COMPOSE_FILE" exec \
+  -e TESLAMATE_ADMIN_EMAIL="$ADMIN_EMAIL" \
+  -e TESLAMATE_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+  -e TESLAMATE_ADMIN_NAME="平台管理员" \
+  teslamate bin/teslamate eval 'TeslaMate.Release.create_admin_from_env()'
+
+unset ADMIN_PASSWORD
+```
+
+预期输出包含：
+
+```text
+Administrator ready: ...
+```
+
+登录 HTTPS 域名后，管理员应能看到全部现有车辆、历史行程、充电和电池趋势。Tesla 采集 token 已使用原 `ENCRYPTION_KEY` 从原数据库读取，不需要重新输入；若此前没有有效 token，再进入“系统管理 → Tesla 连接”。
+
+## 六、自动与人工验证
+
+### 容器与端口
+
+```bash
+docker compose -f "$COMPOSE_FILE" ps
+curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/sign_in
+curl -sS -o /dev/null -D - http://127.0.0.1:3000/ | sed -n '1,10p'
+ss -ltn | grep -E '127\.0\.0\.1:(3000|4000)'
+```
+
+预期：
+
+- `/sign_in` 返回 200；
+- 未登录 `/` 返回 302 并跳转 `/sign_in`；
+- 只有 `127.0.0.1:3000`，没有 4000；
+- 默认 `ps` 中没有 Grafana；
+- Nginx 原上游 `127.0.0.1:3000` 可直接显示平台登录页。
+
+### 数据库与迁移
+
+```bash
+docker exec <PostgreSQL容器名> psql -U teslamate -d teslamate -Atc \
+  "SELECT table_schema||'.'||table_name
+   FROM information_schema.tables
+   WHERE table_schema='private'
+     AND table_name IN ('users','user_sessions','user_cars','vehicle_claims','audit_events')
+   ORDER BY table_name;"
+
+docker exec <PostgreSQL容器名> psql -U teslamate -d teslamate -Atc \
+  "SELECT 'cars='||count(*) FROM cars
+   UNION ALL SELECT 'drives='||count(*) FROM drives
+   UNION ALL SELECT 'positions='||count(*) FROM positions
+   UNION ALL SELECT 'charging_processes='||count(*) FROM charging_processes;" \
+  | tee "$BACKUP_DIR/telemetry-counts.after.txt"
+```
+
+升级期间采集器可能继续新增少量记录，因此“after”应等于或大于“before”，不应减少。
+
+### 权限隔离
+
+人工执行一次最小验收：
+
+1. 管理员登录，确认能选择全部车辆。
+2. 临时把 `TESLAMATE_ALLOW_SIGN_UP=true` 后重建 `teslamate`，注册一个普通测试账号。
+3. 测试账号首次登录必须显示“尚未绑定车辆”，不能枚举行程 URL 或 GPX。
+4. 管理员为其中一辆车生成一次性认领码。
+5. 测试账号兑换后只能看到该车；重复兑换相同认领码必须失败。
+6. 管理员撤销车辆权限后，该账号刷新页面应立即失去访问。
+7. 不需要公开注册时把 `TESLAMATE_ALLOW_SIGN_UP=false` 改回并重新创建应用。
+
+```bash
+docker compose -f "$COMPOSE_FILE" up -d --force-recreate teslamate
+```
+
+## 七、旧 Grafana 管理员密码
+
+统一平台不使用 Grafana 密码。若迁移期需要查看旧卷，先临时启动无宿主机端口的 profile，再重置：
+
+```bash
+docker compose -f "$COMPOSE_FILE" --profile legacy-grafana up -d grafana
+docker compose -f "$COMPOSE_FILE" --profile legacy-grafana exec grafana \
+  grafana cli admin reset-admin-password '新的强密码'
+```
+
+Grafana 13 当前镜像推荐的兼容命令路径仍是 `grafana cli admin reset-admin-password`。完成后停止并移除容器即可，不能删除卷：
+
+```bash
+docker compose -f "$COMPOSE_FILE" --profile legacy-grafana stop grafana
+docker compose -f "$COMPOSE_FILE" --profile legacy-grafana rm -f grafana
+```
+
+## 八、回滚（不删除任何卷）
+
+本次账号迁移是纯增量表，旧代码会忽略这些表。因此应用回滚不需要删除表或恢复数据库；这样可以保留升级后新采集的遥测记录。
+
+```bash
+cd /opt/teslamate-cn
+COMPOSE_FILE=docker-compose.1panel.yml
+
+# 停止统一应用，保留所有卷和外部 PostgreSQL
+docker compose -f "$COMPOSE_FILE" stop teslamate
+
+OLD_COMMIT="$(cat "$BACKUP_DIR/old.commit")"
+git switch --detach "$OLD_COMMIT"
+
+# 恢复升级前的本地 Compose 与环境文件副本
+cp -a "$BACKUP_DIR/docker-compose.1panel.before.yml" docker-compose.1panel.yml
+cp -a "$BACKUP_DIR/env.before" .env
+
+TESLAMATE_REVISION="$OLD_COMMIT" \
+  docker compose -f docker-compose.1panel.yml up -d --build
+```
+
+此时会恢复旧的 Grafana 3000 和 TeslaMate 4000 行为；Nginx 仍指向 3000。`teslamate-grafana-data` 和 PostgreSQL 均未删除。
+
+只有在数据库迁移本身异常且需要回到升级前的“完全一致状态”时，才考虑停止所有会写入数据库的 TeslaMate 实例并恢复 `$DB_BACKUP`。恢复备份会丢失备份后新增的遥测，必须由管理员单独确认，不能作为普通回滚步骤自动执行。
+
+准备重试升级时：
+
+```bash
+git switch main
+git pull --ff-only origin main
+```
+
+## 九、必须人工确认的事项
+
+- 真实 PostgreSQL 容器名与用户是否为 `teslamate`；
+- `postgres` 是否在 `PANEL_NETWORK` 上可解析；
+- 1Panel/Nginx 是否转发 WebSocket、`Host`、`X-Forwarded-Proto` 和 `X-Forwarded-For`；
+- `CHECK_ORIGIN` 是否精确包含公网 HTTPS Origin；
+- 首个管理员邮箱由谁保管，是否使用密码管理器中的独立强密码；
+- 是否需要开放注册；若开放，是否接受当前版本尚无邮件验证/找回流程；
+- OpenStreetMap 瓦片的外部请求是否符合你的轨迹隐私要求；
+- 旧 Grafana 卷需要保留多久以及是否已完成离线备份。

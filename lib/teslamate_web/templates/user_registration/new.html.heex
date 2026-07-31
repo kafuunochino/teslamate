@@ -1,0 +1,65 @@
+<section class="auth-page" aria-labelledby="registration-title">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand-mark"><i class="mdi mdi-account-plus-outline"></i></span>
+      <div>
+        <p class="auth-eyebrow">安全创建账号</p>
+        <h1 id="registration-title">注册车辆数据中心</h1>
+        <p>注册不会自动授予任何车辆权限，随后需使用一次性认领码绑定。</p>
+      </div>
+    </div>
+
+    <%= form_for @changeset, Routes.user_registration_path(@conn, :create),
+      [as: :user, class: "auth-form"], fn f -> %>
+      <div class="field">
+        <%= label f, :name, "显示名称", class: "label" %>
+        <%= text_input f, :name,
+          required: true,
+          autocomplete: "name",
+          minlength: 2,
+          maxlength: 80,
+          class: "input" %>
+        <%= error_tag f, :name %>
+      </div>
+
+      <div class="field">
+        <%= label f, :email, "邮箱", class: "label" %>
+        <%= email_input f, :email,
+          required: true,
+          autocomplete: "username",
+          maxlength: 254,
+          class: "input" %>
+        <%= error_tag f, :email %>
+      </div>
+
+      <div class="field">
+        <%= label f, :password, "密码", class: "label" %>
+        <%= password_input f, :password,
+          required: true,
+          autocomplete: "new-password",
+          minlength: 12,
+          maxlength: 128,
+          class: "input" %>
+        <p class="help">使用至少 12 位且未在其他网站使用过的密码。</p>
+        <%= error_tag f, :password %>
+      </div>
+
+      <div class="field">
+        <%= label f, :password_confirmation, "确认密码", class: "label" %>
+        <%= password_input f, :password_confirmation,
+          required: true,
+          autocomplete: "new-password",
+          minlength: 12,
+          maxlength: 128,
+          class: "input" %>
+        <%= error_tag f, :password_confirmation %>
+      </div>
+
+      <%= submit "创建账号", class: "button is-primary is-fullwidth auth-submit" %>
+    <% end %>
+
+    <p class="auth-switch">
+      已经有账号？<%= link "返回登录", to: Routes.user_session_path(@conn, :new) %>
+    </p>
+  </div>
+</section>

@@ -1,0 +1,55 @@
+<div class="platform-page">
+  <header class="page-heading">
+    <div><p class="page-kicker">权限与归属</p><h1>车辆中心</h1><p>查看当前账号可访问的车辆，或使用一次性认领码绑定新车辆。</p></div>
+  </header>
+
+  <section :if={!TeslaMate.Accounts.admin?(@current_user)} class="data-card claim-card">
+    <div class="claim-card__copy">
+      <span class="claim-card__icon"><i class="mdi mdi-key-chain-variant"></i></span>
+      <div><h2>绑定车辆</h2><p>向管理员索取对应车辆的一次性认领码。系统不会接受 VIN、车牌或车辆名称直接认领。</p></div>
+    </div>
+    <form phx-submit="redeem_claim" class="claim-form">
+      <label for="claim-code">车辆认领码</label>
+      <div class="claim-form__row">
+        <input id="claim-code" name="claim[claim_code]" type="password" autocomplete="one-time-code" required class="input" placeholder="粘贴一次性认领码" />
+        <button class="button is-primary" type="submit">安全绑定</button>
+      </div>
+      <p :if={@claim_error} class="help is-danger" role="alert"><%= @claim_error %></p>
+    </form>
+  </section>
+
+  <section class="vehicle-list-grid">
+    <article :for={car <- @cars} class="vehicle-access-card">
+      <% report = @reports[car.id] %>
+      <% position = report.position %>
+      <% live = report.live %>
+      <div class="vehicle-access-card__head">
+        <span><i class="mdi mdi-car-electric"></i></span>
+        <div><p>VIN · <%= TeslaMate.Fleet.vin_suffix(car) %></p><h2><%= TeslaMate.Fleet.vehicle_label(car) %></h2></div>
+        <span class="access-chip"><i class="mdi mdi-eye-check-outline"></i> 可查看</span>
+      </div>
+      <div class="vehicle-access-card__metrics">
+        <div><span>状态</span><strong><%= state_label(live || report.state) %></strong></div>
+        <% battery = (live && live.battery_level) || (position && position.battery_level) %>
+        <div><span>电量</span><strong><%= if battery, do: "#{battery}%", else: "—" %></strong></div>
+        <div><span>续航</span><strong><%= distance((live && live.rated_battery_range_km) || (position && position.rated_battery_range_km)) %></strong></div>
+        <div><span>最后数据</span><strong><%= date_time(position && position.date) %></strong></div>
+      </div>
+      <div class="vehicle-access-card__actions">
+        <.link navigate={Routes.dashboard_path(@socket, :home, car: car.id)} class="button is-primary is-light">进入车辆首页</.link>
+        <button
+          :if={!TeslaMate.Accounts.admin?(@current_user)}
+          type="button"
+          class="button is-danger is-light"
+          phx-click="unbind"
+          phx-value-car-id={car.id}
+          data-confirm="仅解除当前账号权限，不会删除任何车辆历史数据。确认继续？"
+        >
+          解除绑定
+        </button>
+      </div>
+    </article>
+  </section>
+
+  <.no_vehicle :if={@cars == []} admin={TeslaMate.Accounts.admin?(@current_user)} />
+</div>

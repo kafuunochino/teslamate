@@ -10,15 +10,19 @@ const csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");
 
-const liveSocket = new LiveSocket(window.LIVE_PATH, Socket, {
-  hooks,
-  params: {
-    _csrf_token: csrfToken,
-    baseUrl: window.location.origin,
-    referrer: document.referrer,
-    tz: Intl && Intl.DateTimeFormat().resolvedOptions().timeZone,
+const liveSocket = new LiveSocket(
+  document.documentElement.dataset.livePath || "/live",
+  Socket,
+  {
+    hooks,
+    params: {
+      _csrf_token: csrfToken,
+      baseUrl: window.location.origin,
+      referrer: document.referrer,
+      tz: Intl && Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
   },
-});
+);
 
 liveSocket.connect();
 
