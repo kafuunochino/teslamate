@@ -110,6 +110,7 @@ defmodule TeslaMate.Auth.LoginAudit do
   defp audit_level(:blocked), do: :warning
 
   defp mask(nil), do: "(none)"
+
   defp mask(email) do
     case String.split(email, "@") do
       [local, domain] -> String.slice(local, 0, 2) <> "***@" <> domain

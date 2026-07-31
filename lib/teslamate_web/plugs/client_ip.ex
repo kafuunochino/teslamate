@@ -66,7 +66,9 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
 
   defp trusted_proxies do
     case TeslaMateWeb.Config.trusted_proxies() do
-      "" -> []
+      "" ->
+        []
+
       list ->
         list
         |> String.split(",")
@@ -112,8 +114,12 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
     parsed_peer = parse_ip(peer_str)
 
     cond do
-      is_nil(parsed_peer) -> false
-      prefix == 0 -> true
+      is_nil(parsed_peer) ->
+        false
+
+      prefix == 0 ->
+        true
+
       true ->
         masked_peer = mask(parsed_peer, prefix)
         masked_entry = mask(ip, prefix)

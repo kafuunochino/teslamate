@@ -141,7 +141,9 @@ for (const normalizedFile of allDashboardFiles) {
     for (const panel of visiblePanels) {
       const { h, w, x, y } = panel.gridPos;
       if (h < 1 || w < 1 || x < 0 || y < 0 || x + w > 24) {
-        errors.push(`${normalizedFile}: panel ${panel.id} has an invalid grid position`);
+        errors.push(
+          `${normalizedFile}: panel ${panel.id} has an invalid grid position`,
+        );
       }
     }
     for (let left = 0; left < visiblePanels.length; left += 1) {
@@ -313,7 +315,9 @@ for (const requiredSql of [
 for (const panelId of [2, 3, 4, 5]) {
   const panel = sentryDashboard.panels?.find(({ id }) => id === panelId);
   if (panel?.fieldConfig?.defaults?.noValue !== "0") {
-    errors.push(`${sentryFile}: panel ${panelId} does not render no-data as zero`);
+    errors.push(
+      `${sentryFile}: panel ${panelId} does not render no-data as zero`,
+    );
   }
 }
 
@@ -326,7 +330,9 @@ const capacityVariable = speedTemperatureDashboard.templating?.list?.find(
 );
 if (
   capacityVariable?.current?.value !== "75" ||
-  !capacityVariable?.query?.includes("COALESCE(ROUND(Capacity::numeric, 1), 75)")
+  !capacityVariable?.query?.includes(
+    "COALESCE(ROUND(Capacity::numeric, 1), 75)",
+  )
 ) {
   errors.push(`${speedTemperatureFile}: battery-capacity fallback is missing`);
 }
@@ -341,7 +347,9 @@ for (const [panelId, minimumWidth] of [
   [14, 12],
   [11, 12],
 ]) {
-  const panel = speedTemperatureDashboard.panels?.find(({ id }) => id === panelId);
+  const panel = speedTemperatureDashboard.panels?.find(
+    ({ id }) => id === panelId,
+  );
   if ((panel?.gridPos?.w ?? 0) < minimumWidth) {
     errors.push(`${speedTemperatureFile}: panel ${panelId} is too narrow`);
   }
@@ -387,7 +395,9 @@ for (const folderUid of [
 }
 const homeText = JSON.stringify(homeDashboard);
 if (homeText.includes("https://") || homeText.includes("http://")) {
-  errors.push("internal/home.json: external content remains on the default home page");
+  errors.push(
+    "internal/home.json: external content remains on the default home page",
+  );
 }
 
 for (const [configFile, pathPrefix] of [
@@ -427,7 +437,9 @@ const layoutView = fs.readFileSync(
   "utf8",
 );
 if (layoutView.includes('Path.wildcard("grafana/dashboards/*.json")')) {
-  errors.push("layout_view.ex: dashboard navigation still scans only the old root directory");
+  errors.push(
+    "layout_view.ex: dashboard navigation still scans only the old root directory",
+  );
 }
 for (const category of categoryPaths.slice(0, 6)) {
   if (!layoutView.includes(category)) {
@@ -439,9 +451,14 @@ for (const formatterFile of [
   "treefmt.toml",
   "nix/flake-modules/formatter.nix",
 ]) {
-  const formatter = fs.readFileSync(path.join(projectRoot, formatterFile), "utf8");
+  const formatter = fs.readFileSync(
+    path.join(projectRoot, formatterFile),
+    "utf8",
+  );
   if (!formatter.includes("grafana/dashboards/**/*.json")) {
-    errors.push(`${formatterFile}: categorized dashboards are not excluded from reformatting`);
+    errors.push(
+      `${formatterFile}: categorized dashboards are not excluded from reformatting`,
+    );
   }
 }
 
@@ -452,7 +469,9 @@ for (const [revisionFile, revisionMarker] of [
 ]) {
   const content = fs.readFileSync(path.join(projectRoot, revisionFile), "utf8");
   if (!content.includes(revisionMarker)) {
-    errors.push(`${revisionFile}: Docker update checks cannot identify the build revision`);
+    errors.push(
+      `${revisionFile}: Docker update checks cannot identify the build revision`,
+    );
   }
 }
 
@@ -469,7 +488,9 @@ for (const directAuthSetting of [
   "GF_USERS_ALLOW_SIGN_UP=false",
 ]) {
   if (!grafanaDockerfile.includes(directAuthSetting)) {
-    errors.push(`grafana/Dockerfile: missing direct-login default ${directAuthSetting}`);
+    errors.push(
+      `grafana/Dockerfile: missing direct-login default ${directAuthSetting}`,
+    );
   }
 }
 for (const unsafeAuthSetting of [
@@ -483,7 +504,9 @@ for (const unsafeAuthSetting of [
   "GF_SECURITY_ADMIN_PASSWORD=",
 ]) {
   if (grafanaDockerfile.includes(unsafeAuthSetting)) {
-    errors.push(`grafana/Dockerfile: direct-login image must not set ${unsafeAuthSetting}`);
+    errors.push(
+      `grafana/Dockerfile: direct-login image must not set ${unsafeAuthSetting}`,
+    );
   }
 }
 for (const disabledLayoutFlag of [
@@ -491,7 +514,9 @@ for (const disabledLayoutFlag of [
   "GF_FEATURE_TOGGLES_dashboardNewLayouts=false",
 ]) {
   if (grafanaDockerfile.includes(disabledLayoutFlag)) {
-    errors.push(`grafana/Dockerfile: Grafana 13 layout disabled by ${disabledLayoutFlag}`);
+    errors.push(
+      `grafana/Dockerfile: Grafana 13 layout disabled by ${disabledLayoutFlag}`,
+    );
   }
 }
 
@@ -511,7 +536,9 @@ for (const composeSecuritySetting of [
   "teslamate-grafana-data:/var/lib/grafana",
 ]) {
   if (!dockerCompose.includes(composeSecuritySetting)) {
-    errors.push(`docker-compose.zh-CN.yml: missing security setting ${composeSecuritySetting}`);
+    errors.push(
+      `docker-compose.zh-CN.yml: missing security setting ${composeSecuritySetting}`,
+    );
   }
 }
 

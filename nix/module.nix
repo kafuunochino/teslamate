@@ -417,9 +417,7 @@ in
                 disableDeletion = false;
                 allowUiUpdates = true;
                 updateIntervalSeconds = 86400;
-                options.path = lib.sources.sourceFilesBySuffices
-                  ../grafana/dashboards/overview
-                  [ ".json" ];
+                options.path = lib.sources.sourceFilesBySuffices ../grafana/dashboards/overview [ ".json" ];
               }
               {
                 name = "teslamate_driving";
@@ -430,9 +428,7 @@ in
                 disableDeletion = false;
                 allowUiUpdates = true;
                 updateIntervalSeconds = 86400;
-                options.path = lib.sources.sourceFilesBySuffices
-                  ../grafana/dashboards/driving
-                  [ ".json" ];
+                options.path = lib.sources.sourceFilesBySuffices ../grafana/dashboards/driving [ ".json" ];
               }
               {
                 name = "teslamate_charging";
@@ -443,9 +439,7 @@ in
                 disableDeletion = false;
                 allowUiUpdates = true;
                 updateIntervalSeconds = 86400;
-                options.path = lib.sources.sourceFilesBySuffices
-                  ../grafana/dashboards/charging
-                  [ ".json" ];
+                options.path = lib.sources.sourceFilesBySuffices ../grafana/dashboards/charging [ ".json" ];
               }
               {
                 name = "teslamate_energy";
@@ -456,9 +450,7 @@ in
                 disableDeletion = false;
                 allowUiUpdates = true;
                 updateIntervalSeconds = 86400;
-                options.path = lib.sources.sourceFilesBySuffices
-                  ../grafana/dashboards/energy
-                  [ ".json" ];
+                options.path = lib.sources.sourceFilesBySuffices ../grafana/dashboards/energy [ ".json" ];
               }
               {
                 name = "teslamate_analysis";
@@ -469,9 +461,7 @@ in
                 disableDeletion = false;
                 allowUiUpdates = true;
                 updateIntervalSeconds = 86400;
-                options.path = lib.sources.sourceFilesBySuffices
-                  ../grafana/dashboards/analysis
-                  [ ".json" ];
+                options.path = lib.sources.sourceFilesBySuffices ../grafana/dashboards/analysis [ ".json" ];
               }
               {
                 name = "teslamate_system";
@@ -482,9 +472,7 @@ in
                 disableDeletion = false;
                 allowUiUpdates = true;
                 updateIntervalSeconds = 86400;
-                options.path = lib.sources.sourceFilesBySuffices
-                  ../grafana/dashboards/system
-                  [ ".json" ];
+                options.path = lib.sources.sourceFilesBySuffices ../grafana/dashboards/system [ ".json" ];
               }
               {
                 name = "teslamate_internal";

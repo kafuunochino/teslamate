@@ -4,13 +4,13 @@
 
 ## 概览
 
-| 行为 | 之前 | 默认（升级后） | 启用新版 |
-|---|---|---|---|
-| TeslaMate 页面是否强制登录才能访问设置/地理围栏 | 否 | 否（保持兼容） | `TESLAMATE_STRICT_AUTH=true` |
-| `POST/GET /api/car/*/logging/{resume,suspend}` 是否检查登录态 | 否 | 否 | `TESLAMATE_PROTECT_API=true` |
-| Grafana 端口 `3000` 是否对公网监听 | 是（旧 compose） | 否（仅 `127.0.0.1:3000`） | 通过 HTTPS 反向代理访问 |
-| Grafana 认证方式 | 可能依赖 `/dashboards/*` auth proxy | Grafana 标准账号密码登录 | 旧嵌入代理仅可显式启用 |
-| Grafana 数据源升级 | 复用已有数据源 | 按名称更新并保留原 UID | 无需配置 |
+| 行为                                                          | 之前                                | 默认（升级后）            | 启用新版                     |
+| ------------------------------------------------------------- | ----------------------------------- | ------------------------- | ---------------------------- |
+| TeslaMate 页面是否强制登录才能访问设置/地理围栏               | 否                                  | 否（保持兼容）            | `TESLAMATE_STRICT_AUTH=true` |
+| `POST/GET /api/car/*/logging/{resume,suspend}` 是否检查登录态 | 否                                  | 否                        | `TESLAMATE_PROTECT_API=true` |
+| Grafana 端口 `3000` 是否对公网监听                            | 是（旧 compose）                    | 否（仅 `127.0.0.1:3000`） | 通过 HTTPS 反向代理访问      |
+| Grafana 认证方式                                              | 可能依赖 `/dashboards/*` auth proxy | Grafana 标准账号密码登录  | 旧嵌入代理仅可显式启用       |
+| Grafana 数据源升级                                            | 复用已有数据源                      | 按名称更新并保留原 UID    | 无需配置                     |
 
 ## Grafana 13 数据源升级兼容性
 

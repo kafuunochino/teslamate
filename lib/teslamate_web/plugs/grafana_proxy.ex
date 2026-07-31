@@ -120,8 +120,12 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
     body = conn_body(conn)
     method = conn.method |> String.downcase() |> String.to_atom()
 
-    case HTTP.request(method, target, headers: headers, body: body,
-           receive_timeout: 60_000, pool_timeout: 60_000) do
+    case HTTP.request(method, target,
+           headers: headers,
+           body: body,
+           receive_timeout: 60_000,
+           pool_timeout: 60_000
+         ) do
       {:ok, %Finch.Response{status: status, headers: resp_headers, body: resp_body}} ->
         send_proxied(conn, status, resp_headers, resp_body)
 
@@ -139,11 +143,15 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   # upstream. Always returns a path beginning with a single `/`.
   defp rewrite_path("/" <> _ = path) do
     cond do
-      path == @public_prefix -> "/"
+      path == @public_prefix ->
+        "/"
+
       String.starts_with?(path, @public_prefix <> "/") ->
         rest = path |> String.replace_prefix(@public_prefix, "") |> String.trim_leading("/")
         if rest == "", do: "/", else: "/" <> rest
-      true -> path
+
+      true ->
+        path
     end
   end
 

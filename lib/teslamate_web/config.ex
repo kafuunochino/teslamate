@@ -114,7 +114,9 @@ defmodule TeslaMateWeb.Config do
 
   # ---- CSP tuning -------------------------------------------------------
 
-  def csp_script_src, do: System.get_env("TESLAMATE_CSP_SCRIPT_SRC", "'self' 'unsafe-inline' 'unsafe-eval'")
+  def csp_script_src,
+    do: System.get_env("TESLAMATE_CSP_SCRIPT_SRC", "'self' 'unsafe-inline' 'unsafe-eval'")
+
   def csp_style_src, do: System.get_env("TESLAMATE_CSP_STYLE_SRC", "'self' 'unsafe-inline'")
   def csp_frame_ancestors, do: System.get_env("TESLAMATE_CSP_FRAME_ANCESTORS", "'none'")
 
@@ -122,8 +124,12 @@ defmodule TeslaMateWeb.Config do
 
   defp env_int(name, default) do
     case System.get_env(name) do
-      nil -> default
-      "" -> default
+      nil ->
+        default
+
+      "" ->
+        default
+
       v ->
         case Integer.parse(v) do
           {n, ""} when n > 0 -> n

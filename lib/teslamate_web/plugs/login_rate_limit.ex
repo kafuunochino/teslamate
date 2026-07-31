@@ -167,6 +167,7 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   end
 
   defp mask(nil), do: "(none)"
+
   defp mask(email) do
     case String.split(email, "@") do
       [local, domain] -> String.slice(local, 0, 2) <> "***@" <> domain
@@ -180,6 +181,7 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
 
   defp blocked?(ip, email) do
     cutoff = System.system_time(:second) - window_seconds()
+
     count_hits({:ip, ip}, cutoff) >= max_per_ip() or
       (email != nil and count_hits({:email, email}, cutoff) >= max_per_email())
   end
@@ -187,7 +189,10 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   defp retry_after(ip, _email) do
     cutoff = System.system_time(:second) - window_seconds()
 
-    case :ets.match(@table, {{:ip, ip}, :"$1"}) |> Enum.map(&hd/1) |> Enum.filter(&(&1 >= cutoff)) |> Enum.min() do
+    case :ets.match(@table, {{:ip, ip}, :"$1"})
+         |> Enum.map(&hd/1)
+         |> Enum.filter(&(&1 >= cutoff))
+         |> Enum.min() do
       oldest -> max(1, oldest + window_seconds() - System.system_time(:second))
     end
   rescue
