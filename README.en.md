@@ -59,10 +59,9 @@ LAN-friendly values** so the upgrade from older versions is transparent.
 | `TESLAMATE_HSTS`                  | `false`  | Add HSTS header (only when serving exclusively over HTTPS)               |
 | `TESLAMATE_FORCE_SSL`             | `false`  | Redirect HTTP -> HTTPS (disable when a reverse proxy does this)         |
 | `TESLAMATE_TRUSTED_PROXIES`       | `""`     | Comma-separated IPs/CIDRs whose `X-Forwarded-For` is trusted            |
-| `EMBED_GRAFANA`                   | `true`   | Reverse-proxy Grafana at `/dashboards/*`                                 |
+| `EMBED_GRAFANA`                   | `false`  | Opt in to the legacy `/dashboards/*` auth proxy                           |
 | `GRAFANA_PUBLIC_URL`              | `""`     | Public Grafana URL used when `EMBED_GRAFANA=false`                       |
-| `GRAFANA_PROXY_USER`              | `teslamate@local` | Header user sent to Grafana's `auth_proxy`                     |
-| `GF_SERVER_ROOT_URL`              | `http://localhost:4000/dashboards` | URL Grafana uses for redirects                       |
+| `GRAFANA_PROXY_USER`              | `teslamate@local` | Header user used only by the optional auth proxy                |
 
 For full descriptions and security implications see the comments in
 [`.env.example`](.env.example).

@@ -77,12 +77,12 @@ defmodule TeslaMateWeb.Config do
   def hsts?, do: truthy?(System.get_env("TESLAMATE_HSTS", "false"))
 
   @doc """
-  Reverse-proxy Grafana under `/dashboards/*`. Default: `true`.
+  Reverse-proxy Grafana under `/dashboards/*`. Default: `false`.
 
-  Disable when you want Grafana to remain on its own port (operator must
-  then expose `:3000` and set `GRAFANA_PUBLIC_URL`).
+  Enable only when the Grafana auth proxy settings are explicitly configured.
+  Direct Grafana login on port 3000 is the default.
   """
-  def embed_grafana?, do: truthy?(System.get_env("EMBED_GRAFANA", "true"))
+  def embed_grafana?, do: truthy?(System.get_env("EMBED_GRAFANA", "false"))
 
   # ---- rate limiting ----------------------------------------------------
 
@@ -101,7 +101,6 @@ defmodule TeslaMateWeb.Config do
   def grafana_upstream, do: System.get_env("GRAFANA_UPSTREAM", "http://grafana:3000")
   def grafana_public_url, do: System.get_env("GRAFANA_PUBLIC_URL", "")
   def grafana_proxy_user, do: System.get_env("GRAFANA_PROXY_USER", "teslamate@local")
-  def gf_server_root_url, do: System.get_env("GF_SERVER_ROOT_URL", "http://localhost:4000/dashboards")
 
   # ---- trusted proxies --------------------------------------------------
 

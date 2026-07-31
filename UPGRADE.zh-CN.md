@@ -8,8 +8,8 @@
 |---|---|---|---|
 | TeslaMate 页面是否强制登录才能访问设置/地理围栏 | 否 | 否（保持兼容） | `TESLAMATE_STRICT_AUTH=true` |
 | `POST/GET /api/car/*/logging/{resume,suspend}` 是否检查登录态 | 否 | 否 | `TESLAMATE_PROTECT_API=true` |
-| Grafana 端口 `3000` 是否对外暴露 | 是（docker-compose） | 否（仅容器内 `expose`） | 在 `docker-compose.zh-CN.yml` 中手动加 `ports: "3000:3000"` |
-| Grafana 是否需要走 `/dashboards/*` 反向代理 | 无 | 是（导航自动使用） | `EMBED_GRAFANA=true`（默认） |
+| Grafana 端口 `3000` 是否对公网监听 | 是（旧 compose） | 否（仅 `127.0.0.1:3000`） | 通过 HTTPS 反向代理访问 |
+| Grafana 认证方式 | 可能依赖 `/dashboards/*` auth proxy | Grafana 标准账号密码登录 | 旧嵌入代理仅可显式启用 |
 | Grafana 数据源升级 | 复用已有数据源 | 按名称更新并保留原 UID | 无需配置 |
 
 ## Grafana 13 数据源升级兼容性
@@ -30,9 +30,8 @@ Error: ✗ *provisioning.ProvisioningServiceImpl run error:
 ```bash
 cd /opt/teslamate-cn
 git pull
-docker compose -f docker-compose.zh-CN.yml down
 docker compose -f docker-compose.zh-CN.yml build --no-cache grafana
-docker compose -f docker-compose.zh-CN.yml up -d --build
+docker compose -f docker-compose.zh-CN.yml up -d --force-recreate grafana
 
 # 验证
 docker compose -f docker-compose.zh-CN.yml ps
@@ -51,27 +50,24 @@ docker compose -f docker-compose.zh-CN.yml logs --tail=100 grafana | grep -iE "p
 
 需要严格鉴权时，按下文启用即可。
 
-## 启用统一鉴权（推荐公网部署）
+## 启用 TeslaMate 页面鉴权（推荐公网部署）
 
 1. 在 `.env` 中新增：
    ```bash
    TESLAMATE_STRICT_AUTH=true
-   EMBED_GRAFANA=true
+   EMBED_GRAFANA=false
    # 可选：将 TeslaMate 与 Grafana 的 API 一起保护
    # TESLAMATE_PROTECT_API=true
    ```
 2. 重新 `docker compose pull && docker compose up -d`。
 3. 之后所有非 `/sign_in`、`/health_check`、LiveView WebSocket 升级之外的页面都需要先在 TeslaMate 里登录。
-4. 顶部导航栏"Dashboards"下拉会跳转到 `/dashboards/d/<uid>`（嵌入的 Grafana），而不是新窗口打开外部地址。
+4. Grafana 继续通过独立 HTTPS 域名使用自己的账号密码登录，不依赖 TeslaMate 的 4000 端口。
 
-## 还原旧行为（仅当你不想改变现状）
+旧 `/dashboards/*` 嵌入代理仍保留为兼容功能，但默认关闭。只有同时显式覆盖 Grafana auth proxy 配置时，才可设置 `EMBED_GRAFANA=true`。
 
-- 把上述 `.env` 三个开关全部留空或不设置。
-- 如果你**确实**还需要直接访问 `:3000`，在 `docker-compose.zh-CN.yml` 的 `grafana` 服务下加：
-  ```yaml
-  ports:
-    - "3000:3000"
-  ```
+## 端口安全
+
+Compose 默认把 TeslaMate 和 Grafana 分别绑定到 `127.0.0.1:4000` 与 `127.0.0.1:3000`。请让 HTTPS 反向代理访问这些本机端口，不要改为 `0.0.0.0` 或省略绑定地址。
 
 ## 备份与回滚
 
@@ -97,7 +93,7 @@ docker compose exec database pg_dump -U teslamate teslamate > backup_$(date +%F)
 A: 不要启用这个开关。或者在 `ENCRYPTION_KEY` 不变的前提下重新跑 `/sign_in`，Tesla tokens 会被加密存储在数据库中，下次启动自动续期。`ENCRYPTION_KEY` 必须固定，否则数据库里的 token 都解不出来。
 
 **Q: 启用 `EMBED_GRAFANA=true` 后嵌不进去？**
-A: 检查 Grafana 是否真的启用了 auth_proxy（`GF_AUTH_PROXY_ENABLED=true`）。如果 Grafana 镜像来自外部（比如 `teslamate/grafana` 标签），需要确认其默认配置包含 proxy。
+A: 这是兼容模式，必须另外显式配置 Grafana auth proxy。默认镜像使用标准账号密码登录，不会自动启用代理认证。
 
-**Q: 之前仪表盘直接打开 `:3000`，现在被反代了怎么办？**
-A: 在 `docker-compose.zh-CN.yml` 里加上 `ports: ["3000:3000"]` 显式启用旧路径，详见上文。
+**Q: 之前仪表盘直接打开 `:3000`，现在如何访问？**
+A: 服务器本机可使用 `http://127.0.0.1:3000/login`；远程使用反向代理后的 HTTPS 域名。

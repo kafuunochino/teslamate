@@ -14,11 +14,15 @@ services:
       MQTT_HOST: mosquitto
       DEFAULT_LOCALE: zh_Hans
       TZ: ${TZ:-Asia/Shanghai}
+      # Direct Grafana login is the safe default. The legacy /dashboards proxy
+      # remains available only when explicitly enabled.
+      EMBED_GRAFANA: ${EMBED_GRAFANA:-false}
+      GRAFANA_PUBLIC_URL: ${GRAFANA_PUBLIC_URL:-}
       # 程序会根据令牌区域自动选择中国区服务；仅在排查特殊网络问题时覆盖：
       # TESLA_API_HOST: https://owner-api.vn.cloud.tesla.cn
       # TESLA_WSS_HOST: wss://streaming.vn.cloud.tesla.cn
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     volumes:
       - ./import:/opt/app/import
     cap_drop:
@@ -39,14 +43,12 @@ services:
       - teslamate-db:/var/lib/postgresql
 
   grafana:
-    # Only exposed inside the docker network. TeslaMate (port 4000) is the only
-    # entry point and reverse-proxies /dashboards/* here after the user is signed
-    # in (see lib/teslamate_web/plugs/grafana_proxy.ex).
+    # Bind only to loopback; publish it through an HTTPS reverse proxy.
     build:
       context: ./grafana
     restart: always
-    expose:
-      - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
     environment:
       DATABASE_USER: teslamate
       DATABASE_PASS: ${DATABASE_PASS:?请在 .env 中设置 DATABASE_PASS}
@@ -55,7 +57,12 @@ services:
       DATABASE_PORT: 5432
       DATABASE_SSL_MODE: disable
       GF_USERS_DEFAULT_LANGUAGE: zh-Hans
-      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost:4000/dashboards}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_BASIC_ENABLED: "true"
+      GF_AUTH_PROXY_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_AUTH_DISABLE_SIGNOUT_MENU: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - teslamate-grafana-data:/var/lib/grafana

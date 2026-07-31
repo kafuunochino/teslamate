@@ -96,10 +96,7 @@
                 </a>
                 <div class="navbar-dropdown is-boxed">
                   <%= for %{"title" => title, "uid" => uid} <- list_dashboards() do %>
-                    <%
-                      proxy_enabled =
-                        System.get_env("EMBED_GRAFANA", "true") in ~w(1 true yes on)
-                    %>
+                    <% proxy_enabled = TeslaMateWeb.Config.embed_grafana?() %>
                     <%= if proxy_enabled do %>
                       <%= link(title,
                         to: "/dashboards/d/#{uid}",

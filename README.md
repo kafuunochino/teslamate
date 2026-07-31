@@ -7,7 +7,7 @@
 推荐直接阅读 [Windows / Linux / macOS 原生安装说明](NATIVE_INSTALL.zh-CN.md)，无需使用 Docker。本项目还包含 25 个经过安全清理的中国区增强仪表盘、默认高德地图、GCJ-02 坐标纠偏、安全旁路分时电价和 Grafana 只读数据库账户。Docker 安装方式作为备选保留在本文后续章节。
 
 > [!CAUTION]
-> TeslaMate 会保存 Tesla API 令牌和车辆轨迹。请只在可信设备上部署，设置高强度密钥与密码，并且不要把 3000、4000 端口直接暴露到互联网。远程访问建议使用 VPN、Tailscale、Cloudflare Tunnel 或配置了 HTTPS 与身份认证的反向代理。
+> TeslaMate 会保存 Tesla API 令牌和车辆轨迹。请只在可信设备上部署，设置高强度密钥与密码。Compose 默认把 3000、4000 端口绑定到 `127.0.0.1`，远程访问请使用 VPN、Tailscale、Cloudflare Tunnel 或 HTTPS 反向代理，不要改成对公网监听。
 
 ## 一、准备工作
 
@@ -56,11 +56,21 @@
 
 ## 三、登录与日常使用
 
-1. 打开 `http://设备IP:4000`。
+1. 在服务器本机打开 `http://127.0.0.1:4000`，远程访问请使用已配置的安全反向代理地址。
 2. 在登录页填写 Tesla API 的访问令牌和刷新令牌，然后登录。
 3. 首页用于查看车辆状态、续航、充电、温度与里程。顶部的“地理围栏”可配置常用地点和充电价格，“设置”可调整单位、休眠条件、主题与地址语言。
-4. 打开 `http://设备IP:3000` 查看 Grafana 仪表盘。仪表盘按“常用概览、行程驾驶、充电费用、电池能耗、统计分析、系统维护”分类；首次登录用户名和密码均为 `admin`，登录后请立即修改密码。
-5. 如果网页没有自动显示中文，可访问 `http://设备IP:4000/?locale=zh_Hans`，随后在“设置 → 语言 → 网页应用”中选择简体中文。
+4. 在服务器本机打开 `http://127.0.0.1:3000/login`，或打开反向代理后的 HTTPS 域名登录 Grafana。默认禁止匿名访问和用户自行注册，不依赖 TeslaMate 的 4000 端口认证。
+5. 现有数据卷会保留原有 Grafana 用户和密码；首次部署使用 Grafana 创建的管理员账号，登录后请立即设置强密码。
+6. 如果网页没有自动显示中文，可访问 TeslaMate 地址并添加 `/?locale=zh_Hans`，随后在“设置 → 语言 → 网页应用”中选择简体中文。
+
+忘记现有 Grafana 管理员密码时，可在不删除数据卷的情况下重置：
+
+```bash
+docker compose -f docker-compose.zh-CN.yml exec grafana \
+  grafana cli admin reset-admin-password '新的强密码'
+```
+
+`GF_SECURITY_ADMIN_PASSWORD` 只在首次创建管理员时生效，不能替代上述已有数据卷的密码重置命令。
 
 Tesla 官方令牌获取说明会随 Tesla API 政策变化，请以 [TeslaMate 官方常见问题](https://docs.teslamate.org/docs/faq#how-to-generate-your-own-tokens) 为准。不要把令牌发送给他人或写入 Git 仓库。
 
@@ -107,6 +117,7 @@ Compose 文件把项目内的 `import` 目录挂载到容器的 `/opt/app/import
 
 - 网页打不开：确认 `docker compose ... ps` 中 `teslamate` 为运行状态，并检查 4000 端口是否被占用或被防火墙拦截。
 - Grafana 没有数据：先确认 TeslaMate 已成功连接车辆并产生记录，再检查 `grafana` 和 `database` 服务日志。
+- Grafana 登录页返回 500 且日志包含 `org.notFound`：重新构建 Grafana，确认容器中匿名认证和 auth proxy 均为 `false`，不要删除 `teslamate-grafana-data`。
 - Grafana 启动时提示数据源配置导入失败：请拉取最新代码并仅重新构建服务，不要删除 `teslamate-grafana-data` 数据卷；修复版会按已有数据源名称更新配置并保留原 UID。
 - 重启后需要重新登录：确认 `.env` 中设置了固定的 `ENCRYPTION_KEY`，且启动时使用了同一个 `.env`。
 - 数据库连接失败：确认 `.env` 中的 `DATABASE_PASS` 没有被修改，并且 Compose 中数据库与其他服务使用的是同一个值。

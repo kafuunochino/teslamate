@@ -460,12 +460,58 @@ const grafanaDockerfile = fs.readFileSync(
   path.join(projectRoot, "grafana", "Dockerfile"),
   "utf8",
 );
+for (const directAuthSetting of [
+  "GF_AUTH_ANONYMOUS_ENABLED=false",
+  "GF_AUTH_BASIC_ENABLED=true",
+  "GF_AUTH_PROXY_ENABLED=false",
+  "GF_AUTH_DISABLE_LOGIN_FORM=false",
+  "GF_AUTH_DISABLE_SIGNOUT_MENU=false",
+  "GF_USERS_ALLOW_SIGN_UP=false",
+]) {
+  if (!grafanaDockerfile.includes(directAuthSetting)) {
+    errors.push(`grafana/Dockerfile: missing direct-login default ${directAuthSetting}`);
+  }
+}
+for (const unsafeAuthSetting of [
+  "GF_AUTH_ANONYMOUS_ORG_NAME",
+  "GF_AUTH_ANONYMOUS_ORG_ROLE",
+  "GF_AUTH_PROXY_HEADER_NAME",
+  "GF_AUTH_PROXY_HEADER_PROPERTY",
+  "GF_AUTH_PROXY_AUTO_SIGN_UP",
+  "GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN",
+  "GF_AUTH_PROXY_SYNC_ATTRIBUTES",
+  "GF_SECURITY_ADMIN_PASSWORD=",
+]) {
+  if (grafanaDockerfile.includes(unsafeAuthSetting)) {
+    errors.push(`grafana/Dockerfile: direct-login image must not set ${unsafeAuthSetting}`);
+  }
+}
 for (const disabledLayoutFlag of [
   "GF_FEATURE_TOGGLES_newPanelPadding=false",
   "GF_FEATURE_TOGGLES_dashboardNewLayouts=false",
 ]) {
   if (grafanaDockerfile.includes(disabledLayoutFlag)) {
     errors.push(`grafana/Dockerfile: Grafana 13 layout disabled by ${disabledLayoutFlag}`);
+  }
+}
+
+const dockerCompose = fs.readFileSync(
+  path.join(projectRoot, "docker-compose.zh-CN.yml"),
+  "utf8",
+);
+for (const composeSecuritySetting of [
+  '"127.0.0.1:4000:4000"',
+  '"127.0.0.1:3000:3000"',
+  'GF_AUTH_ANONYMOUS_ENABLED: "false"',
+  'GF_AUTH_BASIC_ENABLED: "true"',
+  'GF_AUTH_PROXY_ENABLED: "false"',
+  'GF_AUTH_DISABLE_LOGIN_FORM: "false"',
+  'GF_AUTH_DISABLE_SIGNOUT_MENU: "false"',
+  'GF_USERS_ALLOW_SIGN_UP: "false"',
+  "teslamate-grafana-data:/var/lib/grafana",
+]) {
+  if (!dockerCompose.includes(composeSecuritySetting)) {
+    errors.push(`docker-compose.zh-CN.yml: missing security setting ${composeSecuritySetting}`);
   }
 }
 

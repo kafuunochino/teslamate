@@ -10,17 +10,15 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   contained in redirect `Location` headers are rewritten so the user cannot
   reach Grafana by typing a direct URL.
 
-  Configure Grafana with `GF_AUTH_PROXY_ENABLED=true` and
-  `GF_AUTH_PROXY_HEADER_NAME=X-Teslamate-User` (see `grafana/Dockerfile`).
-  Each request signed-in to TeslaMate will therefore appear as
-  `X-Teslamate-User: <token>` to Grafana which accepts it via its auth_proxy.
+  The proxy is a legacy compatibility option. It is disabled by default and
+  requires an explicit Grafana auth-proxy configuration before it is enabled.
 
   ## Backward-compatibility switches
 
-  * `EMBED_GRAFANA=false` — disables the proxy entirely. Users hitting
+  * `EMBED_GRAFANA=false` (default) — disables the proxy entirely. Users hitting
     `/dashboards/*` are 302-redirected to `GRAFANA_PUBLIC_URL` so the legacy
     direct port 3000 still works during a migration.
-  * `EMBED_GRAFANA=true` (default) — proxy is active. Unauthenticated users are
+  * `EMBED_GRAFANA=true` — proxy is active. Unauthenticated users are
     302-redirected to `/sign_in`.
 
   No env vars are read at compile time, so changes only require a TeslaMate
@@ -161,9 +159,8 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
       [
         {"host", host(@upstream)},
         # Tell Grafana that the incoming request has already been authenticated.
-        # We send *both* the user identity (for display) AND a signed token that
-        # Grafana can verify (see grafana/Dockerfile — `GF_AUTH_PROXY_HEADER_NAME`
-        # is the user; the token comes via the cookie we set on `do_proxy/1`).
+        # We send both the user identity and a signed token; an explicitly
+        # configured auth proxy can validate and accept them.
         {"x-teslamate-user", @proxy_user},
         {"x-teslamate-token", mint_proxy_token(conn)},
         {"x-forwarded-for", forwarded_for(conn)},
