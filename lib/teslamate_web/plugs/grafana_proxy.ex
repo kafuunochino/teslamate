@@ -201,11 +201,20 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   end
 
   defp forwarded_for(conn) do
-    case List.keyfind(conn.req_headers, "x-forwarded-for", 0) do
-      {_, v} -> to_string(v)
-      nil -> to_string(conn.remote_ip)
+    case conn.private[:client_ip] do
+      ip when is_binary(ip) -> ip
+      _ -> format_ip(conn.remote_ip)
     end
   end
+
+  defp format_ip(ip) when is_tuple(ip) do
+    case :inet.ntoa(ip) do
+      chars when is_list(chars) -> List.to_string(chars)
+      _ -> "unknown"
+    end
+  end
+
+  defp format_ip(_), do: "unknown"
 
   defp forwarded_proto(conn) do
     case List.keyfind(conn.req_headers, "x-forwarded-proto", 0) do
@@ -220,7 +229,7 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
 
   defp conn_body(conn) do
     case read_body(conn) do
-      {:ok, body, _conn} -> body || ""
+      {:ok, body, _conn} -> body
       {:error, _reason} -> ""
     end
   end

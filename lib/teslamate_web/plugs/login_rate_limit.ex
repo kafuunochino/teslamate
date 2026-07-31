@@ -149,14 +149,20 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   # ---- helpers ------------------------------------------------------------
 
   defp client_ip(conn) do
-    case List.keyfind(conn.req_headers, "x-forwarded-for", 0) do
-      {_, v} when is_binary(v) ->
-        v |> String.split(",") |> List.first() |> String.trim()
-
-      _ ->
-        to_string(conn.remote_ip)
+    case conn.private[:client_ip] do
+      ip when is_binary(ip) -> ip
+      _ -> format_ip(conn.remote_ip)
     end
   end
+
+  defp format_ip(ip) when is_tuple(ip) do
+    case :inet.ntoa(ip) do
+      chars when is_list(chars) -> List.to_string(chars)
+      _ -> "unknown"
+    end
+  end
+
+  defp format_ip(_), do: "unknown"
 
   defp extract_email(conn) do
     with %{"tokens" => %{"email" => email}} when is_binary(email) <- conn.body_params do
@@ -202,7 +208,7 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   defp count_hits(key, cutoff \\ nil) do
     match_spec =
       case cutoff do
-        nil -> {{key, :"$1"}, [:"$_"]}
+        nil -> {{key, :"$1"}, [], [:"$_"]}
         c -> {{key, :"$1"}, [{:>=, :"$1", c}], [:"$_"]}
       end
 

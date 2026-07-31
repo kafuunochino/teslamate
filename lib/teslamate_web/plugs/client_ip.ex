@@ -27,11 +27,11 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
        proxy's network interfaces (e.g. `172.18.0.1,10.0.0.5`). CIDR
        notation is supported (e.g. `172.18.0.0/16`).
 
-  When `TESLAMATE_TRUSTED_PROXIES` is unset, the plug treats *every* peer
-  as trusted — fine for direct LAN access, **insecure** for any deployment
-  that is reachable from the internet.
+  When `TESLAMATE_TRUSTED_PROXIES` is unset, the plug trusts no proxy and
+  ignores `X-Forwarded-For`.
   """
 
+  import Bitwise
   import Plug.Conn
 
   def init(opts), do: opts
@@ -47,20 +47,36 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
   # ---- resolution --------------------------------------------------------
 
   defp resolve(conn) do
-    peer = to_string(conn.remote_ip)
+    peer = conn.remote_ip
+    peer_string = format_ip(peer)
 
     if trusted_proxy?(peer) do
-      case List.keyfind(conn.req_headers, "x-forwarded-for", 0) do
-        {_, value} when is_binary(value) ->
-          value |> String.split(",") |> List.first() |> String.trim()
-
-        _ ->
-          peer
-      end
+      forwarded_ip(conn) || peer_string
     else
-      peer
+      peer_string
     end
   end
+
+  defp forwarded_ip(conn) do
+    with {_, value} when is_binary(value) <-
+           List.keyfind(conn.req_headers, "x-forwarded-for", 0),
+         first when is_binary(first) <-
+           value |> String.split(",") |> List.first() |> String.trim(),
+         parsed when is_tuple(parsed) <- parse_ip(first) do
+      format_ip(parsed)
+    else
+      _ -> nil
+    end
+  end
+
+  defp format_ip(ip) when is_tuple(ip) do
+    case :inet.ntoa(ip) do
+      chars when is_list(chars) -> List.to_string(chars)
+      _ -> "unknown"
+    end
+  end
+
+  defp format_ip(_), do: "unknown"
 
   # ---- trusted-proxy matching --------------------------------------------
 
@@ -74,17 +90,27 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
         |> String.split(",")
         |> Enum.map(&String.trim/1)
         |> Enum.reject(&(&1 == ""))
-        |> Enum.flat_map(&expand/1)
+        |> Enum.flat_map(&parse_proxy/1)
     end
   end
 
-  # Expand a CIDR like "172.18.0.0/16" into a list of `inet:ip_address()`
-  # ranges; for plain IPs just return a single-entry list.
-  defp expand(entry) do
-    case String.split(entry, "/") do
-      [ip] -> [parse_ip(ip) || entry]
-      [ip, prefix] -> cidr_range(ip, String.to_integer(prefix))
-      _ -> []
+  defp parse_proxy(entry) do
+    case String.split(entry, "/", parts: 2) do
+      [ip] ->
+        case parse_ip(ip) do
+          parsed when is_tuple(parsed) -> [{:address, parsed}]
+          _ -> []
+        end
+
+      [ip, prefix] ->
+        with parsed when is_tuple(parsed) <- parse_ip(ip),
+             {prefix, ""} <- Integer.parse(prefix),
+             bits when is_integer(bits) <- address_bits(parsed),
+             true <- prefix in 0..bits do
+          [{:network, parsed, prefix}]
+        else
+          _ -> []
+        end
     end
   end
 
@@ -95,60 +121,51 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
     end
   end
 
-  defp cidr_range(ip, prefix) when prefix in 0..32 do
-    case parse_ip(ip) do
-      nil -> []
-      _ -> [{parse_ip(ip), prefix}]
+  defp trusted_proxy?(peer) when is_tuple(peer) do
+    Enum.any?(trusted_proxies(), fn
+      {:address, address} -> peer == address
+      {:network, network, prefix} -> cidr_match?(peer, network, prefix)
+    end)
+  end
+
+  defp trusted_proxy?(_), do: false
+
+  defp cidr_match?(peer, network, prefix) do
+    with {peer, bits} <- ip_integer(peer),
+         {network, ^bits} <- ip_integer(network),
+         true <- prefix in 0..bits do
+      mask =
+        if prefix == 0 do
+          0
+        else
+          ((1 <<< prefix) - 1) <<< (bits - prefix)
+        end
+
+      (peer &&& mask) == (network &&& mask)
+    else
+      _ -> false
     end
   end
 
-  defp cidr_range(_, _), do: []
-
-  defp trusted_proxy?(peer_str) do
-    proxies = trusted_proxies()
-    proxies == [] or Enum.any?(proxies, &matches?(peer_str, &1))
+  defp ip_integer(ip) when tuple_size(ip) == 4 do
+    {Enum.reduce(Tuple.to_list(ip), 0, fn part, acc -> acc <<< 8 ||| part end), 32}
   end
 
-  defp matches?(peer_str, entry) when is_tuple(entry) do
-    {ip, prefix} = entry
-    parsed_peer = parse_ip(peer_str)
-
-    cond do
-      is_nil(parsed_peer) ->
-        false
-
-      prefix == 0 ->
-        true
-
-      true ->
-        masked_peer = mask(parsed_peer, prefix)
-        masked_entry = mask(ip, prefix)
-        masked_peer == masked_entry
-    end
+  defp ip_integer(ip) when tuple_size(ip) == 8 do
+    {Enum.reduce(Tuple.to_list(ip), 0, fn part, acc -> acc <<< 16 ||| part end), 128}
   end
 
-  defp matches?(peer_str, entry) when is_binary(entry) do
-    peer_str == entry
-  end
+  defp ip_integer(_), do: nil
 
-  defp mask({a, _b, _c, _d}, prefix) when prefix <= 8, do: {a_band(a, prefix), 0, 0, 0}
-  defp mask({a, b, _c, _d}, prefix) when prefix <= 16, do: {a, b_band(b, prefix - 8), 0, 0}
-  defp mask({a, b, c, _d}, prefix) when prefix <= 24, do: {a, b, c_band(c, prefix - 16), 0}
-  defp mask({a, b, c, d}, prefix) when prefix <= 32, do: {a, b, c, d_band(d, prefix - 24)}
-  defp mask(_, _), do: nil
-
-  defp a_band(a, p), do: Bitwise.band(a, Bitwise.<<<(-1, 8 - p))
-  defp b_band(b, p), do: Bitwise.band(b, Bitwise.<<<(-1, 8 - p))
-  defp c_band(c, p), do: Bitwise.band(c, Bitwise.<<<(-1, 8 - p))
-  defp d_band(d, p), do: Bitwise.band(d, Bitwise.<<<(-1, 8 - p))
+  defp address_bits(ip) when tuple_size(ip) == 4, do: 32
+  defp address_bits(ip) when tuple_size(ip) == 8, do: 128
+  defp address_bits(_), do: nil
 
   # ---- session bridge ----------------------------------------------------
 
   defp maybe_put_session(%Plug.Conn{} = conn) do
-    case get_session(conn) do
-      %{} -> put_session(conn, :client_ip, conn.private[:client_ip])
-      _ -> conn
-    end
+    _session = get_session(conn)
+    put_session(conn, :client_ip, conn.private[:client_ip])
   rescue
     _ -> conn
   end
