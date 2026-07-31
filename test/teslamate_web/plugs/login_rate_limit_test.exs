@@ -2,9 +2,12 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimitTest do
   use ExUnit.Case, async: false
 
   alias TeslaMateWeb.Plugs.LoginRateLimit
+  alias TeslaMateWeb.Plugs.LoginRateLimit.TableOwner
 
   setup do
     LoginRateLimit.ensure_started()
+    assert pid = Process.whereis(TableOwner)
+    assert Process.alive?(pid)
     :ets.delete_all_objects(:teslamate_login_rate_limits)
 
     on_exit(fn ->

@@ -31,6 +31,7 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   require Logger
 
   alias TeslaMateWeb.Config
+  alias TeslaMateWeb.Plugs.LoginRateLimit.TableOwner
 
   @table :teslamate_login_rate_limits
 
@@ -131,20 +132,7 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   def hit_count(:email, email) when is_binary(email), do: count_hits({:email, email})
 
   @doc "Ensures the underlying ETS table exists. Idempotent."
-  def ensure_started do
-    case :ets.info(@table) do
-      :undefined ->
-        try do
-          :ets.new(@table, [:named_table, :public, :duplicate_bag, read_concurrency: true])
-          :ok
-        rescue
-          ArgumentError -> :ok
-        end
-
-      _ ->
-        :ok
-    end
-  end
+  def ensure_started, do: TableOwner.ensure_started()
 
   # ---- helpers ------------------------------------------------------------
 
