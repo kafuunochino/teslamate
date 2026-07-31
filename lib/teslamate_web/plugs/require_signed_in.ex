@@ -16,6 +16,7 @@ defmodule TeslaMateWeb.Plugs.RequireSignedIn do
   import Phoenix.Controller, only: [redirect: 2]
 
   alias TeslaMate.Api
+  alias TeslaMateWeb.Router.Helpers, as: Routes
 
   def init(opts), do: opts
 
@@ -33,6 +34,6 @@ defmodule TeslaMateWeb.Plugs.RequireSignedIn do
   end
 
   defp sign_in_path(conn) do
-    Phoenix.Router.Routes.live_path(conn, TeslaMateWeb.SignInLive.Index)
+    Routes.live_path(conn, TeslaMateWeb.SignInLive.Index)
   end
 end

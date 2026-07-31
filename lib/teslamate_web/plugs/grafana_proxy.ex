@@ -29,6 +29,7 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   require Logger
 
   alias TeslaMate.HTTP
+  alias TeslaMateWeb.Router.Helpers, as: Routes
 
   @upstream TeslaMateWeb.Config.grafana_upstream()
   @public_grafana_url TeslaMateWeb.Config.grafana_public_url()
@@ -78,7 +79,7 @@ defmodule TeslaMateWeb.Plugs.GrafanaProxy do
   # ---- fallbacks ----------------------------------------------------------
 
   defp redirect_to_sign_in(conn) do
-    target = Phoenix.Router.Routes.live_path(conn, TeslaMateWeb.SignInLive.Index)
+    target = Routes.live_path(conn, TeslaMateWeb.SignInLive.Index)
 
     conn
     |> put_resp_header("location", target)

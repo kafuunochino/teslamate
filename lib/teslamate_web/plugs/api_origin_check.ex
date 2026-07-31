@@ -44,7 +44,7 @@ defmodule TeslaMateWeb.Plugs.ApiOriginCheck do
       false ->
         Logger.warning(
           "[api-origin] rejected #{conn.method} #{conn.request_path} from " <>
-            "origin=#{origin(conn)} referer=#{List.keyget(conn.req_headers, "referer", 0)} host=#{host}"
+            "origin=#{origin(conn)} referer=#{List.first(get_req_header(conn, "referer"))} host=#{host}"
         )
 
         conn
