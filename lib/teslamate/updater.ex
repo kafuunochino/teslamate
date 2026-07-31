@@ -1,6 +1,5 @@
 defmodule TeslaMate.Updater do
   use GenServer
-  use Tesla, only: [:get]
 
   require Logger
 
@@ -24,12 +23,19 @@ defmodule TeslaMate.Updater do
                  end
              end)
 
-  adapter Tesla.Adapter.Finch, name: TeslaMate.HTTP, receive_timeout: 30_000
+  defp client do
+    Tesla.client(
+      [
+        {Tesla.Middleware.BaseUrl, "https://api.github.com"},
+        {Tesla.Middleware.Headers, [{"user-agent", "TeslaMate/#{@version}"}]},
+        Tesla.Middleware.JSON,
+        {Tesla.Middleware.Logger, debug: true, level: &log_level/1}
+      ],
+      {Tesla.Adapter.Finch, name: TeslaMate.HTTP, receive_timeout: 30_000}
+    )
+  end
 
-  plug Tesla.Middleware.BaseUrl, "https://api.github.com"
-  plug Tesla.Middleware.Headers, [{"user-agent", "TeslaMate/#{@version}"}]
-  plug Tesla.Middleware.JSON
-  plug Tesla.Middleware.Logger, debug: true, log_level: &log_level/1
+  defp get(url), do: Tesla.get(client(), url)
 
   defmodule State, do: defstruct([:update, :version, :revision, :repository])
   defmodule Release, do: defstruct([:version, :prerelease])
@@ -201,6 +207,7 @@ defmodule TeslaMate.Updater do
 
   defp normalize_revision(_revision), do: nil
 
-  defp log_level(%Tesla.Env{} = env) when env.status >= 400, do: :warning
-  defp log_level(%Tesla.Env{}), do: :debug
+  defp log_level({:ok, %Tesla.Env{} = env}) when env.status >= 400, do: :warning
+  defp log_level({:ok, %Tesla.Env{}}), do: :debug
+  defp log_level({:error, _reason}), do: :error
 end

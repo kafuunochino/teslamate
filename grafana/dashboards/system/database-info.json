@@ -417,7 +417,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "这表示存在尚未结束的**行程**或**充电记录**。\n如有需要，请参阅官方指南：\n<a href='https://docs.teslamate.org/docs/maintenance/manually_fixing_data' target='_blank'>手动修复数据</a>",
+      "description": "未结束的**行程**或**充电记录**可能是当前活动会话，不一定表示数据不完整。点击数量可查看对应记录。\n如果记录确实不完整，请参阅官方指南：\n<a href='https://docs.teslamate.org/docs/maintenance/manually_fixing_data' target='_blank'>手动修复数据</a>",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -428,8 +428,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
+                "color": "green",
                 "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 1
               }
             ]
           }
@@ -444,6 +448,16 @@
               {
                 "id": "displayName",
                 "value": "未结束的充电记录"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "查看未结束的充电记录",
+                    "url": "/d/TSmNYvRRk/charges?var-car_id=$car_id&viewPanel=17"
+                  }
+                ]
               }
             ]
           },
@@ -456,6 +470,16 @@
               {
                 "id": "displayName",
                 "value": "未结束的行程记录"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "查看未结束的行程记录",
+                    "url": "/d/Y8upc6ZRk/drives?var-car_id=$car_id&viewPanel=9"
+                  }
+                ]
               }
             ]
           }

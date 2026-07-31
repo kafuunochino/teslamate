@@ -43,6 +43,39 @@ defmodule TeslaMate.Vehicles.Vehicle do
 
   @drive_timeout_min 15
 
+  @vin_model_years %{
+    "A" => 2010,
+    "B" => 2011,
+    "C" => 2012,
+    "D" => 2013,
+    "E" => 2014,
+    "F" => 2015,
+    "G" => 2016,
+    "H" => 2017,
+    "J" => 2018,
+    "K" => 2019,
+    "L" => 2020,
+    "M" => 2021,
+    "N" => 2022,
+    "P" => 2023,
+    "R" => 2024,
+    "S" => 2025,
+    "T" => 2026,
+    "V" => 2027,
+    "W" => 2028,
+    "X" => 2029,
+    "Y" => 2030,
+    "1" => 2031,
+    "2" => 2032,
+    "3" => 2033,
+    "4" => 2034,
+    "5" => 2035,
+    "6" => 2036,
+    "7" => 2037,
+    "8" => 2038,
+    "9" => 2039
+  }
+
   # Static
   def interval(env_var, default) do
     System.get_env(env_var)
@@ -59,7 +92,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
   def charging_interval, do: interval("POLLING_CHARGING_INTERVAL", 5)
   def minimum_interval, do: interval("POLLING_MINIMUM_INTERVAL", 0)
 
-  def identify(%Vehicle{display_name: name, vehicle_config: config}) do
+  def identify(%Vehicle{display_name: name, vin: vin, vehicle_config: config}) do
     case config do
       %VehicleConfig{
         car_type: type,
@@ -96,7 +129,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
             {"3", "74D", _} -> "LR AWD"
             {"3", "74", _} -> "LR"
             {"3", "62", _} -> "MR"
-            {"3", "50", _} -> "SR+"
+            {"3", "50", _} -> model_3_base_trim(vin)
             {"X", "100D", "tamarind"} -> "LR"
             {"X", "P100D", "tamarind"} -> "Plaid"
             {"Y", "P74D", _} -> "LR AWD Performance"
@@ -119,6 +152,22 @@ defmodule TeslaMate.Vehicles.Vehicle do
 
       nil ->
         {:error, :vehicle_config_not_available}
+    end
+  end
+
+  # Position 10 of a 17-character VIN encodes the model year. Codes repeat every
+  # 30 years; current Tesla VINs are resolved against the 2010-2039 cycle.
+  defp vin_model_year(<<_::binary-size(9), code::binary-size(1), _::binary-size(7)>>),
+    do: Map.get(@vin_model_years, code)
+
+  defp vin_model_year(_vin), do: nil
+
+  # Model year is only a proxy for the naming change. A MY2021 car renamed or
+  # sold later still falls back to SR+ because the API exposes no rename date.
+  defp model_3_base_trim(vin) do
+    case vin_model_year(vin) do
+      year when is_integer(year) and year >= 2022 -> "RWD"
+      _year -> "SR+"
     end
   end
 
@@ -452,6 +501,9 @@ defmodule TeslaMate.Vehicles.Vehicle do
 
         {:keep_state, data, [broadcast_fetch(false), schedule_fetch(data)]}
 
+      {:error, :import_complete} when data.import? ->
+        {:keep_state, data, broadcast_fetch(false)}
+
       {:error, :closed} ->
         Logger.warning("Error / connection closed", car_id: data.car.id)
         {:keep_state, data, [broadcast_fetch(false), schedule_fetch(5, data)]}
@@ -660,14 +712,26 @@ defmodule TeslaMate.Vehicles.Vehicle do
       ) do
     case {status, stream_data} do
       {:available, %Stream.Data{shift_state: shift_state}} when shift_state in ~w(D N R) ->
-        {:ok, %{elevation: elevation}} =
-          call(data.deps.log, :insert_position, [drv, create_position(stream_data, data)])
+        {elevation, geofence} =
+          Repo.checkout(fn ->
+            {:ok, %{elevation: elevation} = position} =
+              call(data.deps.log, :insert_position, [drv, create_position(stream_data, data)])
+
+            geofence = call(data.deps.locations, :find_geofence, [position])
+            {elevation, geofence}
+          end)
 
         vehicle = merge(data.last_response, stream_data)
         now = DateTime.utc_now()
 
-        {:keep_state, %{data | last_used: now, last_response: vehicle, elevation: elevation},
-         broadcast_summary()}
+        {:keep_state,
+         %{
+           data
+           | last_used: now,
+             last_response: vehicle,
+             elevation: elevation,
+             geofence: geofence
+         }, broadcast_summary()}
 
       {_status, %Stream.Data{}} ->
         {:keep_state_and_data, schedule_fetch(0, data)}
@@ -1255,6 +1319,8 @@ defmodule TeslaMate.Vehicles.Vehicle do
          {:next_event, :internal, {:update, {:online, now}}}}
 
       not is_nil(drv) ->
+        data = maybe_reconnect_stream(data)
+
         {:next_state, {:driving, :available, drv}, %{data | last_used: DateTime.utc_now()},
          {:next_event, :internal, {:update, {:online, now}}}}
     end
@@ -1276,6 +1342,8 @@ defmodule TeslaMate.Vehicles.Vehicle do
         %Data{} = data
       ) do
     Logger.info("Vehicle is back online", car_id: data.car.id)
+
+    data = maybe_reconnect_stream(data)
 
     {:next_state, {:driving, :available, drv}, %{data | last_used: DateTime.utc_now()},
      {:next_event, :internal, {:update, e}}}
@@ -1557,6 +1625,9 @@ defmodule TeslaMate.Vehicles.Vehicle do
 
       {:ok, %V{}} ->
         {:error, :gateway_error}
+
+      {:error, :too_many_request, retry_after} ->
+        {:error, {:too_many_request, retry_after}}
 
       {:error, reason} ->
         {:error, reason}
@@ -1966,6 +2037,17 @@ defmodule TeslaMate.Vehicles.Vehicle do
   defp disconnect_stream(%Data{stream_pid: pid} = data) when is_pid(pid) do
     Logger.info("Stream disconnecting ...", car_id: data.car.id)
     Stream.disconnect(pid)
+  end
+
+  defp maybe_reconnect_stream(%Data{car: %Car{settings: settings}} = data) do
+    case {settings, streaming?(data)} do
+      {%CarSettings{use_streaming_api: true}, false} ->
+        {:ok, pid} = connect_stream(data)
+        %Data{data | stream_pid: pid}
+
+      {%CarSettings{}, _} ->
+        data
+    end
   end
 
   defp summary_topic(car_id) when is_number(car_id), do: "#{__MODULE__}/summary/#{car_id}"

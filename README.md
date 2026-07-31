@@ -97,17 +97,23 @@ TESLAMATE_REVISION="$(git rev-parse HEAD)" docker compose -f docker-compose.zh-C
 
 ## 五、更新
 
-先备份数据库，再拉取代码并重新构建：
+先记录旧版本并备份数据库，再以 fast-forward 方式拉取代码并重新构建：
 
 ```bash
-docker compose -f docker-compose.zh-CN.yml exec -T database \
-  pg_dump -U teslamate -d teslamate -Fc > teslamate-backup.dump
+git status --short
+git rev-parse HEAD | tee teslamate-before-update.commit
 
-git pull
+BACKUP="teslamate-before-update-$(date +%Y%m%d-%H%M%S).dump"
+docker compose -f docker-compose.zh-CN.yml exec -T database \
+  pg_dump -U teslamate -d teslamate -Fc > "$BACKUP"
+test -s "$BACKUP"
+
+git fetch origin
+git pull --ff-only origin main
 TESLAMATE_REVISION="$(git rev-parse HEAD)" docker compose -f docker-compose.zh-CN.yml up -d --build
 ```
 
-Windows PowerShell 在重新构建前先执行 `$env:TESLAMATE_REVISION = git rev-parse HEAD`。更新完成后检查 `ps` 和 TeslaMate 日志。恢复数据库前请停止 TeslaMate，并确认备份文件完整可读。
+如果 `git status --short` 有输出，请先保存服务器本地修改，不要直接覆盖。当前版本包含数据库迁移；迁移不会删除车辆、行程或充电数据，但回退到旧代码时应同时恢复升级前的数据库备份。Windows PowerShell 在重新构建前先执行 `$env:TESLAMATE_REVISION = git rev-parse HEAD`。更新完成后检查 `ps` 和 TeslaMate 日志。恢复数据库前请停止 TeslaMate，并确认备份文件完整可读。
 
 ## 六、数据导入
 

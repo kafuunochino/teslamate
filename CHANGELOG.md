@@ -5,8 +5,14 @@
 ### New features
 
 - feat: add service mode to webview and reduce log when car is Unlocked at service mode (#5289 - @NirKli)
+- feat(mqtt): add service_mode (#5289 - @NirKli)
 - feat: add Sun roof and individual window status via MQTT (#5393 - @nebhale)
 - feat: embed Grafana behind `/dashboards/*` and protect every TeslaMate screen behind the Tesla sign-in when `TESLAMATE_STRICT_AUTH=true`
+- feat: show and color the software update icon through the update lifecycle (#5487 - @NirKli)
+- feat(mqtt): add download_perc and install_perc for pending sw install (#5487 - @NirKli)
+- feat: link the software update icon to the notateslaapp release notes (#5490 - @NirKli)
+- feat: add fullscreen mode to vehicle summary map (#5495 - @hakong)
+- feat(web): expose VIN in car summary ( #5556 - @Helvio88, @magrathean-uk)
 
 ### Improvements and bug fixes
 
@@ -15,6 +21,24 @@
 - fix(mqtt): retry failed value publications (#5429 - @ciyahu)
 - fix(grafana): preserve the UID of an existing named datasource so Grafana 13 upgrades do not fail during provisioning
 - fix(ci): the GitHub Actions Docker build now references the correct step output id (`steps.meta`) instead of `steps.docker_meta`, fixing image publishing since v1.40
+- fix: redact Tesla API tokens from logs (#5475 - @magrathean-uk)
+- fix(vehicle): back off for 15 minutes on Fleet API `EXCEEDED_LIMIT` responses instead of retrying every 10-30s (#5476 - @hossamnagy)
+- refactor: send TOKEN as Bearer header via FleetAuth middleware (#5470 - @jlestel)
+- fix: honor DATABASE_USER/DATABASE_PASS with DATABASE_SOCKET_DIR (#5503 - @mvanhorn)
+- fix(import): accept fractional TeslaFi battery levels (#5513 - @magrathean-uk)
+- fix(cars): enforce non-null VINs (#5512 - @magrathean-uk)
+- fix(mqtt): return publish errors without crashing (#5514 - @magrathean-uk)
+- fix(geofences): increase cost precision (#5508 - @magrathean-uk)
+- fix: reconnect stream when a drive resumes after mid-drive offline phase to avoid missing elevation (#5535 - @JakobLichterfeld)
+- refactor(nix,postgres): provision database declaratively, connect via socket (#5337 - @JakobLichterfeld)
+- fix(nix,maintenance): read RELEASE_COOKIE without sourcing the env file (#5337 - @JakobLichterfeld)
+- fix(nix,postgres): set role password safely for any value (#5337 - @JakobLichterfeld)
+- fix(nix): drop schemas in the configured database during restore (#5337 - @JakobLichterfeld)
+- fix(nix,grafana): disable the periodic plugin update check (#5337 - @JakobLichterfeld)
+- feat(import): continue past malformed rows and resume completed TeslaFi files- (#5552 - @magrathean-uk)
+- fix(vehicle): update geofence while driving with streaming API (#5515 - @magrathean-uk)
+- fix(vehicle): identify base Model 3 from model year 2022 as RWD instead of SR+ (#5551 - @magrathean-uk)
+- fix(mqtt): avoid blocking startup on retained cleanup (#5549 - @magrathean-uk)
 
 #### Build, CI, internal
 
@@ -23,8 +47,8 @@
 - build(deps): bump launch-editor from 2.13.2 to 2.14.1 in /website (#5426)
 - build(deps): update flake.lock (#5427)
 - build(deps): bump webpack-dev-server from 5.2.4 to 5.2.5 in /website (#5445)
-- chore: add .codegraph to .gitignore (#5440- @JakobLichterfeld)
-- ci: speed up check_linting by running treefmt in a lean app (#5440- @JakobLichterfeld)
+- chore: add .codegraph to .gitignore (#5440 - @JakobLichterfeld)
+- ci: speed up check_linting by running treefmt in a lean app (#5440 - @JakobLichterfeld)
 - ci: validate every Grafana dashboard and do not skip checks for mixed workflow/code changes
 - sec(deps): add ws override to version 8.21.0 in /website (#5446 - @JakobLichterfeld)
 - build(deps-dev): bump esbuild from 0.28.0 to 0.28.1 in /assets (#5444)
@@ -37,6 +61,24 @@
 - build(deps-dev): bump sass from 1.100.0 to 1.101.0 in /assets (#5462)
 - build(deps): bump plug_cowboy from 2.8.1 to 2.9.0 (#5463)
 - build(deps): bump floki from 0.38.3 to 0.38.4 (#5461)
+- test: harden async waits (#5456 - @magrathean-uk)
+- build(deps): update flake.lock (#5477)
+- ci: sign published images with SLSA provenance + SBOM attestations (#5380 - @oivindoh)
+- fix(ci): add artifact-metadata permission for workflows as it is essential for generating attestations (#5484 - @JakobLichterfeld)
+- build(deps): update flake.lock (#5498)
+- test: reuse API snapshots across paired fetches (#5510 - @magrathean-uk)
+- build(deps): bump tesla from 1.14.1 to 1.20.0, migrate to Tesla.client/2 and update mix nix hash (#5468 - @JakobLichterfeld)
+- build(deps): bump websocket-driver from 0.7.4 to 0.7.5 in /website (#5516)
+- build(deps): update flake.lock (#5522)
+- build(deps): bump svgo from 3.3.3 to 3.3.4 in /website (#5536)
+- build(deps): bump shell-quote from 1.8.4 to 1.10.0 in /website (#5537)
+- build(deps): bump webpack-dev-server from 5.2.5 to 5.2.6 in /website (#5538)
+- build(deps): bump body-parser from 1.20.5 to 1.20.6 in /website (#5539)
+- build(deps): bump fast-uri from 3.1.2 to 3.1.4 in /website (#5540)
+- build(deps): bump immutable from 5.1.5 to 5.1.9 in /assets (#5541)
+- ci(treefmt): stop treefmt.toml from drifting out of sync with the flake (#5545 - @JakobLichterfeld)
+- style(nix): format Nix code with nixfmt instead of the archived nixpkgs-fmt (#5545 - @JakobLichterfeld)
+- build(deps): update flake.lock (#5544)
 
 #### Dashboards
 
@@ -45,14 +87,25 @@
 - fix: preserve existing Grafana datasource identities during Docker and NixOS upgrades
 - fix: reorganize Grafana dashboards and make monthly driving/parking energy panels resilient to missing range and efficiency data
 - fix: keep categorized dashboards visible in the TeslaMate navigation and validate all dashboard SQL and remote resources
+- feat(grafana): make data health summary actionable (#5526 - @magrathean-uk)
+- fix(grafana): drop the Releases panel from the home dashboard to end the CORS proxy dependency (#5548 - @JakobLichterfeld)
 
 #### Translations
+
+- i18n: add Hungarian translation (#5480 - @magrathean-uk)
+- i18n: improve Traditional Chinese translations (#5527 - @occultsound)
 
 #### Documentation
 
 - docs: update security policy to emphasize network-level protection ([27172cba](https://github.com/teslamate-org/teslamate/commit/27172cba54782f9a8eb7fdd9ea3a481dfd9d8f2b) - @JakobLichterfeld)
 - docs: fix typo in DATABASE_SSL_SNI description (#5346 - @dashitongzhi)
 - docs: update upgrading instructions to emphasize backup before updating more clearly (#5453 - @JakobLichterfeld)
+- docs(mqtt): add service mode topic to MQTT integration documentation (#5472 - @JakobLichterfeld)
+- docs: update star history chart links to new format in README (#5482 - @JakobLichterfeld)
+- docs: update star history links in README with to include the now needed sealed token (#5489 - @JakobLichterfeld)
+- docs: link directly to restore section in upgrading PostgreSQL guide (#5501 - @JakobLichterfeld)
+- docs: split the backup and restore guides into two separate guides and highlight that you should transfer your backup of the host (#5502 - @JakobLichterfeld)
+- - docs: point Tesla Auth users to fixed releases (#5509 - @magrathean-uk)
 
 ## [4.0.1] - 2026-06-14
 
@@ -538,10 +591,10 @@ Enjoy it.
 
 **This is a breaking change release:** TeslaMate uses PostgreSQL as database, this is an external dependency and needs to be updated by yourself. We now require PostgreSQL 16.7 or 17.3 or higher as we are upgrading the bundled earthdistance extension to v1.2. TeslaMate will now fail to start if you are using an older version. Ensure to upgrade your database before upgrading TeslaMate. To upgrade PostgreSQL, you need to follow these instructions:
 
-- [Backup your data](https://docs.teslamate.org/docs/maintenance/backup_restore#backup)
+- [Backup your data](https://docs.teslamate.org/docs/maintenance/backup)
 - [Upgrade PostgreSQL to postgres:17](https://docs.teslamate.org/docs/maintenance/upgrading_postgres) (Yes, you will have to erase your data, which is why you need your backup in the first place.)
 - [Upgrade TeslaMate to this version](https://docs.teslamate.org/docs/upgrading)
-- [Backup your data after the upgrade](https://docs.teslamate.org/docs/maintenance/backup_restore#backup)
+- [Backup your data after the upgrade](https://docs.teslamate.org/docs/maintenance/backup)
 
 **Note for user which revoked permissions:** If the SUPERUSER privilege has been revoked after the initial (manual) installation, it must be temporarily granted for pending earthdistance migrations to succeed. The privilege can then be safely revoked.
 
@@ -793,9 +846,9 @@ As always, lots of improvements. The focus has been on performance improvements,
 
 **Regarding PostgreSQL 17:** TeslaMate uses PostgreSQL as database, this is an external dependency and needs to be updated by yourself. Although TeslaMate currently runs fine with PostgreSQL 14+ we strongly recommend upgrading to the latest supported version. We recommend that you do this as follows:
 
-- [Backup your data](https://docs.teslamate.org/docs/maintenance/backup_restore#backup)
+- [Backup your data](https://docs.teslamate.org/docs/maintenance/backup)
 - [Upgrade TeslaMate to this version](https://docs.teslamate.org/docs/upgrading)
-- [Backup your data after the upgrade](https://docs.teslamate.org/docs/maintenance/backup_restore#backup)
+- [Backup your data after the upgrade](https://docs.teslamate.org/docs/maintenance/backup)
 - [Upgrade PostgreSQL to postgres:17](https://docs.teslamate.org/docs/maintenance/upgrading_postgres) (Yes, you will have to erase your data, which is why you need your backup in the first place.)
 
 **Additional info:** In some very rare cases with very old installations of TeslaMate (from 2019) we have observed performance issues due to missing indexes. These should normally be added with our automatic migrations. If you think your installation may be missing some indexes, see #4201 for the corrective SQL command.

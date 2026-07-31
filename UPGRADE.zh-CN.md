@@ -1,6 +1,6 @@
 # 升级迁移指南：从 1.x 升级到当前版本
 
-本指南帮助从之前的 TeslaMate 版本升级而来的用户理解默认行为变化和如何回退/启用新增功能。所有改动默认与历史版本**行为完全一致**，新行为需要显式设置环境变量。
+本指南帮助从之前的 TeslaMate 版本升级而来的用户理解默认行为变化，以及如何安全启用或回退新增功能。升级前必须备份数据库并记录旧提交。
 
 ## 概览
 
@@ -71,13 +71,59 @@ Compose 默认把 TeslaMate 和 Grafana 分别绑定到 `127.0.0.1:4000` 与 `12
 
 ## 备份与回滚
 
-升级前务必：
+本次上游同步包含三项数据库迁移：
+
+- 为历史 `NULL` VIN 写入可识别的兼容占位值，再增加非空约束；
+- 新增可恢复导入所需的检查点和拒绝记录表；
+- 扩大地理围栏与充电费用字段精度。
+
+这些迁移不会删除车辆、行程、充电记录或现有 PostgreSQL 数据源，但旧代码与新 schema 不能视为完全等价。升级前务必记录提交并创建 PostgreSQL 自定义格式备份：
 
 ```bash
-docker compose exec database pg_dump -U teslamate teslamate > backup_$(date +%F).sql
+git status --short
+git rev-parse HEAD | tee teslamate-before-update.commit
+
+BACKUP="teslamate-before-update-$(date +%Y%m%d-%H%M%S).dump"
+docker compose -f docker-compose.zh-CN.yml exec -T database \
+  pg_dump -U teslamate -d teslamate -Fc > "$BACKUP"
+
+test -s "$BACKUP"
 ```
 
-如果新版本无法启动，可以直接 `git checkout <旧 tag>` 并 `docker compose up -d`，因为数据库 schema 没有改动，升级和回滚都安全。
+使用 1Panel 外部 PostgreSQL 时，不要新增 Compose 数据库服务。把上面的备份命令改为对现有 PostgreSQL 容器执行：
+
+```bash
+BACKUP="teslamate-before-update-$(date +%Y%m%d-%H%M%S).dump"
+docker exec <PostgreSQL容器名> \
+  pg_dump -U teslamate -d teslamate -Fc > "$BACKUP"
+test -s "$BACKUP"
+```
+
+代码更新只允许使用 `git pull --ff-only`。如果升级后需要回退，先停止 TeslaMate，检出 `teslamate-before-update.commit` 中记录的提交，并恢复对应的升级前数据库备份；不要只回退镜像后继续写入已经迁移的数据库。Grafana 数据卷应原样保留，不要执行 `docker compose down -v`、`docker volume rm` 或删除 `/var/lib/grafana`。
+
+### 1Panel 外部 PostgreSQL 部署
+
+服务器已有 `docker-compose.1panel.yml` 时应继续使用该文件，不要用仓库中的独立部署 Compose 覆盖它。确认其中没有新增 PostgreSQL 服务，`DATABASE_HOST=postgres`、`DATABASE_PORT=5432` 保持不变，两个 Web 端口仍只监听回环地址。
+
+完成上面的备份后执行：
+
+```bash
+COMPOSE_FILE=docker-compose.1panel.yml
+
+git fetch origin
+git pull --ff-only origin main
+
+docker compose -f "$COMPOSE_FILE" config
+docker volume inspect teslamate-grafana-data >/dev/null
+
+TESLAMATE_REVISION="$(git rev-parse HEAD)" \
+  docker compose -f "$COMPOSE_FILE" build --no-cache teslamate grafana
+
+docker compose -f "$COMPOSE_FILE" up -d --no-deps --force-recreate grafana
+docker compose -f "$COMPOSE_FILE" up -d --no-deps --force-recreate teslamate
+```
+
+上述命令不会重建外部 PostgreSQL，也不会删除 Grafana 数据卷。启动后按“Grafana 13 数据源升级兼容性”一节检查日志，并确认 `/login` 不返回 `500`、未登录访问 `/` 会跳转到登录页。
 
 ## Docker 发布流水线
 

@@ -1,10 +1,11 @@
 { ... }:
 {
   perSystem =
-    { lib
-    , pkgs
-    , system
-    , ...
+    {
+      lib,
+      pkgs,
+      system,
+      ...
     }:
     let
       beamPackages = pkgs.beam.packagesWith pkgs.beam.interpreters.erlang_28;
@@ -19,7 +20,7 @@
         TOP_SRC = src;
         pname = "${pname}-mix-deps";
         inherit src version;
-        hash = "sha256-OVd4ZPU1nsJIfINz+IkOw+NqvK83TMAZv+1fQ7HbYbs="; # if you change the mix deps, you need to update this hash
+        hash = "sha256-e0zCPOAoNO4MnUiVA3QM/UlcHHZYUCn6ZaGPYFSbZoI="; # if you change the mix deps, you need to update this hash
         # hash = pkgs.lib.fakeHash;
       };
 
@@ -27,7 +28,7 @@
       nodePackages = pkgs.buildNpmPackage {
         name = "${pname}-assets";
         src = "${src}/assets";
-        npmDepsHash = "sha256-b3b5yEVM3E3X9Gl7FheXTnNgs2U9Vwtr9O8IjKro5hA="; # if you change the npm deps, you need to update this hash
+        npmDepsHash = "sha256-x0/2/j1nsWhJHo1f+7KDdI2ks4rB3th1Ty/ad76cRts="; # if you change the npm deps, you need to update this hash
         # npmDepsHash = pkgs.lib.fakeHash;
         dontNpmBuild = true;
         inherit nodejs;

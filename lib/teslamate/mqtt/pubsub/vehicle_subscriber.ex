@@ -34,7 +34,13 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriber do
         |> Enum.reject(&is_nil(&1))
         |> Enum.join("/")
 
-      call(publisher, :publish, [topic, "", [retain: true, qos: 1]])
+      case call(publisher, :publish, [topic, "", [retain: true, qos: 1]]) do
+        :ok ->
+          :ok
+
+        error ->
+          Logger.warning("MQTT retained cleanup failed for #{topic}: #{inspect(error)}")
+      end
     end)
   end
 
@@ -49,9 +55,17 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriber do
     }
 
     :ok = call(deps.vehicles, :subscribe_to_summary, [car_id])
-    :ok = clear_retained(car_id, namespace, deps.publisher)
 
-    {:ok, %State{car_id: car_id, namespace: namespace, deps: deps}}
+    {:ok, %State{car_id: car_id, namespace: namespace, deps: deps}, {:continue, :clear_retained}}
+  end
+
+  @impl true
+  def handle_continue(
+        :clear_retained,
+        %State{car_id: car_id, namespace: namespace, deps: deps} = state
+      ) do
+    clear_retained(car_id, namespace, deps.publisher)
+    {:noreply, state}
   end
 
   @publish_if_nil ~w(charge_energy_added charger_actual_current charger_phases
@@ -112,7 +126,7 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriber do
     model trim_badging exterior_color wheel_type spoiler_type trunk_open frunk_open elevation power
     charge_current_request charge_current_request_max tpms_pressure_fl tpms_pressure_fr tpms_pressure_rl tpms_pressure_rr
     tpms_soft_warning_fl tpms_soft_warning_fr tpms_soft_warning_rl tpms_soft_warning_rr climate_keeper_mode center_display_state
-    service_mode sun_roof_state sun_roof_installed sun_roof_percent_open
+    service_mode sun_roof_state sun_roof_installed sun_roof_percent_open download_perc install_perc
   )a
 
   defp add_simple_values(map, %Summary{} = summary) do
