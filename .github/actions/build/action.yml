@@ -69,7 +69,6 @@ runs:
           TESLAMATE_REVISION=${{ github.sha }}
         platforms: ${{ matrix.platform }}
         labels: ${{ steps.meta.outputs.labels }}
-        tags: ${{ steps.meta.outputs.tags }}
         # Disable BuildKit-side attestations so outputs.digest is the bare image
         # manifest digest. With provenance enabled, BuildKit wraps the image in
         # an OCI index whose digest does NOT appear in the multi-arch manifest
