@@ -789,7 +789,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS \"time\",\n  convert_km(SUM(distance)::numeric, '$length_unit') AS distance_$length_unit\nFROM drives\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
+          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS time,\n  convert_km(SUM(distance)::numeric, '$length_unit') AS distance_$length_unit\nFROM drives\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
           "refId": "A",
           "sql": {
             "columns": [

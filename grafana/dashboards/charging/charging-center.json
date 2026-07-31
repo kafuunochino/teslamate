@@ -624,7 +624,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS \"time\",\n  ROUND(SUM(charge_energy_added)::numeric, 1) AS \"充入电量\"\nFROM charging_processes\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
+          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS time,\n  ROUND(SUM(charge_energy_added)::numeric, 1) AS \"充入电量\"\nFROM charging_processes\nWHERE car_id = $car_id AND end_date IS NOT NULL AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -735,7 +735,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS \"time\",\n  ROUND(SUM(tm_effective_cost(id, cost))::numeric, 2) AS \"充电费用\"\nFROM charging_processes\nWHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL\n  AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
+          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', start_date), '$__timezone') AS time,\n  ROUND(SUM(tm_effective_cost(id, cost))::numeric, 2) AS \"充电费用\"\nFROM charging_processes\nWHERE car_id = $car_id AND tm_effective_cost(id, cost) IS NOT NULL\n  AND $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1;",
           "refId": "A",
           "sql": {
             "columns": [

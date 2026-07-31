@@ -824,7 +824,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', d.start_date), '$__timezone') AS \"time\",\n  ROUND((\n    SUM((d.start_[[preferred_range]]_range_km - d.end_[[preferred_range]]_range_km) * c.efficiency)\n    / NULLIF(convert_km(SUM(d.distance)::numeric, '$length_unit'), 0) * 1000\n  )::numeric, 1) AS consumption_$length_unit\nFROM drives d\nJOIN cars c ON c.id = d.car_id\nWHERE d.car_id = $car_id AND d.end_date IS NOT NULL\n  AND d.start_[[preferred_range]]_range_km > d.end_[[preferred_range]]_range_km\n  AND $__timeFilter(d.start_date)\nGROUP BY 1\nORDER BY 1;",
+          "rawSql": "SELECT\n  date_trunc('day', timezone('UTC', d.start_date), '$__timezone') AS time,\n  ROUND((\n    SUM((d.start_[[preferred_range]]_range_km - d.end_[[preferred_range]]_range_km) * c.efficiency)\n    / NULLIF(convert_km(SUM(d.distance)::numeric, '$length_unit'), 0) * 1000\n  )::numeric, 1) AS consumption_$length_unit\nFROM drives d\nJOIN cars c ON c.id = d.car_id\nWHERE d.car_id = $car_id AND d.end_date IS NOT NULL\n  AND d.start_[[preferred_range]]_range_km > d.end_[[preferred_range]]_range_km\n  AND $__timeFilter(d.start_date)\nGROUP BY 1\nORDER BY 1;",
           "refId": "A",
           "sql": {
             "columns": [
