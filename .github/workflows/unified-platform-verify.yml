@@ -1,0 +1,42 @@
+name: Unified platform verification
+
+on:
+  push:
+    branches: ["agent/unified-multiuser-platform"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spell_check:
+    uses: ./.github/workflows/spell_check.yml
+
+  ensure_linting:
+    uses: ./.github/workflows/ensure_linting.yml
+
+  elixir_static_analysis:
+    uses: ./.github/workflows/elixir_dep_verification_and_static_analysis.yml
+
+  elixir_test:
+    uses: ./.github/workflows/elixir_test.yml
+
+  compose_and_image:
+    name: Compose config and Docker image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate the 1Panel Compose model
+        shell: bash
+        run: |
+          export DATABASE_PASS="$(openssl rand -hex 16)"
+          export ENCRYPTION_KEY="$(openssl rand -hex 32)"
+          export SECRET_KEY_BASE="$(openssl rand -hex 64)"
+          export SIGNING_SALT="$(openssl rand -hex 16)"
+          docker compose -f docker-compose.1panel.yml config >/tmp/teslamate-compose.yml
+          test "$(grep -c 'published: "3000"' /tmp/teslamate-compose.yml)" -eq 1
+          ! grep -q 'published: "4000"' /tmp/teslamate-compose.yml
+
+      - name: Build the unified application image
+        run: docker build --build-arg TESLAMATE_REVISION="$GITHUB_SHA" --tag teslamate-unified:verify .
