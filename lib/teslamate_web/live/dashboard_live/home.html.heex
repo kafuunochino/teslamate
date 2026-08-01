@@ -14,7 +14,8 @@
     <% live = @report.live %>
     <% position = @report.position %>
     <% battery = (live && live.battery_level) || (position && position.battery_level) %>
-    <% range = (live && live.rated_battery_range_km) || (position && position.rated_battery_range_km) %>
+    <% range =
+      (live && live.rated_battery_range_km) || (position && position.rated_battery_range_km) %>
     <% odometer = (live && live.odometer) || (position && position.odometer) %>
     <% elevation = (live && live.elevation) || (position && position.elevation) %>
     <% latitude = (live && live.latitude) || (position && position.latitude) %>
@@ -42,18 +43,46 @@
     </section>
 
     <section class="metrics-grid metrics-grid--six" aria-label="车辆实时指标">
-      <.metric_card title="当前电量" value={if battery, do: "#{battery}%", else: "—"} icon="battery-high" tone="green" />
-      <.metric_card title="预计续航" value={distance(range)} icon="map-marker-distance" tone="blue" />
+      <.metric_card
+        title="当前电量"
+        value={if battery, do: "#{battery}%", else: "—"}
+        icon="battery-high"
+        tone="green"
+      />
+      <.metric_card
+        title="预计续航"
+        value={distance(range)}
+        icon="map-marker-distance"
+        tone="blue"
+      />
       <.metric_card title="累计里程" value={distance(odometer)} icon="counter" tone="violet" />
-      <.metric_card title="当前海拔" value={if elevation, do: "#{elevation} m", else: "—"} icon="image-filter-hdr" tone="amber" />
-      <.metric_card title="车外温度" value={temperature((live && live.outside_temp) || (position && position.outside_temp))} icon="thermometer" tone="cyan" />
-      <.metric_card title="软件版本" value={(live && live.version) || (@report.update && @report.update.version) || "—"} icon="update" tone="slate" />
+      <.metric_card
+        title="当前海拔"
+        value={if elevation, do: "#{elevation} m", else: "—"}
+        icon="image-filter-hdr"
+        tone="amber"
+      />
+      <.metric_card
+        title="车外温度"
+        value={temperature((live && live.outside_temp) || (position && position.outside_temp))}
+        icon="thermometer"
+        tone="cyan"
+      />
+      <.metric_card
+        title="软件版本"
+        value={(live && live.version) || (@report.update && @report.update.version) || "—"}
+        icon="update"
+        tone="slate"
+      />
     </section>
 
     <div class="content-grid content-grid--map">
       <section class="data-card location-card">
         <div class="data-card__header">
-          <div><p class="section-kicker">实时位置</p><h2><%= TeslaMate.Fleet.address_label(@report.location) %></h2></div>
+          <div>
+            <p class="section-kicker">实时位置</p>
+            <h2><%= TeslaMate.Fleet.address_label(@report.location) %></h2>
+          </div>
           <span class="privacy-badge"><i class="mdi mdi-shield-lock-outline"></i> 仅授权账号可见</span>
         </div>
         <div
@@ -74,14 +103,37 @@
       </section>
 
       <section class="data-card quick-stats">
-        <div class="data-card__header"><div><p class="section-kicker">最近 30 天</p><h2>使用概览</h2></div></div>
+        <div class="data-card__header">
+          <div>
+            <p class="section-kicker">最近 30 天</p>
+            <h2>使用概览</h2>
+          </div>
+        </div>
         <dl>
-          <div><dt>行程</dt><dd><%= @report.drive_stats.count %> 次</dd></div>
-          <div><dt>行驶距离</dt><dd><%= distance(@report.drive_stats.distance) %></dd></div>
-          <div><dt>驾驶时长</dt><dd><%= duration(@report.drive_stats.duration_min) %></dd></div>
-          <div><dt>充电</dt><dd><%= @report.charge_stats.count %> 次</dd></div>
-          <div><dt>充入电量</dt><dd><%= energy(@report.charge_stats.energy_added) %></dd></div>
-          <div><dt>充电费用</dt><dd><%= money(@report.charge_stats.cost) %></dd></div>
+          <div>
+            <dt>行程</dt>
+            <dd><%= @report.drive_stats.count %> 次</dd>
+          </div>
+          <div>
+            <dt>行驶距离</dt>
+            <dd><%= distance(@report.drive_stats.distance) %></dd>
+          </div>
+          <div>
+            <dt>驾驶时长</dt>
+            <dd><%= duration(@report.drive_stats.duration_min) %></dd>
+          </div>
+          <div>
+            <dt>充电</dt>
+            <dd><%= @report.charge_stats.count %> 次</dd>
+          </div>
+          <div>
+            <dt>充入电量</dt>
+            <dd><%= energy(@report.charge_stats.energy_added) %></dd>
+          </div>
+          <div>
+            <dt>充电费用</dt>
+            <dd><%= money(@report.charge_stats.cost) %></dd>
+          </div>
         </dl>
       </section>
     </div>
@@ -90,7 +142,12 @@
 
     <div class="content-grid">
       <section class="data-card">
-        <div class="data-card__header"><h2>最近行程</h2><.link navigate={Routes.dashboard_path(@socket, :trips, car: @report.car.id)}>查看全部</.link></div>
+        <div class="data-card__header">
+          <h2>最近行程</h2>
+          <.link navigate={Routes.dashboard_path(@socket, :trips, car: @report.car.id)}>
+            查看全部
+          </.link>
+        </div>
         <div :if={@report.recent_drives == []} class="empty-inline">暂无完整行程</div>
         <div class="activity-list">
           <.link
@@ -100,8 +157,14 @@
           >
             <span class="activity-item__icon"><i class="mdi mdi-map-marker-path"></i></span>
             <span class="activity-item__body">
-              <strong><%= location_label(drive.start_geofence || drive.start_address) %> → <%= location_label(drive.end_geofence || drive.end_address) %></strong>
-              <small><%= date_time(drive.start_date) %> · <%= duration(drive.duration_min) %></small>
+              <strong>
+                <%= location_label(drive.start_geofence || drive.start_address) %> → <%= location_label(
+                  drive.end_geofence || drive.end_address
+                ) %>
+              </strong>
+              <small>
+                <%= date_time(drive.start_date) %> · <%= duration(drive.duration_min) %>
+              </small>
             </span>
             <b><%= distance(drive.distance) %></b>
           </.link>
@@ -109,14 +172,24 @@
       </section>
 
       <section class="data-card">
-        <div class="data-card__header"><h2>最近充电</h2><.link navigate={Routes.dashboard_path(@socket, :charging, car: @report.car.id)}>查看全部</.link></div>
+        <div class="data-card__header">
+          <h2>最近充电</h2>
+          <.link navigate={Routes.dashboard_path(@socket, :charging, car: @report.car.id)}>
+            查看全部
+          </.link>
+        </div>
         <div :if={@report.recent_charges == []} class="empty-inline">暂无充电记录</div>
         <div class="activity-list">
           <div :for={charge <- @report.recent_charges} class="activity-item">
-            <span class="activity-item__icon activity-item__icon--charge"><i class="mdi mdi-ev-station"></i></span>
+            <span class="activity-item__icon activity-item__icon--charge">
+              <i class="mdi mdi-ev-station"></i>
+            </span>
             <span class="activity-item__body">
               <strong><%= location_label(charge.geofence || charge.address) %></strong>
-              <small><%= date_time(charge.start_date) %> · <%= charge.start_battery_level || "—" %>% → <%= charge.end_battery_level || "—" %>%</small>
+              <small>
+                <%= date_time(charge.start_date) %> · <%= charge.start_battery_level || "—" %>% → <%= charge.end_battery_level ||
+                  "—" %>%
+              </small>
             </span>
             <b><%= energy(charge.charge_energy_added) %></b>
           </div>

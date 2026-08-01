@@ -1,6 +1,10 @@
 <div class="platform-page">
   <header class="page-heading">
-    <div><p class="page-kicker">补能与成本</p><h1>充电</h1><p>充电会话、能量、成本与常用站点统一管理。</p></div>
+    <div>
+      <p class="page-kicker">补能与成本</p>
+      <h1>充电</h1>
+      <p>充电会话、能量、成本与常用站点统一管理。</p>
+    </div>
     <.vehicle_picker :if={@report.cars != []} cars={@report.cars} current_car={@report.car} />
   </header>
 
@@ -11,28 +15,76 @@
 
     <% average_cost = divide(@report.stats.cost, @report.stats.energy_added) %>
     <section class="metrics-grid">
-      <.metric_card title="充电次数" value={"#{@report.stats.count} 次"} icon="ev-station" tone="blue" />
-      <.metric_card title="充入电量" value={energy(@report.stats.energy_added)} icon="lightning-bolt" tone="green" />
-      <.metric_card title="电网取电" value={energy(@report.stats.energy_used)} icon="transmission-tower" tone="violet" />
-      <.metric_card title="充电费用" value={money(@report.stats.cost)} icon="cash-multiple" tone="amber" />
-      <.metric_card title="平均电价" value={if average_cost, do: "#{money(average_cost)}/kWh", else: "—"} icon="cash-clock" tone="cyan" />
-      <.metric_card title="充电时长" value={duration(@report.stats.duration_min)} icon="timer-charging-outline" tone="slate" />
+      <.metric_card
+        title="充电次数"
+        value={"#{@report.stats.count} 次"}
+        icon="ev-station"
+        tone="blue"
+      />
+      <.metric_card
+        title="充入电量"
+        value={energy(@report.stats.energy_added)}
+        icon="lightning-bolt"
+        tone="green"
+      />
+      <.metric_card
+        title="电网取电"
+        value={energy(@report.stats.energy_used)}
+        icon="transmission-tower"
+        tone="violet"
+      />
+      <.metric_card
+        title="充电费用"
+        value={money(@report.stats.cost)}
+        icon="cash-multiple"
+        tone="amber"
+      />
+      <.metric_card
+        title="平均电价"
+        value={if average_cost, do: "#{money(average_cost)}/kWh", else: "—"}
+        icon="cash-clock"
+        tone="cyan"
+      />
+      <.metric_card
+        title="充电时长"
+        value={duration(@report.stats.duration_min)}
+        icon="timer-charging-outline"
+        tone="slate"
+      />
     </section>
 
     <.bar_chart title="每日充入电量" rows={@report.daily_energy} unit=" kWh" />
 
     <div class="content-grid content-grid--wide">
       <section class="data-card table-card">
-        <div class="data-card__header"><h2>充电会话</h2><span><%= length(@report.sessions) %> 条</span></div>
+        <div class="data-card__header">
+          <h2>充电会话</h2>
+          <span><%= length(@report.sessions) %> 条</span>
+        </div>
         <div :if={@report.sessions == []} class="empty-inline">该时间范围暂无充电记录</div>
         <div :if={@report.sessions != []} class="responsive-table">
           <table>
-            <thead><tr><th>开始时间</th><th>位置</th><th>电量变化</th><th>充入</th><th>电网取电</th><th>时长</th><th>费用</th></tr></thead>
+            <thead>
+              <tr>
+                <th>开始时间</th>
+                <th>位置</th>
+                <th>电量变化</th>
+                <th>充入</th>
+                <th>电网取电</th>
+                <th>时长</th>
+                <th>费用</th>
+              </tr>
+            </thead>
             <tbody>
               <tr :for={session <- @report.sessions}>
                 <td data-label="开始时间"><%= date_time(session.start_date) %></td>
-                <td data-label="位置"><%= location_label(session.geofence || session.address) %></td>
-                <td data-label="电量变化"><%= session.start_battery_level || "—" %>% → <%= session.end_battery_level || "—" %>%</td>
+                <td data-label="位置">
+                  <%= location_label(session.geofence || session.address) %>
+                </td>
+                <td data-label="电量变化">
+                  <%= session.start_battery_level || "—" %>% → <%= session.end_battery_level ||
+                    "—" %>%
+                </td>
                 <td data-label="充入"><%= energy(session.charge_energy_added) %></td>
                 <td data-label="电网取电"><%= energy(session.charge_energy_used) %></td>
                 <td data-label="时长"><%= duration(session.duration_min) %></td>
@@ -44,12 +96,16 @@
       </section>
 
       <section class="data-card ranking-card">
-        <div class="data-card__header"><h2>常用充电地点</h2></div>
+        <div class="data-card__header">
+          <h2>常用充电地点</h2>
+        </div>
         <div :if={@report.stations == []} class="empty-inline">暂无站点统计</div>
         <ol>
           <li :for={{station, index} <- Enum.with_index(@report.stations, 1)}>
             <span class="rank"><%= index %></span>
-            <span><strong><%= station.label %></strong><small><%= energy(station.energy) %> · <%= money(station.cost) %></small></span>
+            <span>
+              <strong><%= station.label %></strong><small><%= energy(station.energy) %> · <%= money(station.cost) %></small>
+            </span>
             <b><%= station.count %> 次</b>
           </li>
         </ol>

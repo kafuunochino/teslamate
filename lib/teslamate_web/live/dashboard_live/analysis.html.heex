@@ -1,6 +1,10 @@
 <div class="platform-page">
   <header class="page-heading">
-    <div><p class="page-kicker">习惯与建议</p><h1>综合分析</h1><p>根据已记录的行程和充电数据，生成透明、可解释的统计评分。</p></div>
+    <div>
+      <p class="page-kicker">习惯与建议</p>
+      <h1>综合分析</h1>
+      <p>根据已记录的行程和充电数据，生成透明、可解释的统计评分。</p>
+    </div>
     <.vehicle_picker :if={@report.cars != []} cars={@report.cars} current_car={@report.car} />
   </header>
 
@@ -10,32 +14,91 @@
     <.range_picker days={@report.days} />
 
     <section class="score-grid">
-      <.score_card label="综合数据评分" value={@report.scores.overall} hint="由能效、用车与充电三个维度平均" />
-      <.score_card label="能效表现" value={@report.scores.efficiency} hint="基于续航变化估算，并非电池 BMS 实测" />
-      <.score_card label="用车模式" value={@report.scores.usage} hint="关注短途与深夜出行比例" />
-      <.score_card label="充电习惯" value={@report.scores.charging} hint="关注结束电量与低电量补能比例" />
+      <.score_card
+        label="综合数据评分"
+        value={@report.scores.overall}
+        hint="由能效、用车与充电三个维度平均"
+      />
+      <.score_card
+        label="能效表现"
+        value={@report.scores.efficiency}
+        hint="基于续航变化估算，并非电池 BMS 实测"
+      />
+      <.score_card
+        label="用车模式"
+        value={@report.scores.usage}
+        hint="关注短途与深夜出行比例"
+      />
+      <.score_card
+        label="充电习惯"
+        value={@report.scores.charging}
+        hint="关注结束电量与低电量补能比例"
+      />
     </section>
 
     <div class="analysis-disclaimer">
-      <i class="mdi mdi-information-outline"></i>
-      评分只用于帮助理解历史数据，不代表驾驶安全评级、车辆诊断或官方电池健康报告。
+      <i class="mdi mdi-information-outline"></i> 评分只用于帮助理解历史数据，不代表驾驶安全评级、车辆诊断或官方电池健康报告。
     </div>
 
     <section class="metrics-grid">
-      <.metric_card title="活跃天数" value={"#{@report.drive.active_days || 0} 天"} icon="calendar-check" tone="blue" />
-      <.metric_card title="平均单程" value={distance(@report.drive.average_trip)} icon="map-marker-distance" tone="green" />
-      <.metric_card title="平均速度" value={if @report.drive.average_speed, do: "#{format_number(@report.drive.average_speed, 1)} km/h", else: "—"} icon="speedometer" tone="violet" />
-      <.metric_card title="估算能耗" value={if @report.drive.consumption_wh_km, do: "#{format_number(@report.drive.consumption_wh_km, 0)} Wh/km", else: "—"} icon="leaf" tone="amber" />
-      <.metric_card title="短途占比" value={ratio_percentage(@report.drive.short_trip_ratio)} icon="map-marker-radius" tone="cyan" />
-      <.metric_card title="夜间出行" value={ratio_percentage(@report.drive.night_trip_ratio)} icon="weather-night" tone="slate" />
+      <.metric_card
+        title="活跃天数"
+        value={"#{@report.drive.active_days || 0} 天"}
+        icon="calendar-check"
+        tone="blue"
+      />
+      <.metric_card
+        title="平均单程"
+        value={distance(@report.drive.average_trip)}
+        icon="map-marker-distance"
+        tone="green"
+      />
+      <.metric_card
+        title="平均速度"
+        value={
+          if @report.drive.average_speed,
+            do: "#{format_number(@report.drive.average_speed, 1)} km/h",
+            else: "—"
+        }
+        icon="speedometer"
+        tone="violet"
+      />
+      <.metric_card
+        title="估算能耗"
+        value={
+          if @report.drive.consumption_wh_km,
+            do: "#{format_number(@report.drive.consumption_wh_km, 0)} Wh/km",
+            else: "—"
+        }
+        icon="leaf"
+        tone="amber"
+      />
+      <.metric_card
+        title="短途占比"
+        value={ratio_percentage(@report.drive.short_trip_ratio)}
+        icon="map-marker-radius"
+        tone="cyan"
+      />
+      <.metric_card
+        title="夜间出行"
+        value={ratio_percentage(@report.drive.night_trip_ratio)}
+        icon="weather-night"
+        tone="slate"
+      />
     </section>
 
     <section class="data-card recommendations-card">
-      <div class="data-card__header"><div><p class="section-kicker">基于规则生成</p><h2>用车建议</h2></div></div>
+      <div class="data-card__header">
+        <div>
+          <p class="section-kicker">基于规则生成</p>
+          <h2>用车建议</h2>
+        </div>
+      </div>
       <div :if={@report.recommendations == []} class="empty-inline">数据量暂不足以生成建议</div>
       <ul>
         <li :for={recommendation <- @report.recommendations}>
-          <span><i class="mdi mdi-lightbulb-on-outline"></i></span><p><%= recommendation %></p>
+          <span><i class="mdi mdi-lightbulb-on-outline"></i></span>
+          <p><%= recommendation %></p>
         </li>
       </ul>
     </section>
@@ -44,7 +107,9 @@
 
     <div class="content-grid">
       <section class="data-card ranking-card">
-        <div class="data-card__header"><h2>高频目的地</h2></div>
+        <div class="data-card__header">
+          <h2>高频目的地</h2>
+        </div>
         <div :if={@report.destinations == []} class="empty-inline">暂无目的地统计</div>
         <ol>
           <li :for={{destination, index} <- Enum.with_index(@report.destinations, 1)}>
@@ -53,7 +118,9 @@
         </ol>
       </section>
       <section class="data-card ranking-card">
-        <div class="data-card__header"><h2>高频充电地点</h2></div>
+        <div class="data-card__header">
+          <h2>高频充电地点</h2>
+        </div>
         <div :if={@report.stations == []} class="empty-inline">暂无站点统计</div>
         <ol>
           <li :for={{station, index} <- Enum.with_index(@report.stations, 1)}>

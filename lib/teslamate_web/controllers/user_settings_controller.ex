@@ -16,8 +16,13 @@ defmodule TeslaMateWeb.UserSettingsController do
 
   def update_profile(conn, %{"user" => params}) do
     case Accounts.update_profile(conn.assigns.current_user, params) do
-      {:ok, _user} -> conn |> put_flash(:success, "个人资料已更新") |> redirect(to: Routes.user_settings_path(conn, :edit))
-      {:error, changeset} -> render_errors(conn, profile_changeset: changeset)
+      {:ok, _user} ->
+        conn
+        |> put_flash(:success, "个人资料已更新")
+        |> redirect(to: Routes.user_settings_path(conn, :edit))
+
+      {:error, changeset} ->
+        render_errors(conn, profile_changeset: changeset)
     end
   end
 
@@ -47,6 +52,8 @@ defmodule TeslaMateWeb.UserSettingsController do
       password_changeset: TeslaMate.Accounts.User.password_changeset(user, %{})
     ]
 
-    conn |> put_status(:unprocessable_entity) |> render("edit.html", Keyword.merge(defaults, changes))
+    conn
+    |> put_status(:unprocessable_entity)
+    |> render("edit.html", Keyword.merge(defaults, changes))
   end
 end

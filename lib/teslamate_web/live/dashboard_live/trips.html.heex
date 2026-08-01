@@ -1,6 +1,10 @@
 <div class="platform-page">
   <header class="page-heading">
-    <div><p class="page-kicker">出行记录</p><h1>行程轨迹</h1><p>查看路线、里程、时长、速度、海拔变化和常去地点。</p></div>
+    <div>
+      <p class="page-kicker">出行记录</p>
+      <h1>行程轨迹</h1>
+      <p>查看路线、里程、时长、速度、海拔变化和常去地点。</p>
+    </div>
     <.vehicle_picker :if={@report.cars != []} cars={@report.cars} current_car={@report.car} />
   </header>
 
@@ -10,22 +14,60 @@
     <.range_picker days={@report.days} />
 
     <section class="metrics-grid">
-      <.metric_card title="行程数" value={"#{@report.stats.count} 次"} icon="routes" tone="blue" />
-      <.metric_card title="总里程" value={distance(@report.stats.distance)} icon="map-marker-distance" tone="green" />
-      <.metric_card title="驾驶时长" value={duration(@report.stats.duration_min)} icon="timer-outline" tone="violet" />
-      <.metric_card title="平均单程" value={distance(@report.stats.average_distance)} icon="chart-timeline-variant" tone="amber" />
-      <.metric_card title="最高速度" value={if @report.stats.max_speed, do: "#{@report.stats.max_speed} km/h", else: "—"} icon="speedometer" tone="cyan" />
+      <.metric_card
+        title="行程数"
+        value={"#{@report.stats.count} 次"}
+        icon="routes"
+        tone="blue"
+      />
+      <.metric_card
+        title="总里程"
+        value={distance(@report.stats.distance)}
+        icon="map-marker-distance"
+        tone="green"
+      />
+      <.metric_card
+        title="驾驶时长"
+        value={duration(@report.stats.duration_min)}
+        icon="timer-outline"
+        tone="violet"
+      />
+      <.metric_card
+        title="平均单程"
+        value={distance(@report.stats.average_distance)}
+        icon="chart-timeline-variant"
+        tone="amber"
+      />
+      <.metric_card
+        title="最高速度"
+        value={if @report.stats.max_speed, do: "#{@report.stats.max_speed} km/h", else: "—"}
+        icon="speedometer"
+        tone="cyan"
+      />
     </section>
 
     <.bar_chart title="每日行驶里程" rows={@report.daily_distance} unit=" km" />
 
     <div class="content-grid content-grid--wide">
       <section class="data-card table-card">
-        <div class="data-card__header"><h2>行程明细</h2><span><%= length(@report.drives) %> 条</span></div>
+        <div class="data-card__header">
+          <h2>行程明细</h2>
+          <span><%= length(@report.drives) %> 条</span>
+        </div>
         <div :if={@report.drives == []} class="empty-inline">该时间范围没有完整行程</div>
         <div :if={@report.drives != []} class="responsive-table">
           <table>
-            <thead><tr><th>开始时间</th><th>路线</th><th>里程</th><th>时长</th><th>最高速度</th><th>海拔变化</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>开始时间</th>
+                <th>路线</th>
+                <th>里程</th>
+                <th>时长</th>
+                <th>最高速度</th>
+                <th>海拔变化</th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody>
               <tr :for={drive <- @report.drives}>
                 <td data-label="开始时间"><%= date_time(drive.start_date) %></td>
@@ -36,9 +78,20 @@
                 </td>
                 <td data-label="里程"><%= distance(drive.distance) %></td>
                 <td data-label="时长"><%= duration(drive.duration_min) %></td>
-                <td data-label="最高速度"><%= if drive.speed_max, do: "#{drive.speed_max} km/h", else: "—" %></td>
-                <td data-label="海拔变化">+<%= drive.ascent || 0 %> / -<%= drive.descent || 0 %> m</td>
-                <td><.link navigate={Routes.dashboard_path(@socket, :trip, drive.id)} class="table-action">查看轨迹</.link></td>
+                <td data-label="最高速度">
+                  <%= if drive.speed_max, do: "#{drive.speed_max} km/h", else: "—" %>
+                </td>
+                <td data-label="海拔变化">
+                  +<%= drive.ascent || 0 %> / -<%= drive.descent || 0 %> m
+                </td>
+                <td>
+                  <.link
+                    navigate={Routes.dashboard_path(@socket, :trip, drive.id)}
+                    class="table-action"
+                  >
+                    查看轨迹
+                  </.link>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -46,12 +99,16 @@
       </section>
 
       <section class="data-card ranking-card">
-        <div class="data-card__header"><h2>常去目的地</h2></div>
+        <div class="data-card__header">
+          <h2>常去目的地</h2>
+        </div>
         <div :if={@report.destinations == []} class="empty-inline">暂无目的地统计</div>
         <ol>
           <li :for={{destination, index} <- Enum.with_index(@report.destinations, 1)}>
             <span class="rank"><%= index %></span>
-            <span><strong><%= destination.label || "未知位置" %></strong><small>累计 <%= distance(destination.distance) %></small></span>
+            <span>
+              <strong><%= destination.label || "未知位置" %></strong><small>累计 <%= distance(destination.distance) %></small>
+            </span>
             <b><%= destination.count %> 次</b>
           </li>
         </ol>

@@ -24,21 +24,36 @@ defmodule TeslaMateWeb.AdminLive.Users do
 
   def handle_event("update_user", %{"id" => id, "role" => role, "status" => status}, socket) do
     with %Accounts.User{} = target <- Accounts.get_user(id) do
-      case Accounts.update_user_access(socket.assigns.current_user, target, %{role: role, status: status}) do
-        {:ok, _user} -> {:noreply, socket |> put_flash(:success, "用户权限已更新") |> load(new_claim: nil)}
-        {:error, :last_active_admin} -> {:noreply, put_flash(socket, :error, "不能停用或降级最后一个有效管理员")}
-        {:error, reason} -> {:noreply, put_flash(socket, :error, "更新失败：#{inspect(reason)}")}
+      case Accounts.update_user_access(socket.assigns.current_user, target, %{
+             role: role,
+             status: status
+           }) do
+        {:ok, _user} ->
+          {:noreply, socket |> put_flash(:success, "用户权限已更新") |> load(new_claim: nil)}
+
+        {:error, :last_active_admin} ->
+          {:noreply, put_flash(socket, :error, "不能停用或降级最后一个有效管理员")}
+
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, "更新失败：#{inspect(reason)}")}
       end
     else
       nil -> {:noreply, put_flash(socket, :error, "用户不存在")}
     end
   end
 
-  def handle_event("grant_car", %{"binding" => %{"user_id" => user_id, "car_id" => car_id}}, socket) do
+  def handle_event(
+        "grant_car",
+        %{"binding" => %{"user_id" => user_id, "car_id" => car_id}},
+        socket
+      ) do
     with %Accounts.User{} = target <- Accounts.get_user(user_id) do
       case Accounts.grant_car(socket.assigns.current_user, target, car_id) do
-        {:ok, _binding} -> {:noreply, socket |> put_flash(:success, "车辆权限已授予") |> load(new_claim: nil)}
-        {:error, reason} -> {:noreply, put_flash(socket, :error, "授权失败：#{inspect(reason)}")}
+        {:ok, _binding} ->
+          {:noreply, socket |> put_flash(:success, "车辆权限已授予") |> load(new_claim: nil)}
+
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, "授权失败：#{inspect(reason)}")}
       end
     else
       nil -> {:noreply, put_flash(socket, :error, "用户不存在")}
@@ -66,7 +81,8 @@ defmodule TeslaMateWeb.AdminLive.Users do
     if Accounts.authorized_admin?(socket.assigns.current_user) do
       users = Accounts.list_users(socket.assigns.current_user)
 
-      assign(socket,
+      assign(
+        socket,
         [
           page_title: "用户与车辆权限",
           users: users,

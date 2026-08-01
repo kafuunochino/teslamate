@@ -61,13 +61,18 @@ defmodule TeslaMate.AccountsTest do
     assert authenticated.id == user.id
   end
 
-  test "session tokens are stored hashed and disabled users lose access", %{admin: admin, member: member} do
+  test "session tokens are stored hashed and disabled users lose access", %{
+    admin: admin,
+    member: member
+  } do
     assert {:ok, raw_token} = Accounts.create_session(member)
     refute Repo.get_by(UserSession, token_hash: raw_token)
     assert Repo.get_by(UserSession, token_hash: :crypto.hash(:sha256, raw_token))
     assert Accounts.get_user_by_session_token(raw_token).id == member.id
 
-    assert {:ok, disabled} = Accounts.update_user_access(admin, member, %{status: :disabled, role: :member})
+    assert {:ok, disabled} =
+             Accounts.update_user_access(admin, member, %{status: :disabled, role: :member})
+
     assert disabled.status == :disabled
     assert Accounts.get_user_by_session_token(raw_token) == nil
   end
@@ -97,7 +102,9 @@ defmodule TeslaMate.AccountsTest do
     assert {:ok, _binding} = Accounts.redeem_vehicle_claim(member, raw_code)
     assert Accounts.can_access_car?(member, car.id)
     refute Accounts.can_access_car?(other_member, car.id)
-    assert {:error, :invalid_or_expired_claim} = Accounts.redeem_vehicle_claim(other_member, raw_code)
+
+    assert {:error, :invalid_or_expired_claim} =
+             Accounts.redeem_vehicle_claim(other_member, raw_code)
   end
 
   test "a member cannot enumerate another user's drive", %{

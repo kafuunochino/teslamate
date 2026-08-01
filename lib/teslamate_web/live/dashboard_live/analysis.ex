@@ -25,6 +25,8 @@ defmodule TeslaMateWeb.DashboardLive.Analysis do
 
   def handle_event("select_range", %{"days" => days}, socket) do
     car_id = socket.assigns.report.car && socket.assigns.report.car.id
-    {:noreply, push_patch(socket, to: Routes.dashboard_path(socket, :analysis, car: car_id, days: days))}
+
+    {:noreply,
+     push_patch(socket, to: Routes.dashboard_path(socket, :analysis, car: car_id, days: days))}
   end
 end

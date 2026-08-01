@@ -15,7 +15,12 @@ defmodule TeslaMateWeb.UserSessionController do
 
     case LoginRateLimit.check(ip, email) do
       {:error, :rate_limited, retry_after} ->
-        LoginAudit.record(%{ip: ip, email: email, outcome: :blocked, reason: "platform-rate-limit"})
+        LoginAudit.record(%{
+          ip: ip,
+          email: email,
+          outcome: :blocked,
+          reason: "platform-rate-limit"
+        })
 
         conn
         |> put_resp_header("retry-after", Integer.to_string(retry_after))

@@ -55,7 +55,9 @@ defmodule TeslaMateWeb.UserRegistrationController do
   end
 
   defp registration_key(email) do
-    normalized = email |> to_string() |> String.trim() |> String.downcase() |> String.slice(0, 254)
+    normalized =
+      email |> to_string() |> String.trim() |> String.downcase() |> String.slice(0, 254)
+
     "registration:" <> normalized
   end
 end

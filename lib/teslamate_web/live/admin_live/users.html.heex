@@ -1,65 +1,200 @@
 <div class="platform-page">
   <header class="page-heading">
-    <div><p class="page-kicker">管理员</p><h1>用户与车辆权限</h1><p>账号状态、车辆授权、一次性认领码和安全审计集中管理。</p></div>
+    <div>
+      <p class="page-kicker">管理员</p>
+      <h1>用户与车辆权限</h1>
+      <p>账号状态、车辆授权、一次性认领码和安全审计集中管理。</p>
+    </div>
   </header>
 
   <section class="metrics-grid">
-    <.metric_card title="注册用户" value={"#{length(@users)} 人"} icon="account-group-outline" tone="blue" />
-    <.metric_card title="有效用户" value={"#{Enum.count(@users, &(&1.status == :active))} 人"} icon="account-check-outline" tone="green" />
-    <.metric_card title="管理员" value={"#{Enum.count(@users, &(&1.role == :admin and &1.status == :active))} 人"} icon="shield-account-outline" tone="violet" />
-    <.metric_card title="采集车辆" value={"#{length(@cars)} 辆"} icon="car-multiple" tone="amber" />
+    <.metric_card
+      title="注册用户"
+      value={"#{length(@users)} 人"}
+      icon="account-group-outline"
+      tone="blue"
+    />
+    <.metric_card
+      title="有效用户"
+      value={"#{Enum.count(@users, &(&1.status == :active))} 人"}
+      icon="account-check-outline"
+      tone="green"
+    />
+    <.metric_card
+      title="管理员"
+      value={"#{Enum.count(@users, &(&1.role == :admin and &1.status == :active))} 人"}
+      icon="shield-account-outline"
+      tone="violet"
+    />
+    <.metric_card
+      title="采集车辆"
+      value={"#{length(@cars)} 辆"}
+      icon="car-multiple"
+      tone="amber"
+    />
   </section>
 
   <section class="data-card admin-action-card">
-    <div class="data-card__header"><div><p class="section-kicker">自助绑定</p><h2>生成一次性车辆认领码</h2></div></div>
+    <div class="data-card__header">
+      <div>
+        <p class="section-kicker">自助绑定</p>
+        <h2>生成一次性车辆认领码</h2>
+      </div>
+    </div>
     <p>认领码只存储哈希，原文仅显示一次；过期或使用后立即失效。</p>
     <form phx-submit="create_claim" class="inline-admin-form">
-      <div><label>车辆</label><div class="select"><select name="claim[car_id]" required><option value="">请选择</option><option :for={car <- @cars} value={car.id}><%= TeslaMate.Fleet.vehicle_label(car) %> · VIN <%= TeslaMate.Fleet.vin_suffix(car) %></option></select></div></div>
-      <div><label>有效期</label><div class="select"><select name="claim[hours]"><option value="1">1 小时</option><option value="8">8 小时</option><option value="24" selected>24 小时</option><option value="72">72 小时</option></select></div></div>
+      <div>
+        <label>车辆</label>
+        <div class="select">
+          <select name="claim[car_id]" required>
+            <option value="">请选择</option>
+            <option :for={car <- @cars} value={car.id}>
+              <%= TeslaMate.Fleet.vehicle_label(car) %> · VIN <%= TeslaMate.Fleet.vin_suffix(car) %>
+            </option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>有效期</label>
+        <div class="select">
+          <select name="claim[hours]">
+            <option value="1">1 小时</option>
+            <option value="8">8 小时</option>
+            <option value="24" selected>24 小时</option>
+            <option value="72">72 小时</option>
+          </select>
+        </div>
+      </div>
       <button type="submit" class="button is-primary">生成认领码</button>
     </form>
 
     <div :if={@new_claim} class="claim-secret" role="status">
-      <div><i class="mdi mdi-alert-circle-outline"></i><p><strong>请立即安全发送给对应用户</strong><br />关闭或刷新后将无法再次查看原文。</p></div>
+      <div>
+        <i class="mdi mdi-alert-circle-outline"></i>
+        <p><strong>请立即安全发送给对应用户</strong> <br />关闭或刷新后将无法再次查看原文。</p>
+      </div>
       <code id="new-claim-code"><%= @new_claim.code %></code>
-      <button type="button" class="button is-light" phx-hook="CopyText" id="copy-claim-code" data-target="new-claim-code"><i class="mdi mdi-content-copy"></i>&nbsp;复制</button>
-      <small><%= TeslaMate.Fleet.vehicle_label(@new_claim.car) %> · 到期 <%= date_time(@new_claim.claim.expires_at) %></small>
+      <button
+        type="button"
+        class="button is-light"
+        phx-hook="CopyText"
+        id="copy-claim-code"
+        data-target="new-claim-code"
+      >
+        <i class="mdi mdi-content-copy"></i>&nbsp;复制
+      </button>
+      <small>
+        <%= TeslaMate.Fleet.vehicle_label(@new_claim.car) %> · 到期 <%= date_time(
+          @new_claim.claim.expires_at
+        ) %>
+      </small>
     </div>
   </section>
 
   <section class="data-card admin-action-card">
-    <div class="data-card__header"><h2>直接授予车辆权限</h2></div>
+    <div class="data-card__header">
+      <h2>直接授予车辆权限</h2>
+    </div>
     <form phx-submit="grant_car" class="inline-admin-form">
-      <div><label>用户</label><div class="select"><select name="binding[user_id]" required><option value="">请选择</option><option :for={user <- @users} value={user.id}><%= user.name %> · <%= user.email %></option></select></div></div>
-      <div><label>车辆</label><div class="select"><select name="binding[car_id]" required><option value="">请选择</option><option :for={car <- @cars} value={car.id}><%= TeslaMate.Fleet.vehicle_label(car) %> · VIN <%= TeslaMate.Fleet.vin_suffix(car) %></option></select></div></div>
+      <div>
+        <label>用户</label>
+        <div class="select">
+          <select name="binding[user_id]" required>
+            <option value="">请选择</option>
+            <option :for={user <- @users} value={user.id}>
+              <%= user.name %> · <%= user.email %>
+            </option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>车辆</label>
+        <div class="select">
+          <select name="binding[car_id]" required>
+            <option value="">请选择</option>
+            <option :for={car <- @cars} value={car.id}>
+              <%= TeslaMate.Fleet.vehicle_label(car) %> · VIN <%= TeslaMate.Fleet.vin_suffix(car) %>
+            </option>
+          </select>
+        </div>
+      </div>
       <button type="submit" class="button is-primary is-light">授予权限</button>
     </form>
   </section>
 
   <section class="data-card table-card">
-    <div class="data-card__header"><h2>用户账号</h2></div>
+    <div class="data-card__header">
+      <h2>用户账号</h2>
+    </div>
     <div class="responsive-table">
       <table>
-        <thead><tr><th>用户</th><th>角色</th><th>状态</th><th>车辆权限</th><th>最近登录</th><th>操作</th></tr></thead>
+        <thead>
+          <tr>
+            <th>用户</th>
+            <th>角色</th>
+            <th>状态</th>
+            <th>车辆权限</th>
+            <th>最近登录</th>
+            <th>操作</th>
+          </tr>
+        </thead>
         <tbody>
           <tr :for={user <- @users}>
-            <td data-label="用户"><strong><%= user.name %></strong><small class="table-subline"><%= user.email %></small></td>
-            <td data-label="角色"><span class={"role-chip role-chip--#{user.role}"}><%= if user.role == :admin, do: "管理员", else: "普通用户" %></span></td>
-            <td data-label="状态"><span class={"status-chip status-chip--#{user.status}"}><%= if user.status == :active, do: "有效", else: "已停用" %></span></td>
+            <td data-label="用户">
+              <strong><%= user.name %></strong><small class="table-subline"><%= user.email %></small>
+            </td>
+            <td data-label="角色">
+              <span class={"role-chip role-chip--#{user.role}"}>
+                <%= if user.role == :admin, do: "管理员", else: "普通用户" %>
+              </span>
+            </td>
+            <td data-label="状态">
+              <span class={"status-chip status-chip--#{user.status}"}>
+                <%= if user.status == :active, do: "有效", else: "已停用" %>
+              </span>
+            </td>
             <td data-label="车辆权限">
               <div class="binding-chips">
                 <span :for={car <- user.cars}>
                   <%= TeslaMate.Fleet.vehicle_label(car) %>
-                  <button type="button" phx-click="revoke_car" phx-value-user-id={user.id} phx-value-car-id={car.id} aria-label="撤销车辆权限">×</button>
+                  <button
+                    type="button"
+                    phx-click="revoke_car"
+                    phx-value-user-id={user.id}
+                    phx-value-car-id={car.id}
+                    aria-label="撤销车辆权限"
+                  >
+                    ×
+                  </button>
                 </span>
-                <em :if={user.role == :admin}>全部车辆</em><em :if={user.role != :admin and user.cars == []}>未绑定</em>
+                <em :if={user.role == :admin}>全部车辆</em><em :if={
+                  user.role != :admin and user.cars == []
+                }>未绑定</em>
               </div>
             </td>
             <td data-label="最近登录"><%= date_time(user.last_login_at) %></td>
             <td data-label="操作">
               <div class="table-buttons">
-                <button type="button" class="button is-small" phx-click="update_user" phx-value-id={user.id} phx-value-role={if user.role == :admin, do: "member", else: "admin"} phx-value-status={user.status}><%= if user.role == :admin, do: "降为用户", else: "设为管理员" %></button>
-                <button type="button" class={"button is-small #{if user.status == :active, do: "is-danger is-light", else: "is-success is-light"}"} phx-click="update_user" phx-value-id={user.id} phx-value-role={user.role} phx-value-status={if user.status == :active, do: "disabled", else: "active"}><%= if user.status == :active, do: "停用", else: "启用" %></button>
+                <button
+                  type="button"
+                  class="button is-small"
+                  phx-click="update_user"
+                  phx-value-id={user.id}
+                  phx-value-role={if user.role == :admin, do: "member", else: "admin"}
+                  phx-value-status={user.status}
+                >
+                  <%= if user.role == :admin, do: "降为用户", else: "设为管理员" %>
+                </button>
+                <button
+                  type="button"
+                  class={"button is-small #{if user.status == :active, do: "is-danger is-light", else: "is-success is-light"}"}
+                  phx-click="update_user"
+                  phx-value-id={user.id}
+                  phx-value-role={user.role}
+                  phx-value-status={if user.status == :active, do: "disabled", else: "active"}
+                >
+                  <%= if user.status == :active, do: "停用", else: "启用" %>
+                </button>
               </div>
             </td>
           </tr>
@@ -70,23 +205,52 @@
 
   <div class="content-grid">
     <section class="data-card table-card">
-      <div class="data-card__header"><h2>最近认领码</h2></div>
-      <div class="responsive-table"><table><thead><tr><th>车辆</th><th>创建人</th><th>到期</th><th>状态</th><th></th></tr></thead><tbody>
-        <tr :for={claim <- @claims}>
-          <td data-label="车辆"><%= TeslaMate.Fleet.vehicle_label(claim.car) %></td>
-          <td data-label="创建人"><%= claim.created_by_user.name %></td>
-          <td data-label="到期"><%= date_time(claim.expires_at) %></td>
-          <td data-label="状态"><%= claim_status(claim) %></td>
-          <td><button :if={!claim.claimed_at && !claim.revoked_at} type="button" class="button is-small is-danger is-light" phx-click="revoke_claim" phx-value-id={claim.id}>撤销</button></td>
-        </tr>
-      </tbody></table></div>
+      <div class="data-card__header">
+        <h2>最近认领码</h2>
+      </div>
+      <div class="responsive-table">
+        <table>
+          <thead>
+            <tr>
+              <th>车辆</th>
+              <th>创建人</th>
+              <th>到期</th>
+              <th>状态</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr :for={claim <- @claims}>
+              <td data-label="车辆"><%= TeslaMate.Fleet.vehicle_label(claim.car) %></td>
+              <td data-label="创建人"><%= claim.created_by_user.name %></td>
+              <td data-label="到期"><%= date_time(claim.expires_at) %></td>
+              <td data-label="状态"><%= claim_status(claim) %></td>
+              <td>
+                <button
+                  :if={!claim.claimed_at && !claim.revoked_at}
+                  type="button"
+                  class="button is-small is-danger is-light"
+                  phx-click="revoke_claim"
+                  phx-value-id={claim.id}
+                >
+                  撤销
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="data-card audit-list">
-      <div class="data-card__header"><h2>权限审计</h2></div>
+      <div class="data-card__header">
+        <h2>权限审计</h2>
+      </div>
       <div :for={event <- @audit_events} class="audit-event">
         <span><i class="mdi mdi-shield-check-outline"></i></span>
-        <div><strong><%= audit_action_label(event.action) %></strong><small><%= (event.actor_user && event.actor_user.name) || "系统" %> · <%= date_time(event.inserted_at) %></small></div>
+        <div>
+          <strong><%= audit_action_label(event.action) %></strong><small><%= (event.actor_user && event.actor_user.name) || "系统" %> · <%= date_time(event.inserted_at) %></small>
+        </div>
       </div>
     </section>
   </div>

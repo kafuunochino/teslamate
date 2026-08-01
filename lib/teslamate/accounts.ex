@@ -53,7 +53,10 @@ defmodule TeslaMate.Accounts do
 
       true ->
         now = now()
-        {1, _} = Repo.update_all(from(u in User, where: u.id == ^user.id), set: [last_login_at: now])
+
+        {1, _} =
+          Repo.update_all(from(u in User, where: u.id == ^user.id), set: [last_login_at: now])
+
         user = %{user | last_login_at: now}
         audit(:user_logged_in, user, target_user: user)
         {:ok, user}
@@ -301,7 +304,9 @@ defmodule TeslaMate.Accounts do
   def revoke_car(%User{} = actor, %User{} = target, car_id) do
     if active_admin_actor?(actor) do
       id = parse_id(car_id)
-      {count, _} = Repo.delete_all(from uc in UserCar, where: uc.user_id == ^target.id and uc.car_id == ^id)
+
+      {count, _} =
+        Repo.delete_all(from uc in UserCar, where: uc.user_id == ^target.id and uc.car_id == ^id)
 
       if count > 0 do
         audit(:vehicle_access_revoked, actor, target_user: target, car_id: id)
@@ -318,7 +323,9 @@ defmodule TeslaMate.Accounts do
   def unbind_own_car(%User{} = user, car_id) do
     if active_user_id?(user.id) do
       id = parse_id(car_id)
-      {count, _} = Repo.delete_all(from uc in UserCar, where: uc.user_id == ^user.id and uc.car_id == ^id)
+
+      {count, _} =
+        Repo.delete_all(from uc in UserCar, where: uc.user_id == ^user.id and uc.car_id == ^id)
 
       if count > 0 do
         audit(:vehicle_access_relinquished, user, target_user: user, car_id: id)

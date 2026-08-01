@@ -278,8 +278,11 @@ defmodule TeslaMate.Fleet do
     |> limit(1)
     |> Repo.one()
     |> case do
-      nil -> nil
-      drive -> drive.end_geofence || drive.end_address || drive.start_geofence || drive.start_address
+      nil ->
+        nil
+
+      drive ->
+        drive.end_geofence || drive.end_address || drive.start_geofence || drive.start_address
     end
   end
 
@@ -393,7 +396,11 @@ defmodule TeslaMate.Fleet do
     current = history |> Enum.take(-sample_size) |> average_field(:full_range)
 
     if baseline && current && baseline > 0 do
-      %{baseline_range: baseline, current_range: current, loss_percent: max(0.0, (baseline - current) / baseline * 100)}
+      %{
+        baseline_range: baseline,
+        current_range: current,
+        loss_percent: max(0.0, (baseline - current) / baseline * 100)
+      }
     end
   end
 

@@ -2,24 +2,63 @@
   <% drive = @report.drive %>
   <header class="page-heading">
     <div>
-      <.link navigate={Routes.dashboard_path(@socket, :trips, car: drive.car_id)} class="back-link"><i class="mdi mdi-arrow-left"></i> 返回行程列表</.link>
+      <.link
+        navigate={Routes.dashboard_path(@socket, :trips, car: drive.car_id)}
+        class="back-link"
+      >
+        <i class="mdi mdi-arrow-left"></i> 返回行程列表
+      </.link>
       <p class="page-kicker">行程 #<%= drive.id %></p>
-      <h1><%= location_label(drive.start_geofence || drive.start_address) %> → <%= location_label(drive.end_geofence || drive.end_address) %></h1>
+      <h1>
+        <%= location_label(drive.start_geofence || drive.start_address) %> → <%= location_label(
+          drive.end_geofence || drive.end_address
+        ) %>
+      </h1>
       <p><%= date_time(drive.start_date) %> 至 <%= date_time(drive.end_date) %></p>
     </div>
-    <a href={Routes.drive_path(@socket, :gpx, drive.id)} class="button is-light"><i class="mdi mdi-download"></i>&nbsp;导出 GPX</a>
+    <a href={Routes.drive_path(@socket, :gpx, drive.id)} class="button is-light">
+      <i class="mdi mdi-download"></i>&nbsp;导出 GPX
+    </a>
   </header>
 
   <section class="metrics-grid">
-    <.metric_card title="行驶距离" value={distance(drive.distance)} icon="map-marker-distance" tone="blue" />
-    <.metric_card title="驾驶时长" value={duration(drive.duration_min)} icon="timer-outline" tone="green" />
-    <.metric_card title="最高速度" value={if drive.speed_max, do: "#{drive.speed_max} km/h", else: "—"} icon="speedometer" tone="violet" />
-    <.metric_card title="上升 / 下降" value={"+#{drive.ascent || 0} / -#{drive.descent || 0} m"} icon="elevation-rise" tone="amber" />
-    <.metric_card title="车外均温" value={temperature(drive.outside_temp_avg)} icon="thermometer" tone="cyan" />
+    <.metric_card
+      title="行驶距离"
+      value={distance(drive.distance)}
+      icon="map-marker-distance"
+      tone="blue"
+    />
+    <.metric_card
+      title="驾驶时长"
+      value={duration(drive.duration_min)}
+      icon="timer-outline"
+      tone="green"
+    />
+    <.metric_card
+      title="最高速度"
+      value={if drive.speed_max, do: "#{drive.speed_max} km/h", else: "—"}
+      icon="speedometer"
+      tone="violet"
+    />
+    <.metric_card
+      title="上升 / 下降"
+      value={"+#{drive.ascent || 0} / -#{drive.descent || 0} m"}
+      icon="elevation-rise"
+      tone="amber"
+    />
+    <.metric_card
+      title="车外均温"
+      value={temperature(drive.outside_temp_avg)}
+      icon="thermometer"
+      tone="cyan"
+    />
   </section>
 
   <section class="data-card">
-    <div class="data-card__header"><h2>行驶轨迹</h2><span><%= length(@report.positions) %> 个采样点</span></div>
+    <div class="data-card__header">
+      <h2>行驶轨迹</h2>
+      <span><%= length(@report.positions) %> 个采样点</span>
+    </div>
     <div
       id={"trip-map-#{drive.id}"}
       class="platform-map platform-map--large"
@@ -29,18 +68,26 @@
       data-mode="route"
     >
     </div>
-    <p class="privacy-note"><i class="mdi mdi-shield-lock-outline"></i> 轨迹仅发送到当前已认证浏览器，不会提供公开分享链接。</p>
+    <p class="privacy-note">
+      <i class="mdi mdi-shield-lock-outline"></i> 轨迹仅发送到当前已认证浏览器，不会提供公开分享链接。
+    </p>
   </section>
 
   <section class="data-card table-card">
-    <div class="data-card__header"><h2>能量与里程变化</h2></div>
+    <div class="data-card__header">
+      <h2>能量与里程变化</h2>
+    </div>
     <div class="detail-grid">
       <div><span>起始里程</span><strong><%= distance(drive.start_km) %></strong></div>
       <div><span>结束里程</span><strong><%= distance(drive.end_km) %></strong></div>
       <div><span>起始额定续航</span><strong><%= distance(drive.start_rated_range_km) %></strong></div>
       <div><span>结束额定续航</span><strong><%= distance(drive.end_rated_range_km) %></strong></div>
-      <div><span>最大功率</span><strong><%= if drive.power_max, do: "#{drive.power_max} kW", else: "—" %></strong></div>
-      <div><span>最大回收功率</span><strong><%= if drive.power_min, do: "#{abs(drive.power_min)} kW", else: "—" %></strong></div>
+      <div>
+        <span>最大功率</span><strong><%= if drive.power_max, do: "#{drive.power_max} kW", else: "—" %></strong>
+      </div>
+      <div>
+        <span>最大回收功率</span><strong><%= if drive.power_min, do: "#{abs(drive.power_min)} kW", else: "—" %></strong>
+      </div>
     </div>
   </section>
 </div>

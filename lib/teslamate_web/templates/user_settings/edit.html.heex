@@ -1,24 +1,74 @@
 <div class="platform-page">
-  <header class="page-heading"><div><p class="page-kicker">个人账号</p><h1>账号设置</h1><p>管理显示名称和登录密码。</p></div></header>
+  <header class="page-heading">
+    <div>
+      <p class="page-kicker">个人账号</p>
+      <h1>账号设置</h1>
+      <p>管理显示名称和登录密码。</p>
+    </div>
+  </header>
 
   <div class="content-grid">
     <section class="data-card settings-card">
-      <div class="data-card__header"><h2>个人资料</h2></div>
+      <div class="data-card__header">
+        <h2>个人资料</h2>
+      </div>
       <%= form_for @profile_changeset, Routes.user_settings_path(@conn, :update_profile), [as: :user, method: :put, class: "auth-form"], fn f -> %>
-        <div class="field"><%= label f, :email, "邮箱", class: "label" %><input class="input" value={@conn.assigns.current_user.email} disabled /></div>
-        <div class="field"><%= label f, :name, "显示名称", class: "label" %><%= text_input f, :name, required: true, maxlength: 80, class: "input" %><%= error_tag f, :name %></div>
-        <%= submit "保存资料", class: "button is-primary" %>
+        <div class="field">
+          <%= label(f, :email, "邮箱", class: "label") %><input
+            class="input"
+            value={@conn.assigns.current_user.email}
+            disabled
+          />
+        </div>
+        <div class="field">
+          <%= label(f, :name, "显示名称", class: "label") %><%= text_input(f, :name,
+            required: true,
+            maxlength: 80,
+            class: "input"
+          ) %><%= error_tag(f, :name) %>
+        </div>
+        <%= submit("保存资料", class: "button is-primary") %>
       <% end %>
     </section>
 
     <section class="data-card settings-card">
-      <div class="data-card__header"><h2>修改密码</h2></div>
+      <div class="data-card__header">
+        <h2>修改密码</h2>
+      </div>
       <%= form_for @password_changeset, Routes.user_settings_path(@conn, :update_password), [as: :user, method: :put, class: "auth-form"], fn f -> %>
-        <div class="field"><label class="label" for="user_current_password">当前密码</label><input id="user_current_password" name="user[current_password]" type="password" autocomplete="current-password" required class="input" /></div>
-        <div class="field"><%= label f, :password, "新密码", class: "label" %><%= password_input f, :password, required: true, minlength: 12, maxlength: 128, autocomplete: "new-password", class: "input" %><%= error_tag f, :password %></div>
-        <div class="field"><%= label f, :password_confirmation, "确认新密码", class: "label" %><%= password_input f, :password_confirmation, required: true, minlength: 12, maxlength: 128, autocomplete: "new-password", class: "input" %><%= error_tag f, :password_confirmation %></div>
+        <div class="field">
+          <label class="label" for="user_current_password">当前密码</label>
+          <input
+            id="user_current_password"
+            name="user[current_password]"
+            type="password"
+            autocomplete="current-password"
+            required
+            class="input"
+          />
+        </div>
+        <div class="field">
+          <%= label(f, :password, "新密码", class: "label") %><%= password_input(f, :password,
+            required: true,
+            minlength: 12,
+            maxlength: 128,
+            autocomplete: "new-password",
+            class: "input"
+          ) %><%= error_tag(f, :password) %>
+        </div>
+        <div class="field">
+          <%= label(f, :password_confirmation, "确认新密码", class: "label") %><%= password_input(
+            f,
+            :password_confirmation,
+            required: true,
+            minlength: 12,
+            maxlength: 128,
+            autocomplete: "new-password",
+            class: "input"
+          ) %><%= error_tag(f, :password_confirmation) %>
+        </div>
         <p class="help">修改成功后会撤销所有已有登录会话。</p>
-        <%= submit "修改密码", class: "button is-primary" %>
+        <%= submit("修改密码", class: "button is-primary") %>
       <% end %>
     </section>
   </div>

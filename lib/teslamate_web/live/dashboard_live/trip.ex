@@ -28,7 +28,13 @@ defmodule TeslaMateWeb.DashboardLive.Trip do
 
   defp downsample(points, maximum) do
     step = max(div(length(points) + maximum - 1, maximum), 1)
-    sampled = points |> Enum.with_index() |> Enum.filter(fn {_point, index} -> rem(index, step) == 0 end) |> Enum.map(&elem(&1, 0))
+
+    sampled =
+      points
+      |> Enum.with_index()
+      |> Enum.filter(fn {_point, index} -> rem(index, step) == 0 end)
+      |> Enum.map(&elem(&1, 0))
+
     Enum.uniq_by(sampled ++ [List.last(points)], &{&1.latitude, &1.longitude, &1.date})
   end
 end

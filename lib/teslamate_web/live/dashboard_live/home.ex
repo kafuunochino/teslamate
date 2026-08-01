@@ -22,7 +22,10 @@ defmodule TeslaMateWeb.DashboardLive.Home do
   end
 
   @impl true
-  def handle_info(%Summary{car: %{id: id}} = summary, %{assigns: %{report: %{car: %{id: id}}}} = socket) do
+  def handle_info(
+        %Summary{car: %{id: id}} = summary,
+        %{assigns: %{report: %{car: %{id: id}}}} = socket
+      ) do
     {:noreply, update(socket, :report, &Map.put(&1, :live, summary))}
   end
 

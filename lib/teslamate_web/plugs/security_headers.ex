@@ -73,5 +73,4 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
   defp script_src, do: TeslaMateWeb.Config.csp_script_src()
   defp style_src, do: TeslaMateWeb.Config.csp_style_src()
   defp frame_ancestors, do: TeslaMateWeb.Config.csp_frame_ancestors()
-
 end

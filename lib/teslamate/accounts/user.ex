@@ -86,7 +86,10 @@ defmodule TeslaMate.Accounts.User do
     now = DateTime.utc_now() |> DateTime.truncate(:microsecond)
 
     changeset
-    |> put_change(:password_hash, TeslaMate.Accounts.Password.hash(get_change(changeset, :password)))
+    |> put_change(
+      :password_hash,
+      TeslaMate.Accounts.Password.hash(get_change(changeset, :password))
+    )
     |> put_change(:password_changed_at, now)
   end
 

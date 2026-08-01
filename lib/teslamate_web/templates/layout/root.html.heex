@@ -12,14 +12,38 @@
       <%= assigns[:page_title] || "车辆数据中心" %>
     </.live_title>
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")} />
-    <link rel="apple-touch-icon" sizes="180x180" href={Routes.static_path(@conn, "/apple-touch-icon.png?v=6")} />
-    <link rel="icon" type="image/png" sizes="32x32" href={Routes.static_path(@conn, "/favicon-32x32.png?v=6")} />
-    <link rel="icon" type="image/png" sizes="16x16" href={Routes.static_path(@conn, "/favicon-16x16.png?v=6")} />
-    <link rel="manifest" href={Routes.static_path(@conn, "/site.webmanifest?v=6")} crossorigin="use-credentials" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href={Routes.static_path(@conn, "/apple-touch-icon.png?v=6")}
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href={Routes.static_path(@conn, "/favicon-32x32.png?v=6")}
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href={Routes.static_path(@conn, "/favicon-16x16.png?v=6")}
+    />
+    <link
+      rel="manifest"
+      href={Routes.static_path(@conn, "/site.webmanifest?v=6")}
+      crossorigin="use-credentials"
+    />
     <link rel="shortcut icon" href={Routes.static_path(@conn, "/favicon.ico?v=6")} />
     <meta name="theme-color" content="#0b1020" />
     <%= csrf_meta_tag() %>
-    <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}></script>
+    <script
+      defer
+      phx-track-static
+      type="text/javascript"
+      src={Routes.static_path(@conn, "/assets/app.js")}
+    >
+    </script>
   </head>
   <% current_user = @conn.assigns[:current_user] %>
   <body class={if current_user, do: "platform-body", else: "auth-body"} tabindex="0">
@@ -32,7 +56,14 @@
               <span><i class="mdi mdi-car-connected"></i></span>
               <div><strong>TeslaMate</strong><small>车辆数据中心</small></div>
             </.link>
-            <button id="sidebar-close" class="sidebar-close" type="button" aria-label="关闭菜单"><i class="mdi mdi-close"></i></button>
+            <button
+              id="sidebar-close"
+              class="sidebar-close"
+              type="button"
+              aria-label="关闭菜单"
+            >
+              <i class="mdi mdi-close"></i>
+            </button>
           </div>
 
           <nav class="sidebar-nav">
@@ -40,54 +71,94 @@
             <.link navigate={Routes.dashboard_path(@conn, :home)} class={nav_class(@conn, "/")}>
               <i class="mdi mdi-view-dashboard-outline"></i><span>首页</span>
             </.link>
-            <.link navigate={Routes.dashboard_path(@conn, :trips)} class={nav_class(@conn, "/trips")}>
+            <.link
+              navigate={Routes.dashboard_path(@conn, :trips)}
+              class={nav_class(@conn, "/trips")}
+            >
               <i class="mdi mdi-map-marker-path"></i><span>行程轨迹</span>
             </.link>
-            <.link navigate={Routes.dashboard_path(@conn, :battery)} class={nav_class(@conn, "/battery")}>
+            <.link
+              navigate={Routes.dashboard_path(@conn, :battery)}
+              class={nav_class(@conn, "/battery")}
+            >
               <i class="mdi mdi-car-battery"></i><span>电池</span>
             </.link>
-            <.link navigate={Routes.dashboard_path(@conn, :charging)} class={nav_class(@conn, "/charging")}>
+            <.link
+              navigate={Routes.dashboard_path(@conn, :charging)}
+              class={nav_class(@conn, "/charging")}
+            >
               <i class="mdi mdi-ev-station"></i><span>充电</span>
             </.link>
-            <.link navigate={Routes.dashboard_path(@conn, :analysis)} class={nav_class(@conn, "/analysis")}>
+            <.link
+              navigate={Routes.dashboard_path(@conn, :analysis)}
+              class={nav_class(@conn, "/analysis")}
+            >
               <i class="mdi mdi-chart-box-outline"></i><span>分析</span>
             </.link>
-            <.link navigate={Routes.live_path(@conn, TeslaMateWeb.VehicleLive.Index)} class={nav_class(@conn, "/vehicles")}>
+            <.link
+              navigate={Routes.live_path(@conn, TeslaMateWeb.VehicleLive.Index)}
+              class={nav_class(@conn, "/vehicles")}
+            >
               <i class="mdi mdi-car-key"></i><span>车辆中心</span>
             </.link>
 
             <%= if TeslaMate.Accounts.admin?(current_user) do %>
               <p>系统管理</p>
-              <.link navigate={Routes.live_path(@conn, TeslaMateWeb.AdminLive.Users)} class={nav_class(@conn, "/admin/users")}>
+              <.link
+                navigate={Routes.live_path(@conn, TeslaMateWeb.AdminLive.Users)}
+                class={nav_class(@conn, "/admin/users")}
+              >
                 <i class="mdi mdi-account-lock-outline"></i><span>用户与权限</span>
               </.link>
-              <.link navigate={Routes.live_path(@conn, TeslaMateWeb.SignInLive.Index)} class={nav_class(@conn, "/admin/tesla-account")}>
+              <.link
+                navigate={Routes.live_path(@conn, TeslaMateWeb.SignInLive.Index)}
+                class={nav_class(@conn, "/admin/tesla-account")}
+              >
                 <i class="mdi mdi-cloud-key-outline"></i><span>Tesla 连接</span>
               </.link>
-              <.link navigate={Routes.live_path(@conn, TeslaMateWeb.GeoFenceLive.Index)} class={nav_class(@conn, "/admin/geo-fences")}>
+              <.link
+                navigate={Routes.live_path(@conn, TeslaMateWeb.GeoFenceLive.Index)}
+                class={nav_class(@conn, "/admin/geo-fences")}
+              >
                 <i class="mdi mdi-map-marker-radius"></i><span>地理围栏</span>
               </.link>
-              <.link navigate={Routes.live_path(@conn, TeslaMateWeb.SettingsLive.Index)} class={nav_class(@conn, "/admin/settings")}>
+              <.link
+                navigate={Routes.live_path(@conn, TeslaMateWeb.SettingsLive.Index)}
+                class={nav_class(@conn, "/admin/settings")}
+              >
                 <i class="mdi mdi-tune-variant"></i><span>系统设置</span>
               </.link>
-              <.link navigate={Routes.live_path(@conn, TeslaMateWeb.ImportLive.Index)} class={nav_class(@conn, "/admin/import")}>
+              <.link
+                navigate={Routes.live_path(@conn, TeslaMateWeb.ImportLive.Index)}
+                class={nav_class(@conn, "/admin/import")}
+              >
                 <i class="mdi mdi-database-import-outline"></i><span>数据导入</span>
               </.link>
             <% end %>
           </nav>
 
           <div class="sidebar-account">
-            <div class="account-avatar"><%= current_user.name |> String.first() |> String.upcase() %></div>
-            <div><strong><%= current_user.name %></strong><small><%= if TeslaMate.Accounts.admin?(current_user), do: "管理员", else: "普通用户" %></small></div>
-            <.link href={Routes.user_settings_path(@conn, :edit)} aria-label="账号设置"><i class="mdi mdi-cog-outline"></i></.link>
+            <div class="account-avatar">
+              <%= current_user.name |> String.first() |> String.upcase() %>
+            </div>
+            <div>
+              <strong><%= current_user.name %></strong><small><%= if TeslaMate.Accounts.admin?(current_user), do: "管理员", else: "普通用户" %></small>
+            </div>
+            <.link href={Routes.user_settings_path(@conn, :edit)} aria-label="账号设置">
+              <i class="mdi mdi-cog-outline"></i>
+            </.link>
           </div>
         </aside>
 
         <div class="platform-main">
           <header class="mobile-topbar">
-            <button id="sidebar-open" type="button" aria-label="打开菜单"><i class="mdi mdi-menu"></i></button>
+            <button id="sidebar-open" type="button" aria-label="打开菜单">
+              <i class="mdi mdi-menu"></i>
+            </button>
             <strong>TeslaMate CN</strong>
-            <.link href={Routes.user_settings_path(@conn, :edit)} aria-label="账号设置"><i class="mdi mdi-account-circle-outline"></i></.link>
+            <.link href={Routes.user_settings_path(@conn, :edit)} aria-label="账号设置">
+              <i class="mdi mdi-account-circle-outline"></i>
+            </.link>
           </header>
 
           <main role="main" class="platform-content">

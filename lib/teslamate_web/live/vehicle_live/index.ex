@@ -47,7 +47,8 @@ defmodule TeslaMateWeb.VehicleLive.Index do
         {car.id, report}
       end)
 
-    assign(socket,
+    assign(
+      socket,
       [page_title: "车辆中心", cars: cars, reports: reports] ++ extra
     )
   end

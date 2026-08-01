@@ -31,7 +31,11 @@ defmodule TeslaMateWeb.PlatformComponents do
       <label for="vehicle-picker-id">当前车辆</label>
       <div class="select is-fullwidth">
         <select id="vehicle-picker-id" name="vehicle[id]" aria-label="选择车辆">
-          <option :for={car <- @cars} value={car.id} selected={@current_car && car.id == @current_car.id}>
+          <option
+            :for={car <- @cars}
+            value={car.id}
+            selected={@current_car && car.id == @current_car.id}
+          >
             <%= Fleet.vehicle_label(car) %> · VIN <%= Fleet.vin_suffix(car) %>
           </option>
         </select>
@@ -70,7 +74,9 @@ defmodule TeslaMateWeb.PlatformComponents do
 
     ~H"""
     <section class="data-card chart-card">
-      <div class="data-card__header"><h2><%= @title %></h2></div>
+      <div class="data-card__header">
+        <h2><%= @title %></h2>
+      </div>
       <div :if={@rows == []} class="empty-inline"><%= @empty %></div>
       <div :if={@rows != []} class="bar-chart" role="img" aria-label={@title}>
         <div
@@ -78,11 +84,7 @@ defmodule TeslaMateWeb.PlatformComponents do
           class="bar-chart__column"
           title={"#{format_period(row.period)}：#{format_number(row.value, 1)}#{@unit}"}
         >
-          <span
-            class="bar-chart__bar"
-            style={"height: #{bar_height(row.value, @maximum)}%"}
-          >
-          </span>
+          <span class="bar-chart__bar" style={"height: #{bar_height(row.value, @maximum)}%"}></span>
           <small><%= compact_period(row.period) %></small>
         </div>
       </div>
@@ -103,7 +105,10 @@ defmodule TeslaMateWeb.PlatformComponents do
       <div class="score-ring" style={"--score: #{@safe_value}"}>
         <strong><%= @value || "—" %></strong><span :if={@value}>分</span>
       </div>
-      <div><h3><%= @label %></h3><p :if={@hint}><%= @hint %></p></div>
+      <div>
+        <h3><%= @label %></h3>
+        <p :if={@hint}><%= @hint %></p>
+      </div>
     </article>
     """
   end
@@ -123,8 +128,12 @@ defmodule TeslaMateWeb.PlatformComponents do
   end
 
   def format_number(nil, _precision), do: "—"
-  def format_number(%Decimal{} = value, precision), do: value |> Decimal.to_float() |> format_number(precision)
-  def format_number(value, precision) when is_integer(value), do: format_number(value * 1.0, precision)
+
+  def format_number(%Decimal{} = value, precision),
+    do: value |> Decimal.to_float() |> format_number(precision)
+
+  def format_number(value, precision) when is_integer(value),
+    do: format_number(value * 1.0, precision)
 
   def format_number(value, precision) when is_float(value) do
     :erlang.float_to_binary(value, decimals: precision)
