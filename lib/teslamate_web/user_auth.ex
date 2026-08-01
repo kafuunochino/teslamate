@@ -14,8 +14,8 @@ defmodule TeslaMateWeb.UserAuth do
     token = get_session(conn, @session_key)
 
     conn
-    |> assign(:current_user_session_token, token)
-    |> assign(:current_user, Accounts.get_user_by_session_token(token))
+    |> Plug.Conn.assign(:current_user_session_token, token)
+    |> Plug.Conn.assign(:current_user, Accounts.get_user_by_session_token(token))
   end
 
   def redirect_if_authenticated(%Plug.Conn{assigns: %{current_user: user}} = conn, _opts)

@@ -332,7 +332,9 @@ defmodule TeslaMate.Accounts do
 
   ## One-time vehicle claims
 
-  def create_vehicle_claim(%User{} = actor, car_id, opts \\ []) do
+  def create_vehicle_claim(actor, car_id, opts \\ [])
+
+  def create_vehicle_claim(%User{} = actor, car_id, opts) do
     hours = opts |> Keyword.get(:hours, @default_claim_hours) |> clamp(1, @max_claim_hours)
 
     with true <- active_admin_actor?(actor),
@@ -478,7 +480,9 @@ defmodule TeslaMate.Accounts do
 
   ## Audit
 
-  def list_audit_events(%User{} = actor, limit \\ 100) do
+  def list_audit_events(actor, limit \\ 100)
+
+  def list_audit_events(%User{} = actor, limit) do
     if active_admin_actor?(actor) do
       AuditEvent
       |> order_by([e], desc: e.inserted_at, desc: e.id)
