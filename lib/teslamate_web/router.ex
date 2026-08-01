@@ -43,15 +43,15 @@ defmodule TeslaMateWeb.Router do
     plug :fetch_current_user
   end
 
-  pipeline :redirect_if_authenticated do
+  pipeline :redirect_authenticated_users do
     plug :redirect_if_authenticated
   end
 
-  pipeline :require_user do
+  pipeline :authenticated_user do
     plug :require_authenticated_user
   end
 
-  pipeline :require_admin do
+  pipeline :platform_admin do
     plug :require_admin
   end
 
@@ -64,7 +64,7 @@ defmodule TeslaMateWeb.Router do
   end
 
   scope "/", TeslaMateWeb do
-    pipe_through [:browser, :redirect_if_authenticated]
+    pipe_through [:browser, :redirect_authenticated_users]
 
     get "/sign_in", UserSessionController, :new
     post "/sign_in", UserSessionController, :create
@@ -73,7 +73,7 @@ defmodule TeslaMateWeb.Router do
   end
 
   scope "/", TeslaMateWeb do
-    pipe_through [:browser, :require_user]
+    pipe_through [:browser, :authenticated_user]
 
     delete "/sign_out", UserSessionController, :delete
     get "/account", UserSettingsController, :edit
@@ -97,7 +97,7 @@ defmodule TeslaMateWeb.Router do
   end
 
   scope "/admin", TeslaMateWeb do
-    pipe_through [:browser, :require_user, :require_admin]
+    pipe_through [:browser, :authenticated_user, :platform_admin]
 
     # Keep legacy operational pages available to administrators while the
     # end-user UI is fully served by the unified platform above.
