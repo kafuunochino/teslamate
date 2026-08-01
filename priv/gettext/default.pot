@@ -544,6 +544,7 @@ msgid "GitHub"
 msgstr ""
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:382
+#: lib/teslamate_web/templates/layout/root.html.heex:168
 #, elixir-autogen
 msgid "Update available"
 msgstr ""
