@@ -39,7 +39,7 @@ defmodule TeslaMateWeb.ImportLive.Index do
 
       {:ok, socket}
     else
-      {:ok, redirect(socket, to: Routes.car_path(socket, :index))}
+      {:ok, redirect(socket, to: Routes.dashboard_path(socket, :home))}
     end
   end
 

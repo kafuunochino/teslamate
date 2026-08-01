@@ -127,6 +127,6 @@ defmodule TeslaMateWeb.SignInLive.Index do
   defp redirect_to_carlive(socket) do
     socket
     |> put_flash(:success, gettext("Signed in successfully"))
-    |> redirect(to: Routes.car_path(socket, :index))
+    |> redirect(to: Routes.dashboard_path(socket, :home))
   end
 end

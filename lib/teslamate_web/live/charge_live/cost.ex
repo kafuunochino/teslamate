@@ -33,7 +33,7 @@ defmodule TeslaMateWeb.ChargeLive.Cost do
         _ -> nil
       end
 
-    {:noreply, assign(socket, redirect_to: referrer || Routes.car_path(socket, :index))}
+    {:noreply, assign(socket, redirect_to: referrer || Routes.dashboard_path(socket, :home))}
   end
 
   @impl true

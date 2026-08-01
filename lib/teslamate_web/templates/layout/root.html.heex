@@ -95,19 +95,13 @@
             >
               <i class="mdi mdi-chart-box-outline"></i><span>分析</span>
             </.link>
-            <.link
-              navigate={~p"/vehicles"}
-              class={nav_class(@conn, "/vehicles")}
-            >
+            <.link navigate={~p"/vehicles"} class={nav_class(@conn, "/vehicles")}>
               <i class="mdi mdi-car-key"></i><span>车辆中心</span>
             </.link>
 
             <%= if TeslaMate.Accounts.admin?(current_user) do %>
               <p>系统管理</p>
-              <.link
-                navigate={~p"/admin/users"}
-                class={nav_class(@conn, "/admin/users")}
-              >
+              <.link navigate={~p"/admin/users"} class={nav_class(@conn, "/admin/users")}>
                 <i class="mdi mdi-account-lock-outline"></i><span>用户与权限</span>
               </.link>
               <.link
@@ -122,16 +116,10 @@
               >
                 <i class="mdi mdi-map-marker-radius"></i><span>地理围栏</span>
               </.link>
-              <.link
-                navigate={~p"/admin/settings"}
-                class={nav_class(@conn, "/admin/settings")}
-              >
+              <.link navigate={~p"/admin/settings"} class={nav_class(@conn, "/admin/settings")}>
                 <i class="mdi mdi-tune-variant"></i><span>系统设置</span>
               </.link>
-              <.link
-                navigate={~p"/admin/import"}
-                class={nav_class(@conn, "/admin/import")}
-              >
+              <.link navigate={~p"/admin/import"} class={nav_class(@conn, "/admin/import")}>
                 <i class="mdi mdi-database-import-outline"></i><span>数据导入</span>
               </.link>
             <% end %>
@@ -168,8 +156,20 @@
             <%= @inner_content %>
           </main>
 
-          <footer class="platform-footer">
-            <span>数据仅对授权账号开放</span>
+          <% update = TeslaMate.Updater.get_update() %>
+          <footer class="platform-footer footer">
+            <%= if update do %>
+              <%= link to: "https://github.com/teslamate-org/teslamate/releases",
+                  class: "button is-rounded is-text is-small has-text-grey",
+                  type: "button",
+                  target: "_blank",
+                  rel: "noopener noreferrer" do %>
+                <span class="icon"><i class="mdi mdi-gift"></i></span>
+                <strong><%= [gettext("Update available"), ": ", update] %></strong>
+              <% end %>
+            <% else %>
+              <span>数据仅对授权账号开放</span>
+            <% end %>
             <%= form_for @conn, Routes.user_session_path(@conn, :delete), [method: :delete], fn _f -> %>
               <button type="submit"><i class="mdi mdi-logout"></i> 退出登录</button>
             <% end %>

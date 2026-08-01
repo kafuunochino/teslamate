@@ -75,7 +75,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, parent_view, _html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       [view] = live_children(parent_view)
       html = render(view)
@@ -157,7 +157,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
         assert {:ok, parent_view, _html} =
                  conn
                  |> put_connect_params(%{"baseUrl" => "http://localhost"})
-                 |> live("/")
+                 |> live("/admin/collector")
 
         [view] = live_children(parent_view)
         render_click(view, :suspend_logging)
@@ -204,7 +204,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, parent_view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       assert table_row(html, "Status", "online")
 
@@ -268,7 +268,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, _parent_view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       assert {"span", _, [{"span", [{"class", "mdi mdi-alert-box"}], _}]} =
                html
@@ -298,7 +298,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, _view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       assert [
                {"span",
@@ -330,7 +330,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, view, _html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       TestHelper.eventually(
         fn ->
@@ -362,7 +362,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, _parent_view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       assert [{"button", attrs, _children} = button] =
                html
@@ -397,7 +397,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, view, _html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       TestHelper.eventually(
         fn ->
@@ -439,7 +439,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, _parent_view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       icon =
         html
@@ -483,7 +483,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, _parent_view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       html
       |> Floki.parse_document!()
@@ -577,7 +577,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, _parent_view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       assert {"span", _, [{"span", [{"class", "mdi mdi-snowflake"}], _}]} =
                html
@@ -620,7 +620,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       assert {:ok, parent_view, html} =
                conn
                |> put_connect_params(%{"baseUrl" => "http://localhost"})
-               |> live("/")
+               |> live("/admin/collector")
 
       # Check if the map marker icon is present
       parsed_html = Floki.parse_document!(html)

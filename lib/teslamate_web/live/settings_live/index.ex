@@ -106,7 +106,7 @@ defmodule TeslaMateWeb.SettingsLive.Index do
 
   def handle_event("sign_out", _params, socket) do
     :ok = Api.sign_out()
-    {:noreply, redirect(socket, to: Routes.car_path(socket, :index))}
+    {:noreply, redirect(socket, to: Routes.dashboard_path(socket, :home))}
   end
 
   def handle_event("check_repository_update", _params, socket) do
