@@ -519,8 +519,8 @@ for (const [route, label] of [
   [":battery", "电池"],
   [":charging", "充电"],
   [":analysis", "分析"],
-  ["VehicleLive.Index", "车辆中心"],
-  ["AdminLive.Users", "用户与权限"],
+  ['~p"/vehicles"', "车辆中心"],
+  ['~p"/admin/users"', "用户与权限"],
 ]) {
   if (!rootLayout.includes(route) || !rootLayout.includes(label)) {
     errors.push(`root.html.heex: unified navigation omits ${label}`);
