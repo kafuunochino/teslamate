@@ -80,10 +80,28 @@ defmodule TeslaMate.Accounts do
 
   def list_users(%User{} = actor) do
     if active_admin_actor?(actor) do
-      User
-      |> order_by([u], asc: u.inserted_at, asc: u.id)
-      |> preload([:cars])
-      |> Repo.all()
+      users = User |> order_by([u], asc: u.inserted_at, asc: u.id) |> Repo.all()
+
+      bindings =
+        UserCar
+        |> select([uc], {uc.user_id, uc.car_id})
+        |> Repo.all()
+
+      cars_by_id =
+        bindings
+        |> Enum.map(&elem(&1, 1))
+        |> case do
+          [] -> []
+          ids -> Repo.all(from c in Car, where: c.id in ^ids)
+        end
+        |> Map.new(&{&1.id, &1})
+
+      cars_by_user =
+        bindings
+        |> Enum.group_by(&elem(&1, 0), fn {_user_id, car_id} -> cars_by_id[car_id] end)
+        |> Map.new(fn {user_id, cars} -> {user_id, Enum.reject(cars, &is_nil/1)} end)
+
+      Enum.map(users, &Map.put(&1, :cars, Map.get(cars_by_user, &1.id, [])))
     else
       []
     end

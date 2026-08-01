@@ -92,7 +92,7 @@ defmodule TeslaMateWeb.Router do
       live "/battery", DashboardLive.Battery, :battery, as: :dashboard
       live "/charging", DashboardLive.Charging, :charging, as: :dashboard
       live "/analysis", DashboardLive.Analysis, :analysis, as: :dashboard
-      live "/vehicles", VehicleLive.Index, :index
+      live "/vehicles", VehicleLive.Index
     end
   end
 
@@ -108,8 +108,27 @@ defmodule TeslaMateWeb.Router do
         {TeslaMateWeb.InitAssigns, :locale},
         {TeslaMateWeb.UserAuth, :ensure_admin}
       ] do
-      live "/users", AdminLive.Users, :index
-      live "/tesla-account", SignInLive.Index, :index
+      live "/users", AdminLive.Users
+      live "/tesla-account", SignInLive.Index
+      live "/settings", SettingsLive.Index, :admin
+      live "/geo-fences", GeoFenceLive.Index, :admin
+      live "/geo-fences/new", GeoFenceLive.Form, :admin_new
+      live "/geo-fences/:id/edit", GeoFenceLive.Form, :admin_edit
+      live "/charge-cost/:id", ChargeLive.Cost, :admin
+      live "/import", ImportLive.Index, :admin
+    end
+  end
+
+  # Keep the established operational URLs working after an upgrade. They are
+  # still guarded by both the HTTP admin plug and a LiveView admin recheck.
+  scope "/", TeslaMateWeb do
+    pipe_through [:browser, :authenticated_user, :platform_admin]
+
+    live_session :platform_admin_compat,
+      on_mount: [
+        {TeslaMateWeb.InitAssigns, :locale},
+        {TeslaMateWeb.UserAuth, :ensure_admin}
+      ] do
       live "/settings", SettingsLive.Index
       live "/geo-fences", GeoFenceLive.Index
       live "/geo-fences/new", GeoFenceLive.Form

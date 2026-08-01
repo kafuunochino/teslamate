@@ -96,7 +96,7 @@
               <i class="mdi mdi-chart-box-outline"></i><span>分析</span>
             </.link>
             <.link
-              navigate={Routes.live_path(@conn, TeslaMateWeb.VehicleLive.Index)}
+              navigate={~p"/vehicles"}
               class={nav_class(@conn, "/vehicles")}
             >
               <i class="mdi mdi-car-key"></i><span>车辆中心</span>
@@ -105,31 +105,31 @@
             <%= if TeslaMate.Accounts.admin?(current_user) do %>
               <p>系统管理</p>
               <.link
-                navigate={Routes.live_path(@conn, TeslaMateWeb.AdminLive.Users)}
+                navigate={~p"/admin/users"}
                 class={nav_class(@conn, "/admin/users")}
               >
                 <i class="mdi mdi-account-lock-outline"></i><span>用户与权限</span>
               </.link>
               <.link
-                navigate={Routes.live_path(@conn, TeslaMateWeb.SignInLive.Index)}
+                navigate={~p"/admin/tesla-account"}
                 class={nav_class(@conn, "/admin/tesla-account")}
               >
                 <i class="mdi mdi-cloud-key-outline"></i><span>Tesla 连接</span>
               </.link>
               <.link
-                navigate={Routes.live_path(@conn, TeslaMateWeb.GeoFenceLive.Index)}
+                navigate={~p"/admin/geo-fences"}
                 class={nav_class(@conn, "/admin/geo-fences")}
               >
                 <i class="mdi mdi-map-marker-radius"></i><span>地理围栏</span>
               </.link>
               <.link
-                navigate={Routes.live_path(@conn, TeslaMateWeb.SettingsLive.Index)}
+                navigate={~p"/admin/settings"}
                 class={nav_class(@conn, "/admin/settings")}
               >
                 <i class="mdi mdi-tune-variant"></i><span>系统设置</span>
               </.link>
               <.link
-                navigate={Routes.live_path(@conn, TeslaMateWeb.ImportLive.Index)}
+                navigate={~p"/admin/import"}
                 class={nav_class(@conn, "/admin/import")}
               >
                 <i class="mdi mdi-database-import-outline"></i><span>数据导入</span>
