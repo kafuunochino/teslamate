@@ -1,7 +1,9 @@
 <nav class="breadcrumb" aria-label={gettext("Breadcrumbs")}>
   <ul>
     <li><.link navigate={~p"/"}><%= gettext("Home") %></.link></li>
-    <li class="is-active"><.link navigate={~p"/admin/settings"}><%= gettext("Settings") %></.link></li>
+    <li class="is-active">
+      <.link navigate={~p"/admin/settings"}><%= gettext("Settings") %></.link>
+    </li>
   </ul>
 </nav>
 
