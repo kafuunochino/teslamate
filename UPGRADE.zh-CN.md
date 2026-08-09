@@ -99,7 +99,9 @@ docker exec <PostgreSQL容器名> \
 test -s "$DB_BACKUP"
 
 docker exec <PostgreSQL容器名> \
-  pg_restore --list - < "$DB_BACKUP" >/dev/null
+  pg_restore --list < "$DB_BACKUP" \
+  > "$BACKUP_DIR/teslamate-before.list"
+test -s "$BACKUP_DIR/teslamate-before.list"
 ```
 
 记录关键遥测行数，升级后对比：
