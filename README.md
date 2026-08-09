@@ -380,7 +380,7 @@ docker compose -f docker-compose.1panel.yml \
 
 ## 质量检查
 
-GitHub Actions 会执行：
+主分支 GitHub Actions 会执行：
 
 - Elixir 编译与完整测试；
 - Dialyzer 静态分析和未使用依赖检查；
