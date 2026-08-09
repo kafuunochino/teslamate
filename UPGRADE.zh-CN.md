@@ -98,7 +98,7 @@ docker exec <PostgreSQL容器名> \
   pg_dump -U teslamate -d teslamate -Fc > "$DB_BACKUP"
 test -s "$DB_BACKUP"
 
-docker exec <PostgreSQL容器名> \
+docker exec -i <PostgreSQL容器名> \
   pg_restore --list < "$DB_BACKUP" \
   > "$BACKUP_DIR/teslamate-before.list"
 test -s "$BACKUP_DIR/teslamate-before.list"
