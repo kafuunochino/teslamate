@@ -6,7 +6,8 @@
 - Grafana 运行在 `127.0.0.1:3000`；
 - PostgreSQL 是外部现有服务，容器内使用 `postgres:5432`；
 - Nginx/1Panel 把公网 HTTPS 域名代理到 `127.0.0.1:3000`；
-- 已有 `teslamate-grafana-data` 数据卷。
+- 已有 Grafana 数据卷；它的 Docker 实际名称可能带 Compose 项目前缀，例如
+  `teslamate-cn_teslamate-grafana-data`。
 
 升级后的统一应用接管宿主机 3000，4000 不再发布。旧 Grafana 只停止并移除容器，其数据卷、用户、仪表板和 SQLite 数据均保留。TeslaMate 遥测数据继续使用原 PostgreSQL。
 
@@ -19,7 +20,7 @@
 | 平台登录   | Grafana 账号或旧 Tesla token 页面 | 独立平台账号、注册与会话       |
 | 车辆权限   | Grafana 组织/全局访问             | 管理员全车；普通用户按车辆授权 |
 | PostgreSQL | 外部 `postgres:5432`              | 原地址、原库、原数据           |
-| Grafana 卷 | 运行中                            | 原名保留，默认不挂载运行       |
+| Grafana 卷 | 运行中，名称可能带项目前缀        | 精确原名保留，默认不挂载运行   |
 
 新增迁移版本为 `20260801090000`，只创建：
 
@@ -45,30 +46,49 @@ OLD_COMMIT="$(git rev-parse HEAD)"
 BACKUP_DIR="/opt/teslamate-upgrade-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
+printf '%s\n' "$BACKUP_DIR" > /opt/teslamate-upgrade-current.path
+chmod 600 /opt/teslamate-upgrade-current.path
 
 printf '%s\n' "$OLD_COMMIT" > "$BACKUP_DIR/old.commit"
 cp -a .env "$BACKUP_DIR/env.before"
 cp -a docker-compose.1panel.yml "$BACKUP_DIR/docker-compose.1panel.before.yml"
-chmod 600 "$BACKUP_DIR"/*
+for LOCAL_BACKUP in .env.bak.* docker-compose.1panel.yml.bak.*; do
+  [ ! -e "$LOCAL_BACKUP" ] || cp -a "$LOCAL_BACKUP" "$BACKUP_DIR/"
+done
 
 docker compose -f docker-compose.1panel.yml config \
   > "$BACKUP_DIR/compose.effective.before.yml"
 docker compose -f docker-compose.1panel.yml ps \
   > "$BACKUP_DIR/containers.before.txt"
 
+# 从正在运行的旧容器检测真实卷名，不能根据 Compose 中的逻辑名称猜测。
+GRAFANA_CONTAINER="$(docker compose -f docker-compose.1panel.yml ps -q grafana)"
+test -n "$GRAFANA_CONTAINER"
+GRAFANA_VOLUME_NAME="$(docker inspect "$GRAFANA_CONTAINER" --format \
+  '{{range .Mounts}}{{if eq .Destination "/var/lib/grafana"}}{{.Name}}{{end}}{{end}}')"
+test -n "$GRAFANA_VOLUME_NAME"
+printf '%s\n' "$GRAFANA_VOLUME_NAME" > "$BACKUP_DIR/grafana-volume.name"
+docker volume inspect "$GRAFANA_VOLUME_NAME" \
+  > "$BACKUP_DIR/grafana-volume.before.json"
+
+chmod 600 "$BACKUP_DIR"/*
 git status --short
 ```
 
-如果 `git status --short` 除 `?? docker-compose.1panel.yml` 外还有输出，先停止升级并保存人工修改。不要让 `git pull` 覆盖未知改动。
+先核对所有输出。已知的 `.env.bak.*` 和 `docker-compose.1panel.yml.bak.*`
+可以保留，但必须已复制到 `$BACKUP_DIR`；若有其他未知修改，停止升级。不要让
+`git pull` 覆盖人工修改。
 
-确认外部 PostgreSQL 与项目位于同一个 1Panel 网络。默认网络名是 `1panel-network`：
+确认外部 PostgreSQL 的网络和别名：
 
 ```bash
-docker network inspect 1panel-network >/dev/null
-docker inspect postgres --format '{{json .NetworkSettings.Networks}}'
+docker inspect <PostgreSQL容器名> --format '{{json .NetworkSettings.Networks}}'
 ```
 
-若网络名不同，稍后在 `.env` 设置 `PANEL_NETWORK=实际网络名`。
+`PANEL_NETWORK` 必须选择一个已经连接 PostgreSQL、且其中存在
+`DATABASE_HOST` 对应 DNS 别名的网络。例如 `DATABASE_HOST=postgres` 只在
+`teslamate-cn_default` 上显示别名 `postgres` 时，应设置
+`PANEL_NETWORK=teslamate-cn_default`，不要把数据库主机名改成另一个值。
 
 创建外部 PostgreSQL 自定义格式备份。把 `<PostgreSQL容器名>` 替换为真实容器名；不要改数据库密码、主机或库名：
 
@@ -93,11 +113,14 @@ docker exec <PostgreSQL容器名> psql -U teslamate -d teslamate -Atc \
   | tee "$BACKUP_DIR/telemetry-counts.before.txt"
 ```
 
-确认 Grafana 卷存在：
+`grafana-volume.before.json` 和 `grafana-volume.name` 已保存真实卷信息。迁移后
+所有卷检查都必须读取这个名称，不能硬编码逻辑名称。
+
+若 SSH 会话中断，先执行下面两行恢复本指南使用的变量，再继续当前章节：
 
 ```bash
-docker volume inspect teslamate-grafana-data \
-  > "$BACKUP_DIR/grafana-volume.before.json"
+BACKUP_DIR="$(cat /opt/teslamate-upgrade-current.path)"
+test -d "$BACKUP_DIR"
 ```
 
 ## 二、处理仓库中的 1Panel Compose 文件
@@ -105,6 +128,10 @@ docker volume inspect teslamate-grafana-data \
 旧服务器的 `docker-compose.1panel.yml` 通常是未跟踪文件；新版本开始由仓库维护同名文件。先把旧文件移出工作树，避免 `git pull` 因“untracked working tree file would be overwritten”失败：
 
 ```bash
+set -e
+BACKUP_DIR="$(cat /opt/teslamate-upgrade-current.path)"
+test -d "$BACKUP_DIR"
+
 if ! git ls-files --error-unmatch docker-compose.1panel.yml >/dev/null 2>&1; then
   mv docker-compose.1panel.yml "$BACKUP_DIR/docker-compose.1panel.local.yml"
 fi
@@ -127,14 +154,29 @@ DATABASE_HOST
 DATABASE_NAME
 ```
 
-只为新平台增加两个稳定密钥。以下命令仅在变量不存在时追加，不会覆盖已有值：
+只为新平台增加两个稳定密钥，并固定刚才检测到的 Grafana 真实卷名。以下命令
+不会覆盖已有密钥；若 `.env` 已配置了不同的 Grafana 卷名，会中止而不是猜测：
 
 ```bash
+set -e
+BACKUP_DIR="$(cat /opt/teslamate-upgrade-current.path)"
+test -d "$BACKUP_DIR"
+
 grep -q '^SECRET_KEY_BASE=' .env || \
   printf 'SECRET_KEY_BASE=%s\n' "$(openssl rand -base64 64 | tr -d '\n')" >> .env
 
 grep -q '^SIGNING_SALT=' .env || \
   printf 'SIGNING_SALT=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env
+
+DETECTED_GRAFANA_VOLUME="$(cat "$BACKUP_DIR/grafana-volume.name")"
+CONFIGURED_GRAFANA_VOLUME="$(sed -n 's/^GRAFANA_VOLUME_NAME=//p' .env | tail -n 1)"
+if [ -n "$CONFIGURED_GRAFANA_VOLUME" ] && \
+   [ "$CONFIGURED_GRAFANA_VOLUME" != "$DETECTED_GRAFANA_VOLUME" ]; then
+  echo 'GRAFANA_VOLUME_NAME 与旧容器实际挂载不一致，停止升级'
+  exit 1
+fi
+grep -q '^GRAFANA_VOLUME_NAME=' .env || \
+  printf 'GRAFANA_VOLUME_NAME=%s\n' "$DETECTED_GRAFANA_VOLUME" >> .env
 
 chmod 600 .env
 ```
@@ -146,7 +188,9 @@ DATABASE_USER=teslamate
 DATABASE_HOST=postgres
 DATABASE_PORT=5432
 DATABASE_NAME=teslamate
-PANEL_NETWORK=1panel-network
+# 必须是 DATABASE_HOST 在其中确实存在相同 DNS 别名的网络
+PANEL_NETWORK=实际匹配网络
+GRAFANA_VOLUME_NAME=上一步检测出的真实卷名
 
 VIRTUAL_HOST=你的公网域名
 CHECK_ORIGIN=https://你的公网域名
@@ -165,11 +209,20 @@ TESLAMATE_ACCOUNT_SESSION_DAYS=30
 先验证新 Compose。它必须只列出外部 PostgreSQL 连接，不能有 `database` 服务：
 
 ```bash
+set -e
+BACKUP_DIR="$(cat /opt/teslamate-upgrade-current.path)"
+test -d "$BACKUP_DIR"
 COMPOSE_FILE=docker-compose.1panel.yml
 
 docker compose -f "$COMPOSE_FILE" config > /tmp/teslamate-compose-check.yml
 docker compose -f "$COMPOSE_FILE" config --services
 grep -n '127.0.0.1:3000' /tmp/teslamate-compose-check.yml
+EXPECTED_GRAFANA_VOLUME="$(cat "$BACKUP_DIR/grafana-volume.name")"
+RESOLVED_GRAFANA_VOLUME="$(sed -n \
+  '/^  teslamate-grafana-data:$/,/^  [^ ]/s/^    name: //p' \
+  /tmp/teslamate-compose-check.yml)"
+test "$RESOLVED_GRAFANA_VOLUME" = "$EXPECTED_GRAFANA_VOLUME"
+docker volume inspect "$EXPECTED_GRAFANA_VOLUME" >/dev/null
 if grep -n '4000:4000' /tmp/teslamate-compose-check.yml; then
   echo '检测到旧 4000 映射，停止升级'
   exit 1
@@ -183,12 +236,31 @@ TESLAMATE_REVISION="$(git rev-parse HEAD)" \
   docker compose -f "$COMPOSE_FILE" build --no-cache teslamate
 ```
 
-旧 Grafana 占用宿主机 3000，必须先停止并移除该容器。下列操作不接触数据卷：
+旧 Grafana 占用宿主机 3000，必须先停止。停止后先通过 Docker API 把一致状态的
+`/var/lib/grafana` 完整复制到备份目录；复制失败会恢复旧容器并中止，不会移除
+数据卷：
 
 ```bash
+GRAFANA_CONTAINER="$(docker compose -f "$COMPOSE_FILE" \
+  --profile legacy-grafana ps -q grafana)"
+test -n "$GRAFANA_CONTAINER"
 docker compose -f "$COMPOSE_FILE" --profile legacy-grafana stop grafana
+
+mkdir -p "$BACKUP_DIR/grafana-data.before"
+if ! docker cp "$GRAFANA_CONTAINER:/var/lib/grafana/." \
+  "$BACKUP_DIR/grafana-data.before/"; then
+  docker start "$GRAFANA_CONTAINER"
+  echo 'Grafana 数据复制失败，已恢复旧 Grafana，停止升级'
+  exit 1
+fi
+if [ ! -s "$BACKUP_DIR/grafana-data.before/grafana.db" ]; then
+  docker start "$GRAFANA_CONTAINER"
+  echo '备份中没有有效 grafana.db，已恢复旧 Grafana，停止升级'
+  exit 1
+fi
+
 docker compose -f "$COMPOSE_FILE" --profile legacy-grafana rm -f grafana
-docker volume inspect teslamate-grafana-data >/dev/null
+docker volume inspect "$(cat "$BACKUP_DIR/grafana-volume.name")" >/dev/null
 ```
 
 只重新创建应用和 MQTT；入口脚本会自动执行增量数据库迁移：
@@ -305,6 +377,8 @@ docker compose -f "$COMPOSE_FILE" --profile legacy-grafana rm -f grafana
 
 ```bash
 cd /opt/teslamate-cn
+BACKUP_DIR="$(cat /opt/teslamate-upgrade-current.path)"
+test -d "$BACKUP_DIR"
 COMPOSE_FILE=docker-compose.1panel.yml
 
 # 停止统一应用，保留所有卷和外部 PostgreSQL
@@ -321,7 +395,8 @@ TESLAMATE_REVISION="$OLD_COMMIT" \
   docker compose -f docker-compose.1panel.yml up -d --build
 ```
 
-此时会恢复旧的 Grafana 3000 和 TeslaMate 4000 行为；Nginx 仍指向 3000。`teslamate-grafana-data` 和 PostgreSQL 均未删除。
+此时会恢复旧的 Grafana 3000 和 TeslaMate 4000 行为；Nginx 仍指向 3000。
+`grafana-volume.name` 中记录的原 Grafana 卷和 PostgreSQL 均未删除。
 
 只有在数据库迁移本身异常且需要回到升级前的“完全一致状态”时，才考虑停止所有会写入数据库的 TeslaMate 实例并恢复 `$DB_BACKUP`。恢复备份会丢失备份后新增的遥测，必须由管理员单独确认，不能作为普通回滚步骤自动执行。
 
@@ -335,10 +410,11 @@ git pull --ff-only origin main
 ## 九、必须人工确认的事项
 
 - 真实 PostgreSQL 容器名与用户是否为 `teslamate`；
-- `postgres` 是否在 `PANEL_NETWORK` 上可解析；
+- `DATABASE_HOST` 是否在 `PANEL_NETWORK` 上以同名网络别名可解析；
 - 1Panel/Nginx 是否转发 WebSocket、`Host`、`X-Forwarded-Proto` 和 `X-Forwarded-For`；
 - `CHECK_ORIGIN` 是否精确包含公网 HTTPS Origin；
 - 首个管理员邮箱由谁保管，是否使用密码管理器中的独立强密码；
 - 是否需要开放注册；若开放，是否接受当前版本尚无邮件验证/找回流程；
 - OpenStreetMap 瓦片的外部请求是否符合你的轨迹隐私要求；
+- `GRAFANA_VOLUME_NAME` 是否等于旧容器 `/var/lib/grafana` 的真实挂载卷；
 - 旧 Grafana 卷需要保留多久以及是否已完成离线备份。

@@ -55,7 +55,9 @@ services:
 
   # Compatibility only. It is never started by the default compose command
   # and publishes no host port. Keeping the declaration makes it possible to
-  # inspect or export the old Grafana volume during the transition.
+  # inspect or export the old Grafana volume during the transition. The volume
+  # is external on purpose: Compose must never create an empty replacement when
+  # the old deployment used a project-prefixed volume name.
   grafana:
     profiles: ["legacy-grafana"]
     build:
@@ -70,6 +72,8 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_AUTH_BASIC_ENABLED: "true"
       GF_AUTH_PROXY_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_AUTH_DISABLE_SIGNOUT_MENU: "false"
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - teslamate-grafana-data:/var/lib/grafana
@@ -80,7 +84,8 @@ volumes:
   mosquitto-conf:
   mosquitto-data:
   teslamate-grafana-data:
-    name: teslamate-grafana-data
+    external: true
+    name: ${GRAFANA_VOLUME_NAME:-teslamate-grafana-data}
 
 networks:
   1panel-network:

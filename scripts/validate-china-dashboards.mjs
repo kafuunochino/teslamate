@@ -656,6 +656,20 @@ for (const composeFile of [
   if (!grafanaService.includes('profiles: ["legacy-grafana"]')) {
     errors.push(`${composeFile}: Grafana must remain an opt-in legacy profile`);
   }
+  for (const directLoginSetting of [
+    'GF_AUTH_ANONYMOUS_ENABLED: "false"',
+    'GF_AUTH_BASIC_ENABLED: "true"',
+    'GF_AUTH_PROXY_ENABLED: "false"',
+    'GF_AUTH_DISABLE_LOGIN_FORM: "false"',
+    'GF_AUTH_DISABLE_SIGNOUT_MENU: "false"',
+    'GF_USERS_ALLOW_SIGN_UP: "false"',
+  ]) {
+    if (!grafanaService.includes(directLoginSetting)) {
+      errors.push(
+        `${composeFile}: legacy Grafana direct login is missing ${directLoginSetting}`,
+      );
+    }
+  }
   if (/^\s{4}ports:/m.test(grafanaService)) {
     errors.push(`${composeFile}: legacy Grafana must not publish a host port`);
   }
@@ -682,6 +696,22 @@ for (const externalDatabaseSetting of [
   if (!onePanelCompose.includes(externalDatabaseSetting)) {
     errors.push(
       `docker-compose.1panel.yml: missing external database setting ${externalDatabaseSetting}`,
+    );
+  }
+}
+
+const onePanelGrafanaVolume =
+  onePanelCompose.match(
+    /^  teslamate-grafana-data:\n(?: {4}[^\n]*(?:\n|$))*/m,
+  )?.[0] ?? "";
+
+for (const preservedVolumeSetting of [
+  "external: true",
+  "name: ${GRAFANA_VOLUME_NAME:-teslamate-grafana-data}",
+]) {
+  if (!onePanelGrafanaVolume.includes(preservedVolumeSetting)) {
+    errors.push(
+      `docker-compose.1panel.yml: legacy Grafana volume is missing ${preservedVolumeSetting}`,
     );
   }
 }

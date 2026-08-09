@@ -73,17 +73,17 @@ flowchart LR
     App -->|postgres:5432| DB[(PostgreSQL\n遥测 + private 账号表)]
     App --> MQTT[Mosquitto\n仅容器网络]
     App --> Tesla[Tesla API]
-    Legacy[旧 Grafana\nlegacy-grafana profile] -.默认关闭.-> Volume[(teslamate-grafana-data)]
+    Legacy[旧 Grafana\nlegacy-grafana profile] -.默认关闭.-> Volume[(检测到的原 Grafana 卷)]
     Legacy -.只读查询.-> DB
 ```
 
-| 组件                     | 默认行为                                                     |
-| ------------------------ | ------------------------------------------------------------ |
-| `teslamate`              | 采集器、统一前后端、登录与权限；容器及宿主机均使用 3000      |
-| PostgreSQL               | 1Panel 部署连接现有 `postgres:5432`，不会新建或替换数据库    |
-| `mosquitto`              | 仅在 Docker 网络内使用，不发布宿主机端口                     |
-| `grafana`                | 仅作为 `legacy-grafana` 兼容 profile，默认不启动且不发布端口 |
-| `teslamate-grafana-data` | 保留原卷名和数据，不删除、不重新初始化                       |
+| 组件                  | 默认行为                                                     |
+| --------------------- | ------------------------------------------------------------ |
+| `teslamate`           | 采集器、统一前后端、登录与权限；容器及宿主机均使用 3000      |
+| PostgreSQL            | 1Panel 部署连接现有 `postgres:5432`，不会新建或替换数据库    |
+| `mosquitto`           | 仅在 Docker 网络内使用，不发布宿主机端口                     |
+| `grafana`             | 仅作为 `legacy-grafana` 兼容 profile，默认不启动且不发布端口 |
+| `GRAFANA_VOLUME_NAME` | 固定到旧容器真实挂载卷，不删除、不重新初始化                 |
 
 默认网络边界：
 
@@ -104,7 +104,9 @@ Internet ──HTTPS──> 1Panel/Nginx ──HTTP──> 127.0.0.1:3000
 - 外部 PostgreSQL：`postgres:5432`
 - 1Panel/Nginx：代理到 `127.0.0.1:3000`
 
-请严格按照 [1Panel 无损升级指南](UPGRADE.zh-CN.md) 操作。升级会先备份 PostgreSQL、`.env`、Compose 和 Grafana 卷信息，再停止旧 Grafana 释放 3000，最后启动统一应用。
+请严格按照 [1Panel 无损升级指南](UPGRADE.zh-CN.md) 操作。升级会先备份
+PostgreSQL、`.env` 和 Compose，构建完成后停止旧 Grafana 并完整复制其数据，
+确认备份有效才释放 3000，最后启动统一应用。
 
 不要直接执行：
 
@@ -126,7 +128,7 @@ rm -rf /var/lib/grafana
 - 不新增或替换外部 PostgreSQL；
 - 只新增 `private.users`、`private.user_sessions`、`private.user_cars`、`private.vehicle_claims` 和 `private.audit_events`；
 - 不删除车辆、行程、位置、充电、地址或地理围栏；
-- `teslamate-grafana-data` 原样保留；
+- 从旧容器检测并固定 Grafana 真实卷名，原卷原样保留；
 - Nginx 上游继续使用 `http://127.0.0.1:3000`；
 - 数据库迁移由新容器入口脚本自动执行。
 
@@ -187,6 +189,7 @@ rm -rf /var/lib/grafana
 | `DATABASE_HOST`                  | PostgreSQL 主机                             | `postgres`           |
 | `DATABASE_PORT`                  | PostgreSQL 端口                             | `5432`               |
 | `PANEL_NETWORK`                  | PostgreSQL 和应用共同使用的外部 Docker 网络 | `1panel-network`     |
+| `GRAFANA_VOLUME_NAME`            | 旧 Grafana `/var/lib/grafana` 的真实卷名    | 从旧容器检测         |
 | `VIRTUAL_HOST`                   | 公网域名，不包含协议                        | 实际域名             |
 | `CHECK_ORIGIN`                   | 允许的浏览器 Origin                         | `https://实际域名`   |
 | `TESLAMATE_TRUSTED_PROXIES`      | 可以信任转发头的反向代理 IP/CIDR            | 实际代理容器地址     |
@@ -309,7 +312,11 @@ ss -ltn | grep -E '127\.0\.0\.1:(3000|4000)'
 
 ## 旧 Grafana 数据
 
-统一平台默认不使用 Grafana，但会永久保留 `teslamate-grafana-data` 卷的兼容声明。需要迁移期检查或导出旧内容时，可以临时启动不发布宿主机端口的 profile：
+统一平台默认不使用 Grafana。1Panel 首次迁移会从旧容器的
+`/var/lib/grafana` 挂载检测真实卷名，并把它保存为 `GRAFANA_VOLUME_NAME`；这可
+兼容 `teslamate-cn_teslamate-grafana-data` 一类带项目名前缀的卷。该卷声明为
+external，Compose 不会在名称错误时悄悄创建空白替代卷。需要检查或导出旧内容
+时，可以临时启动不发布宿主机端口的 profile：
 
 ```bash
 docker compose -f docker-compose.1panel.yml \
