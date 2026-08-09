@@ -215,12 +215,14 @@ test -d "$BACKUP_DIR"
 COMPOSE_FILE=docker-compose.1panel.yml
 
 docker compose -f "$COMPOSE_FILE" config > /tmp/teslamate-compose-check.yml
+docker compose -f "$COMPOSE_FILE" --profile legacy-grafana config \
+  > /tmp/teslamate-compose-legacy-check.yml
 docker compose -f "$COMPOSE_FILE" config --services
 grep -n '127.0.0.1:3000' /tmp/teslamate-compose-check.yml
 EXPECTED_GRAFANA_VOLUME="$(cat "$BACKUP_DIR/grafana-volume.name")"
 RESOLVED_GRAFANA_VOLUME="$(sed -n \
   '/^  teslamate-grafana-data:$/,/^  [^ ]/s/^    name: //p' \
-  /tmp/teslamate-compose-check.yml)"
+  /tmp/teslamate-compose-legacy-check.yml)"
 test "$RESOLVED_GRAFANA_VOLUME" = "$EXPECTED_GRAFANA_VOLUME"
 docker volume inspect "$EXPECTED_GRAFANA_VOLUME" >/dev/null
 if grep -n '4000:4000' /tmp/teslamate-compose-check.yml; then

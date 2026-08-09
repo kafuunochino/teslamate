@@ -78,14 +78,20 @@ jobs:
 
           docker compose -f docker-compose.1panel.yml config \
             >/tmp/teslamate-compose.yml
+          docker compose -f docker-compose.1panel.yml \
+            --profile legacy-grafana config \
+            >/tmp/teslamate-compose-legacy.yml
           test "$(grep -c 'published: "3000"' /tmp/teslamate-compose.yml)" -eq 1
           ! grep -q 'published: "4000"' /tmp/teslamate-compose.yml
           ! docker compose -f docker-compose.1panel.yml config --services \
             | grep -qx database
+          ! docker compose -f docker-compose.1panel.yml config --services \
+            | grep -qx grafana
 
           sed -n \
             '/^  teslamate-grafana-data:$/,/^  [^ ]/p' \
-            /tmp/teslamate-compose.yml >/tmp/teslamate-grafana-volume.yml
+            /tmp/teslamate-compose-legacy.yml \
+            >/tmp/teslamate-grafana-volume.yml
           grep -qx '    name: teslamate-cn_teslamate-grafana-data' \
             /tmp/teslamate-grafana-volume.yml
           grep -qx '    external: true' /tmp/teslamate-grafana-volume.yml
