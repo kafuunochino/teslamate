@@ -70,7 +70,9 @@
       <section class="data-card table-card">
         <div class="data-card__header">
           <h2>充电会话</h2>
-          <span><%= length(@report.sessions) %> 条 · <%= @report.stats.count - @report.stats.cost_count %> 次费用待补充</span>
+          <span>
+            <%= length(@report.sessions) %> 条 · <%= @report.stats.count - @report.stats.cost_count %> 次费用待补充
+          </span>
         </div>
         <div :if={@report.sessions == []} class="empty-inline">该时间范围暂无充电记录</div>
         <div :if={@report.sessions != []} class="responsive-table">
@@ -151,7 +153,11 @@
                           placeholder: "例如 38.50",
                           aria: [describedby: "charge-cost-help charge-cost-errors"]
                         ) %>
-                        <button type="submit" class="button is-link" phx-disable-with="正在保存…">
+                        <button
+                          type="submit"
+                          class="button is-link"
+                          phx-disable-with="正在保存…"
+                        >
                           保存费用
                         </button>
                         <button type="button" class="button" phx-click="cancel_cost">
