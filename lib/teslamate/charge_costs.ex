@@ -4,7 +4,7 @@ defmodule TeslaMate.ChargeCosts do
   """
 
   import Ecto.Query
-  import Ecto.Changeset
+  import Ecto.Changeset, except: [change: 1, change: 2]
 
   alias TeslaMate.Accounts
   alias TeslaMate.Accounts.User
