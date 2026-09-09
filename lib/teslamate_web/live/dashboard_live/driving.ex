@@ -51,7 +51,6 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
     # An explicit refresh also incorporates any enriched historical samples.
     {:noreply, socket |> assign(report: nil) |> refresh() |> schedule_refresh()}
   end
-  end
 
   def handle_event("visibility", %{"visible" => visible}, socket) when is_boolean(visible) do
     socket = assign(socket, visible?: visible)
