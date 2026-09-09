@@ -541,7 +541,7 @@ defmodule TeslaMateWeb.SettingsLiveTest do
 
         assert [
                  {"a",
-                  [_, {"href", "https://github.com/teslamate-org/teslamate/releases"}, _, _, _],
+                  [_, {"href", "https://github.com/kafuunochino/teslamate/releases"}, _, _, _],
                   [_, {_, _, ["Update available: 1.1.3"]}]}
                ] = Floki.find(html, ".footer a")
       end
@@ -555,8 +555,19 @@ defmodule TeslaMateWeb.SettingsLiveTest do
       repository_mock =
         {Tesla.Adapter.Finch, [],
          call: fn %Tesla.Env{} = env, _opts ->
-           assert env.url == "https://api.github.com/repos/kafuunochino/teslamate/commits/main"
-           {:ok, %Tesla.Env{status: 200, body: %{"sha" => remote}}}
+           body =
+             case env.url do
+               "https://api.github.com/repos/kafuunochino/teslamate/commits/main" ->
+                 %{"sha" => remote}
+
+               url ->
+                 assert url ==
+                          "https://api.github.com/repos/kafuunochino/teslamate/compare/#{current}...#{remote}"
+
+                 %{"status" => "ahead"}
+             end
+
+           {:ok, %Tesla.Env{status: 200, body: body}}
          end}
 
       with_mocks [repository_mock] do

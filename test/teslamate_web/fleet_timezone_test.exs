@@ -35,19 +35,20 @@ defmodule TeslaMateWeb.FleetTimezoneTest do
         duration_min: 1
       })
 
-      Repo.insert!(%ChargingProcess{
-        car_id: car.id,
-        start_date: date,
-        charge_energy_added: Decimal.new(amount * 10)
-      })
-
-      Repo.insert!(%Position{
+      position = Repo.insert!(%Position{
         car_id: car.id,
         date: date,
         latitude: Decimal.new("30"),
         longitude: Decimal.new("100"),
         battery_level: 50,
         rated_battery_range_km: Decimal.new(300 + amount * 10)
+      })
+
+      Repo.insert!(%ChargingProcess{
+        car_id: car.id,
+        position_id: position.id,
+        start_date: date,
+        charge_energy_added: Decimal.new(amount * 10)
       })
     end
 

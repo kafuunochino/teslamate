@@ -27,12 +27,18 @@ defmodule PubSubMock do
     {:reply, :ok, state}
   end
 
-  def handle_call({:broadcast, _, _, _} = event, _from, %State{last_event: event} = state) do
-    {:reply, :ok, state}
-  end
-
   def handle_call({:broadcast, _, _, _} = event, _from, %State{pid: pid} = state) do
-    send(pid, {:pubsub, event})
-    {:reply, :ok, %State{state | last_event: event}}
+    # State assertions ignore timestamp-only refreshes but retain the original payload.
+    comparable =
+      case event do
+        {:broadcast, server, topic, %TeslaMate.Vehicles.Vehicle.Summary{} = summary} ->
+          {:broadcast, server, topic, %{summary | data_updated_at: nil}}
+
+        _ ->
+          event
+      end
+
+    unless comparable == state.last_event, do: send(pid, {:pubsub, event})
+    {:reply, :ok, %State{state | last_event: comparable}}
   end
 end
