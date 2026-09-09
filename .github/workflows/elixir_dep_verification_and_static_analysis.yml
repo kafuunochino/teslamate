@@ -68,9 +68,3 @@ jobs:
 
       - name: Run dialyzer for static analysis
         run: mix dialyzer --format github
-
-      - name: Show generated Gettext changes
-        if: failure()
-        run: |
-          mix gettext.extract
-          git diff --no-ext-diff -- priv/gettext

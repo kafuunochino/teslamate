@@ -533,7 +533,7 @@ msgstr ""
 msgid "Streaming API"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:451
+#: lib/teslamate_web/live/settings_live/index.html.heex:467
 #, elixir-autogen
 msgid "Documentation"
 msgstr ""
@@ -544,7 +544,7 @@ msgid "GitHub"
 msgstr ""
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:382
-#: lib/teslamate_web/templates/layout/root.html.heex:168
+#: lib/teslamate_web/templates/layout/root.html.heex:183
 #, elixir-autogen
 msgid "Update available"
 msgstr ""
@@ -570,8 +570,8 @@ msgstr ""
 msgid "Software Update available (%{version})"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:470
-#: lib/teslamate_web/live/settings_live/index.html.heex:473
+#: lib/teslamate_web/live/settings_live/index.html.heex:486
+#: lib/teslamate_web/live/settings_live/index.html.heex:489
 #, elixir-autogen
 msgid "Sign out"
 msgstr ""
@@ -725,32 +725,33 @@ msgstr ""
 msgid "Check for updates"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:412
+#: lib/teslamate_web/live/settings_live/index.html.heex:414
 #, elixir-autogen
 msgid "Checking for updates…"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:419
+#: lib/teslamate_web/live/settings_live/index.html.heex:421
 #, elixir-autogen
 msgid "Already up to date (%{revision})"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:430
+#: lib/teslamate_web/live/settings_live/index.html.heex:432
 #, elixir-autogen
 msgid "Project differences found (%{revision})"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:433
+#: lib/teslamate_web/live/settings_live/index.html.heex:435
+#: lib/teslamate_web/live/settings_live/index.html.heex:449
 #, elixir-autogen
 msgid "View changes"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:441
+#: lib/teslamate_web/live/settings_live/index.html.heex:457
 #, elixir-autogen
 msgid "Current source revision is unknown; rebuild from a Git checkout"
 msgstr ""
 
-#: lib/teslamate_web/live/settings_live/index.html.heex:445
+#: lib/teslamate_web/live/settings_live/index.html.heex:461
 #, elixir-autogen
 msgid "Update check failed; please try again later"
 msgstr ""
