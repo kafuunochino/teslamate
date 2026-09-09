@@ -16,7 +16,8 @@ const sidebarToggle = document.getElementById("sidebar-desktop-toggle");
 const desktopSidebar = window.matchMedia("(min-width: 981px)");
 let sidebarCollapsed = false;
 try {
-  sidebarCollapsed = localStorage.getItem("teslamate:sidebar-collapsed") === "true";
+  sidebarCollapsed =
+    localStorage.getItem("teslamate:sidebar-collapsed") === "true";
 } catch (_error) {
   // Browsers may disable storage; the toggle still works for this page.
 }
@@ -50,7 +51,10 @@ if (sidebarToggle) {
   sidebarToggle.addEventListener("click", () => {
     setSidebarCollapsed(!sidebarCollapsed);
     try {
-      localStorage.setItem("teslamate:sidebar-collapsed", String(sidebarCollapsed));
+      localStorage.setItem(
+        "teslamate:sidebar-collapsed",
+        String(sidebarCollapsed),
+      );
     } catch (_error) {}
   });
 }

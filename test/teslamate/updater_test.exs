@@ -150,6 +150,7 @@ defmodule TeslaMate.UpdaterTest do
                "https://github.com/kafuunochino/teslamate/compare/#{current}...#{remote}"
     end
   end
+
   test "does not offer an update when the fork has no published release", %{test: name} do
     with_mocks HTTPMocck.response({:ok, %Tesla.Env{status: 404}}) do
       {:ok, pid} = start_updater(name, "1.0.0")
@@ -170,9 +171,7 @@ defmodule TeslaMate.UpdaterTest do
        end}
     ] do
       pid =
-        start_supervised!(
-          {Updater, name: nil, revision: current, check_after: :timer.hours(1)}
-        )
+        start_supervised!({Updater, name: nil, revision: current, check_after: :timer.hours(1)})
 
       assert :ok = Updater.check_repository(self(), pid)
       assert_receive {:repository_update_check, {:ok, %Updater.RepositoryCheck{status: :current}}}
@@ -198,9 +197,7 @@ defmodule TeslaMate.UpdaterTest do
          end}
       ] do
         pid =
-          start_supervised!(
-            {Updater, name: nil, revision: current, check_after: :timer.hours(1)}
-          )
+          start_supervised!({Updater, name: nil, revision: current, check_after: :timer.hours(1)})
 
         assert :ok = Updater.check_repository(self(), pid)
 
@@ -228,13 +225,10 @@ defmodule TeslaMate.UpdaterTest do
        end}
     ] do
       pid =
-        start_supervised!(
-          {Updater, name: nil, revision: current, check_after: :timer.hours(1)}
-        )
+        start_supervised!({Updater, name: nil, revision: current, check_after: :timer.hours(1)})
 
       assert :ok = Updater.check_repository(self(), pid)
       assert_receive {:repository_update_check, {:error, :timeout}}
     end
   end
-
 end

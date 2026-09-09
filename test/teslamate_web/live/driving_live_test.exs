@@ -20,9 +20,14 @@ defmodule TeslaMateWeb.DrivingLiveTest do
 
     position =
       Repo.insert!(%Position{
-        car_id: car.id, drive_id: drive.id, date: date,
-        latitude: Decimal.new("30"), longitude: Decimal.new("100"),
-        elevation: 900, power: 36, odometer: 1000.0,
+        car_id: car.id,
+        drive_id: drive.id,
+        date: date,
+        latitude: Decimal.new("30"),
+        longitude: Decimal.new("100"),
+        elevation: 900,
+        power: 36,
+        odometer: 1000.0,
         rated_battery_range_km: Decimal.new("300")
       })
 
@@ -41,7 +46,10 @@ defmodule TeslaMateWeb.DrivingLiveTest do
     refute has_element?(view, "#drive-altitude")
   end
 
-  test "defaults to five seconds and preserves selected refresh in the URL", %{conn: conn, car: car} do
+  test "defaults to five seconds and preserves selected refresh in the URL", %{
+    conn: conn,
+    car: car
+  } do
     {:ok, view, _html} = live(conn, "/driving")
     assert has_element?(view, "#drive-refresh-interval option[value='5'][selected]")
     assert has_element?(view, "#drive-altitude strong", "900")
@@ -56,7 +64,11 @@ defmodule TeslaMateWeb.DrivingLiveTest do
     assert Driving.normalize_interval("1000000") == 5
   end
 
-  test "pausing rejects an old timer but manual refresh still works", %{conn: conn, car: car, drive: drive} do
+  test "pausing rejects an old timer but manual refresh still works", %{
+    conn: conn,
+    car: car,
+    drive: drive
+  } do
     {:ok, view, _html} = live(conn, "/driving")
     old_token = :sys.get_state(view.pid).socket.assigns.refresh_token
 
@@ -64,9 +76,14 @@ defmodule TeslaMateWeb.DrivingLiveTest do
     assert has_element?(view, "#drive-refresh-interval option[value='0'][selected]")
 
     Repo.insert!(%Position{
-      car_id: car.id, drive_id: drive.id, date: DateTime.utc_now(),
-      latitude: Decimal.new("30"), longitude: Decimal.new("100"),
-      elevation: 950, power: 36, odometer: 1000.1
+      car_id: car.id,
+      drive_id: drive.id,
+      date: DateTime.utc_now(),
+      latitude: Decimal.new("30"),
+      longitude: Decimal.new("100"),
+      elevation: 950,
+      power: 36,
+      odometer: 1000.1
     })
 
     render_hook(view, "visibility", %{"visible" => true})

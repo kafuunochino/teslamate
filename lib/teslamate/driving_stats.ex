@@ -67,8 +67,12 @@ defmodule TeslaMate.DrivingStats do
       energy_used: if(stats.covered_seconds > 0, do: stats.energy_used),
       energy_recovered: if(stats.covered_seconds > 0, do: stats.energy_recovered),
       net_energy: energy,
-      consumption: if(is_number(energy) and is_number(distance) and distance >= 1, do: energy * 1000 / distance),
-      recovery_ratio: if(stats.energy_used > 0.01, do: stats.energy_recovered / stats.energy_used * 100),
+      consumption:
+        if(is_number(energy) and is_number(distance) and distance >= 1,
+          do: energy * 1000 / distance
+        ),
+      recovery_ratio:
+        if(stats.energy_used > 0.01, do: stats.energy_recovered / stats.energy_used * 100),
       coverage: if(elapsed > 0, do: min(100.0, stats.covered_seconds / elapsed * 100)),
       ascent: if(stats.altitude_intervals > 0, do: stats.ascent),
       descent: if(stats.altitude_intervals > 0, do: stats.descent),
@@ -76,7 +80,10 @@ defmodule TeslaMate.DrivingStats do
       altitude_max: stats.altitude_max,
       altitude_change: difference(stats.last.elevation, stats.first.elevation),
       range_used: range_used,
-      range_efficiency: if(is_number(distance) and distance >= 1 and is_number(range_used) and range_used >= 0.5, do: distance / range_used * 100),
+      range_efficiency:
+        if(is_number(distance) and distance >= 1 and is_number(range_used) and range_used >= 0.5,
+          do: distance / range_used * 100
+        ),
       grade: grade(stats)
     }
   end
@@ -92,10 +99,11 @@ defmodule TeslaMate.DrivingStats do
         if is_number(previous.power) and is_number(point.power) do
           {used, recovered} = energy_between(previous.power, point.power, seconds)
 
-          %{stats |
-            energy_used: stats.energy_used + used,
-            energy_recovered: stats.energy_recovered + recovered,
-            covered_seconds: stats.covered_seconds + seconds
+          %{
+            stats
+            | energy_used: stats.energy_used + used,
+              energy_recovered: stats.energy_recovered + recovered,
+              covered_seconds: stats.covered_seconds + seconds
           }
         else
           stats
@@ -104,10 +112,11 @@ defmodule TeslaMate.DrivingStats do
       if is_number(previous.elevation) and is_number(point.elevation) do
         delta = point.elevation - previous.elevation
 
-        %{stats |
-          ascent: stats.ascent + max(delta, 0),
-          descent: stats.descent + max(-delta, 0),
-          altitude_intervals: stats.altitude_intervals + 1
+        %{
+          stats
+          | ascent: stats.ascent + max(delta, 0),
+            descent: stats.descent + max(-delta, 0),
+            altitude_intervals: stats.altitude_intervals + 1
         }
       else
         stats
@@ -153,7 +162,9 @@ defmodule TeslaMate.DrivingStats do
     end)
     |> Enum.min_by(fn point -> abs(odometer - point.odometer - 0.1) end, fn -> nil end)
     |> case do
-      nil -> nil
+      nil ->
+        nil
+
       point ->
         meters = (odometer - point.odometer) * 1000
         %{percent: (elevation - point.elevation) / meters * 100, meters: round(meters)}
@@ -172,10 +183,27 @@ defmodule TeslaMate.DrivingStats do
   defp maximum(a, b), do: max(a, b)
 
   defp empty_metrics do
-    Map.new([
-      :distance, :duration_min, :average_speed, :energy_used, :energy_recovered,
-      :net_energy, :consumption, :recovery_ratio, :coverage, :ascent, :descent,
-      :altitude_min, :altitude_max, :altitude_change, :range_used, :range_efficiency, :grade
-    ], &{&1, nil})
+    Map.new(
+      [
+        :distance,
+        :duration_min,
+        :average_speed,
+        :energy_used,
+        :energy_recovered,
+        :net_energy,
+        :consumption,
+        :recovery_ratio,
+        :coverage,
+        :ascent,
+        :descent,
+        :altitude_min,
+        :altitude_max,
+        :altitude_change,
+        :range_used,
+        :range_efficiency,
+        :grade
+      ],
+      &{&1, nil}
+    )
   end
 end

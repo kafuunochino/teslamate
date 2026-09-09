@@ -586,7 +586,9 @@ export const DrivingMap = {
       attribution: "© OpenStreetMap",
     }).addTo(this.map);
     this.updatePosition();
-    this.resizeObserver = new ResizeObserver(() => this.map.invalidateSize({ pan: false }));
+    this.resizeObserver = new ResizeObserver(() =>
+      this.map.invalidateSize({ pan: false }),
+    );
     this.resizeObserver.observe(this.el);
   },
 
@@ -604,7 +606,13 @@ export const DrivingMap = {
     if (point?.latitude == null || point?.longitude == null) return;
     const lat = Number(point.latitude);
     const lng = Number(point.longitude);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lng) > 180
+    )
+      return;
 
     if (!this.marker) {
       this.marker = new Marker([lat, lng], { icon }).addTo(this.map);

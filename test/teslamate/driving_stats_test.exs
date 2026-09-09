@@ -4,11 +4,17 @@ defmodule TeslaMate.DrivingStatsTest do
   alias TeslaMate.DrivingStats
 
   defp point(id, seconds, attrs \\ %{}) do
-    Map.merge(%{
-      id: id, date: DateTime.add(~U[2026-01-01 00:00:00Z], seconds),
-      elevation: 100, power: 36, odometer: 1000 + seconds / 100,
-      rated_battery_range_km: 300 - seconds / 10
-    }, attrs)
+    Map.merge(
+      %{
+        id: id,
+        date: DateTime.add(~U[2026-01-01 00:00:00Z], seconds),
+        elevation: 100,
+        power: 36,
+        odometer: 1000 + seconds / 100,
+        rated_battery_range_km: 300 - seconds / 10
+      },
+      attrs
+    )
   end
 
   test "splits sign-changing power into consumption and recovery" do
@@ -56,7 +62,10 @@ defmodule TeslaMate.DrivingStatsTest do
   test "calculates grade across a meaningful distance window" do
     stats =
       Enum.reduce(0..3, DrivingStats.new(1), fn i, acc ->
-        DrivingStats.append(acc, point(i + 1, i * 10, %{odometer: 1000 + i * 0.05, elevation: 100 + i * 5}))
+        DrivingStats.append(
+          acc,
+          point(i + 1, i * 10, %{odometer: 1000 + i * 0.05, elevation: 100 + i * 5})
+        )
       end)
 
     assert %{grade: %{meters: 100, percent: grade}} = DrivingStats.metrics(stats)

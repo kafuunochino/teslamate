@@ -83,12 +83,17 @@ defmodule TeslaMate.Fleet do
           if DateTime.diff(DateTime.utc_now(), rebuilt_at) < 60,
             do: previous,
             else: TeslaMate.DrivingStats.new(drive.id)
-        _ -> TeslaMate.DrivingStats.new(drive.id)
+
+        _ ->
+          TeslaMate.DrivingStats.new(drive.id)
       end
 
     query =
       Position
-      |> where([p], p.car_id == ^drive.car_id and p.drive_id == ^drive.id and p.id > ^stats.last_id)
+      |> where(
+        [p],
+        p.car_id == ^drive.car_id and p.drive_id == ^drive.id and p.id > ^stats.last_id
+      )
       |> order_by([p], asc: p.id)
       |> select([p], map(p, [:id, :date, :elevation, :power, :odometer, :rated_battery_range_km]))
 

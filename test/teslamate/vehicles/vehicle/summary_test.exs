@@ -111,9 +111,14 @@ defmodule TeslaMate.Vehicles.Vehicle.SummaryTest do
       assert summary.update_version == nil
     end
   end
+
   test "retains the source timestamp rather than the time the page polls" do
     date = ~U[2026-01-01 00:00:00Z]
-    vehicle = %Vehicle{drive_state: %TeslaApi.Vehicle.State.Drive{timestamp: DateTime.to_unix(date, :millisecond)}}
+
+    vehicle = %Vehicle{
+      drive_state: %TeslaApi.Vehicle.State.Drive{timestamp: DateTime.to_unix(date, :millisecond)}
+    }
+
     assert DateTime.compare(Summary.into(vehicle, attrs()).data_updated_at, date) == :eq
     assert Summary.into(%Vehicle{}, attrs()).data_updated_at == nil
   end

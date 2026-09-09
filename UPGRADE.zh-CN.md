@@ -90,7 +90,6 @@ docker inspect <PostgreSQL容器名> --format '{{json .NetworkSettings.Networks}
 `teslamate-cn_default` 上显示别名 `postgres` 时，应设置
 `PANEL_NETWORK=teslamate-cn_default`，不要把数据库主机名改成另一个值。
 
-
 如果旧的 `DATABASE_HOST` 别名已经随 PostgreSQL 容器重建而丢失，不要仅靠
 `docker network connect` 临时补接：1Panel 下次重建容器仍可能丢失该连接。
 应从 PostgreSQL 自身的 Compose 配置确认持久网络和服务名，让应用加入相同的

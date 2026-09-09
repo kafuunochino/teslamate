@@ -6,18 +6,32 @@
       <p>把原车之外的行程细节放在眼前。</p>
     </div>
     <div class="drive-controls">
-      <.vehicle_picker :if={@report && @report.cars != []} cars={@report.cars} current_car={@report.car} />
+      <.vehicle_picker
+        :if={@report && @report.cars != []}
+        cars={@report.cars}
+        current_car={@report.car}
+      />
       <form id="drive-refresh-form" class="drive-refresh" phx-change="set_refresh_interval">
         <label for="drive-refresh-interval">刷新间隔</label>
         <div class="select">
           <select id="drive-refresh-interval" name="refresh[seconds]" aria-label="刷新间隔">
-            <option :for={seconds <- [1, 2, 5, 10, 30, 60, 0]} value={seconds} selected={seconds == @refresh_interval}>
+            <option
+              :for={seconds <- [1, 2, 5, 10, 30, 60, 0]}
+              value={seconds}
+              selected={seconds == @refresh_interval}
+            >
               <%= if seconds == 0, do: "暂停", else: "每 #{seconds} 秒" %>
             </option>
           </select>
         </div>
       </form>
-      <button id="drive-refresh-now" type="button" class="button drive-refresh-button" phx-click="refresh" aria-label="立即刷新">
+      <button
+        id="drive-refresh-now"
+        type="button"
+        class="button drive-refresh-button"
+        phx-click="refresh"
+        aria-label="立即刷新"
+      >
         <i class="mdi mdi-refresh"></i><span>刷新</span>
       </button>
     </div>
@@ -32,7 +46,9 @@
     <% metrics = @report.metrics %>
     <% stats = @report.driving_stats %>
     <% active_drive = @report.drive && is_nil(@report.drive.end_date) %>
-    <% grade = if fresh && active_drive && stats.last && DateTime.diff(@refreshed_at, stats.last.date) in -5..30, do: metrics.grade %>
+    <% grade =
+      if fresh && active_drive && stats.last &&
+           DateTime.diff(@refreshed_at, stats.last.date) in -5..30, do: metrics.grade %>
     <% latitude = reading(@report, :latitude) %>
     <% longitude = reading(@report, :longitude) %>
 
@@ -40,17 +56,34 @@
       <div>
         <span class={["drive-live-badge", if(fresh && @refresh_interval > 0, do: "is-live")]}>
           <%= cond do %>
-            <% @refresh_interval == 0 -> %>刷新已暂停
-            <% fresh -> %>数据更新中
-            <% true -> %>最近记录
+            <% @refresh_interval == 0 -> %>
+              刷新已暂停
+            <% fresh -> %>
+              数据更新中
+            <% true -> %>
+              最近记录
           <% end %>
         </span>
         <strong><%= Fleet.vehicle_label(@report.car) %></strong>
         <span><%= state_label(@report.live || @report.state) %></span>
       </div>
       <div class="drive-timestamps">
-        <span>车辆数据 <time id="drive-data-time" phx-hook="LocalDateTime" data-date={iso(telemetry_time(@report))}><%= date_time(telemetry_time(@report)) %></time></span>
-        <span>页面刷新 <time id="drive-page-time" phx-hook="LocalTime" data-date={iso(@refreshed_at)}><%= date_time(@refreshed_at) %></time></span>
+        <span>
+          车辆数据
+          <time
+            id="drive-data-time"
+            phx-hook="LocalDateTime"
+            data-date={iso(telemetry_time(@report))}
+          >
+            <%= date_time(telemetry_time(@report)) %>
+          </time>
+        </span>
+        <span>
+          页面刷新
+          <time id="drive-page-time" phx-hook="LocalTime" data-date={iso(@refreshed_at)}>
+            <%= date_time(@refreshed_at) %>
+          </time>
+        </span>
       </div>
     </div>
 
@@ -62,45 +95,120 @@
           <span><i class="mdi mdi-image-filter-hdr"></i> 当前海拔</span>
           <span>地形高程</span>
         </div>
-        <div id="drive-altitude" class="drive-altitude-value"><strong><%= format_number(reading(@report, :elevation), 0) %></strong><span>m</span></div>
-        <div class="drive-altitude-summary">
-          <div><span><%= if active_drive, do: "本程", else: "上次行程" %>海拔净变化</span><strong><%= signed(metrics.altitude_change, " m") %></strong></div>
-          <div><span>行程高程范围</span><strong><%= scalar(metrics.altitude_min, "", 0) %> ～ <%= scalar(metrics.altitude_max, " m", 0) %></strong></div>
+        <div id="drive-altitude" class="drive-altitude-value">
+          <strong><%= format_number(reading(@report, :elevation), 0) %></strong><span>m</span>
         </div>
-        <svg viewBox="0 0 600 180" preserveAspectRatio="none" aria-hidden="true" class="drive-mountain">
+        <div class="drive-altitude-summary">
+          <div>
+            <span><%= if active_drive, do: "本程", else: "上次行程" %>海拔净变化</span><strong><%= signed(metrics.altitude_change, " m") %></strong>
+          </div>
+          <div>
+            <span>行程高程范围</span><strong><%= scalar(metrics.altitude_min, "", 0) %> ～ <%= scalar(metrics.altitude_max, " m", 0) %></strong>
+          </div>
+        </div>
+        <svg
+          viewBox="0 0 600 180"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          class="drive-mountain"
+        >
           <path d="M0 180 L0 135 L80 82 L135 119 L236 20 L306 91 L363 47 L445 115 L520 76 L600 138 L600 180Z" />
           <path d="M0 180 L105 125 L181 146 L277 79 L368 134 L450 88 L600 166 L600 180Z" />
         </svg>
       </article>
       <article class="data-card drive-primary-metric">
         <span class="section-kicker">坡度估算</span>
-        <strong class="drive-current-value"><%= if grade, do: signed(grade.percent, "%"), else: "—" %></strong>
-        <span><%= if grade, do: "最近 #{grade.meters} 米 · 正值上坡 / 负值下坡", else: "需要连续海拔与至少 50 米的行驶采样" %></span>
+        <strong class="drive-current-value">
+          <%= if grade, do: signed(grade.percent, "%"), else: "—" %>
+        </strong>
+        <span>
+          <%= if grade, do: "最近 #{grade.meters} 米 · 正值上坡 / 负值下坡", else: "需要连续海拔与至少 50 米的行驶采样" %>
+        </span>
       </article>
       <article class="data-card drive-primary-metric">
         <span class="section-kicker">瞬时功率</span>
-        <strong id="drive-instant-power" class="drive-current-value"><%= scalar(current_reading(@report, :power, fresh), " kW", 0) %></strong>
+        <strong id="drive-instant-power" class="drive-current-value">
+          <%= scalar(current_reading(@report, :power, fresh), " kW", 0) %>
+        </strong>
         <span>正值耗电 · 负值能量回收</span>
-        <div class="drive-inline-stat"><span>瞬时能耗</span><b><%= scalar(instant_consumption(@report, fresh), " Wh/km", 0) %></b></div>
+        <div class="drive-inline-stat">
+          <span>瞬时能耗</span><b><%= scalar(instant_consumption(@report, fresh), " Wh/km", 0) %></b>
+        </div>
         <small>低于 10 km/h 时不计算瞬时能耗。</small>
       </article>
     </section>
 
     <section class="drive-trip-section" aria-label="行程进阶统计">
       <div class="drive-section-heading">
-        <div><p class="section-kicker">行程进阶统计</p><h2><%= if active_drive, do: "本次行程", else: "最近一次行程" %></h2></div>
-        <.link :if={@report.drive} navigate={Routes.dashboard_path(@socket, :trip, @report.drive.id)}>查看完整轨迹 <i class="mdi mdi-arrow-right"></i></.link>
+        <div>
+          <p class="section-kicker">行程进阶统计</p>
+          <h2><%= if active_drive, do: "本次行程", else: "最近一次行程" %></h2>
+        </div>
+        <.link
+          :if={@report.drive}
+          navigate={Routes.dashboard_path(@socket, :trip, @report.drive.id)}
+        >
+          查看完整轨迹 <i class="mdi mdi-arrow-right"></i>
+        </.link>
       </div>
       <div :if={!@report.drive} class="empty-inline">下一次行程开始后，将自动累计以下指标。</div>
       <div class="drive-metrics-grid">
-        <.metric_card title="累计爬升" value={scalar(metrics.ascent, " m", 0)} icon="trending-up" tone="amber" hint="连续高程采样估算" />
-        <.metric_card title="累计下降" value={scalar(metrics.descent, " m", 0)} icon="trending-down" tone="cyan" hint="连续高程采样估算" />
-        <.metric_card title="平均能耗" value={scalar(metrics.consumption, " Wh/km", 0)} icon="lightning-bolt" tone="blue" hint="净耗电 ÷ 实际里程，至少 1 km" />
-        <.metric_card title="净耗电量" value={energy(metrics.net_energy)} icon="battery-arrow-down-outline" tone="violet" hint="耗电减去回收，按功率采样估算" />
-        <.metric_card title="回收电量" value={energy(metrics.energy_recovered)} icon="battery-arrow-up-outline" tone="green" hint="按负功率采样估算" />
-        <.metric_card title="回收 / 耗电" value={percentage(metrics.recovery_ratio)} icon="recycle" tone="green" hint="下坡时可能超过 100%" />
-        <.metric_card title="实际里程 / 消耗续航" value={percentage(metrics.range_efficiency)} icon="map-marker-distance" tone="blue" hint="额定续航消耗至少 0.5 km 后计算" />
-        <.metric_card title="消耗额定续航" value={distance(metrics.range_used)} icon="battery-minus-outline" tone="slate" hint="起点额定续航 − 当前额定续航" />
+        <.metric_card
+          title="累计爬升"
+          value={scalar(metrics.ascent, " m", 0)}
+          icon="trending-up"
+          tone="amber"
+          hint="连续高程采样估算"
+        />
+        <.metric_card
+          title="累计下降"
+          value={scalar(metrics.descent, " m", 0)}
+          icon="trending-down"
+          tone="cyan"
+          hint="连续高程采样估算"
+        />
+        <.metric_card
+          title="平均能耗"
+          value={scalar(metrics.consumption, " Wh/km", 0)}
+          icon="lightning-bolt"
+          tone="blue"
+          hint="净耗电 ÷ 实际里程，至少 1 km"
+        />
+        <.metric_card
+          title="净耗电量"
+          value={energy(metrics.net_energy)}
+          icon="battery-arrow-down-outline"
+          tone="violet"
+          hint="耗电减去回收，按功率采样估算"
+        />
+        <.metric_card
+          title="回收电量"
+          value={energy(metrics.energy_recovered)}
+          icon="battery-arrow-up-outline"
+          tone="green"
+          hint="按负功率采样估算"
+        />
+        <.metric_card
+          title="回收 / 耗电"
+          value={percentage(metrics.recovery_ratio)}
+          icon="recycle"
+          tone="green"
+          hint="下坡时可能超过 100%"
+        />
+        <.metric_card
+          title="实际里程 / 消耗续航"
+          value={percentage(metrics.range_efficiency)}
+          icon="map-marker-distance"
+          tone="blue"
+          hint="额定续航消耗至少 0.5 km 后计算"
+        />
+        <.metric_card
+          title="消耗额定续航"
+          value={distance(metrics.range_used)}
+          icon="battery-minus-outline"
+          tone="slate"
+          hint="起点额定续航 − 当前额定续航"
+        />
       </div>
       <div class="drive-trip-strip">
         <span>实际里程 <b><%= distance(metrics.distance) %></b></span>
@@ -113,31 +221,93 @@
 
     <div class="content-grid">
       <.trend_chart title="海拔变化" trail={stats.trail} field={:elevation} unit=" m" />
-      <.trend_chart title="耗电与回收功率" trail={stats.trail} field={:power} unit=" kW" tone="green" />
+      <.trend_chart
+        title="耗电与回收功率"
+        trail={stats.trail}
+        field={:power}
+        unit=" kW"
+        tone="green"
+      />
     </div>
 
     <div class="content-grid drive-bottom-grid">
       <section class="data-card">
-        <div class="data-card__header"><h2>位置与行驶方向</h2><span><%= heading(reading(@report, :heading)) %></span></div>
-        <div :if={latitude && longitude} id="driving-position-map" class="platform-map drive-map" phx-hook="DrivingMap" phx-update="ignore"
-          data-points={Jason.encode!([%{latitude: latitude, longitude: longitude}])}></div>
+        <div class="data-card__header">
+          <h2>位置与行驶方向</h2>
+          <span><%= heading(reading(@report, :heading)) %></span>
+        </div>
+        <div
+          :if={latitude && longitude}
+          id="driving-position-map"
+          class="platform-map drive-map"
+          phx-hook="DrivingMap"
+          phx-update="ignore"
+          data-points={Jason.encode!([%{latitude: latitude, longitude: longitude}])}
+        >
+        </div>
         <div :if={!latitude || !longitude} class="empty-inline">暂无位置数据</div>
-        <p :if={latitude && longitude} class="coordinate-line"><%= format_number(latitude, 5) %>, <%= format_number(longitude, 5) %></p>
+        <p :if={latitude && longitude} class="coordinate-line">
+          <%= format_number(latitude, 5) %>, <%= format_number(longitude, 5) %>
+        </p>
       </section>
       <section class="data-card drive-support">
-        <div class="data-card__header"><h2>车内环境与辅助状态</h2><.link navigate={Routes.dashboard_path(@socket, :battery, car: @report.car.id)}>电池详情</.link></div>
+        <div class="data-card__header">
+          <h2>车内环境与辅助状态</h2>
+          <.link navigate={Routes.dashboard_path(@socket, :battery, car: @report.car.id)}>
+            电池详情
+          </.link>
+        </div>
         <dl class="drive-support-grid">
-          <div><dt>车内温度</dt><dd><%= temperature(reading(@report, :inside_temp)) %></dd></div>
-          <div><dt>车外温度</dt><dd><%= temperature(reading(@report, :outside_temp)) %></dd></div>
-          <div><dt>内外温差</dt><dd><%= signed(temperature_delta(@report), " °C") %></dd></div>
-          <div><dt>空调状态</dt><dd><%= case reading(@report, :is_climate_on) do %><% true -> %>开启<% false -> %>关闭<% _ -> %>—<% end %></dd></div>
-          <div><dt>车速</dt><dd class="drive-current-value"><%= scalar(current_reading(@report, :speed, fresh), " km/h", 0) %></dd></div>
-          <div><dt>电量 / 额定续航</dt><dd><%= scalar(reading(@report, :battery_level), "%", 0) %> · <%= distance(reading(@report, :rated_battery_range_km)) %></dd></div>
+          <div>
+            <dt>车内温度</dt>
+            <dd><%= temperature(reading(@report, :inside_temp)) %></dd>
+          </div>
+          <div>
+            <dt>车外温度</dt>
+            <dd><%= temperature(reading(@report, :outside_temp)) %></dd>
+          </div>
+          <div>
+            <dt>内外温差</dt>
+            <dd><%= signed(temperature_delta(@report), " °C") %></dd>
+          </div>
+          <div>
+            <dt>空调状态</dt>
+            <dd>
+              <%= case reading(@report, :is_climate_on) do %>
+                <% true -> %>
+                  开启
+                <% false -> %>
+                  关闭
+                <% _ -> %>
+                  —
+              <% end %>
+            </dd>
+          </div>
+          <div>
+            <dt>车速</dt>
+            <dd class="drive-current-value">
+              <%= scalar(current_reading(@report, :speed, fresh), " km/h", 0) %>
+            </dd>
+          </div>
+          <div>
+            <dt>电量 / 额定续航</dt>
+            <dd>
+              <%= scalar(reading(@report, :battery_level), "%", 0) %> · <%= distance(
+                reading(@report, :rated_battery_range_km)
+              ) %>
+            </dd>
+          </div>
         </dl>
         <div class="drive-shortcuts">
-          <.link navigate={Routes.dashboard_path(@socket, :trips, car: @report.car.id)}><i class="mdi mdi-map-marker-path"></i> 行程轨迹</.link>
-          <.link navigate={Routes.dashboard_path(@socket, :charging, car: @report.car.id)}><i class="mdi mdi-ev-station"></i> 充电统计</.link>
-          <.link navigate={Routes.dashboard_path(@socket, :analysis, car: @report.car.id)}><i class="mdi mdi-chart-box-outline"></i> 用车分析</.link>
+          <.link navigate={Routes.dashboard_path(@socket, :trips, car: @report.car.id)}>
+            <i class="mdi mdi-map-marker-path"></i> 行程轨迹
+          </.link>
+          <.link navigate={Routes.dashboard_path(@socket, :charging, car: @report.car.id)}>
+            <i class="mdi mdi-ev-station"></i> 充电统计
+          </.link>
+          <.link navigate={Routes.dashboard_path(@socket, :analysis, car: @report.car.id)}>
+            <i class="mdi mdi-chart-box-outline"></i> 用车分析
+          </.link>
         </div>
       </section>
     </div>

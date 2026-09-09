@@ -224,7 +224,9 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
         value = Map.get(row, assigns.field)
 
         if is_number(value) do
-          x = 8 + (DateTime.to_unix(row.date, :millisecond) - start) / max(finish - start, 1) * 584
+          x =
+            8 + (DateTime.to_unix(row.date, :millisecond) - start) / max(finish - start, 1) * 584
+
           y = 130 - (value - low) / max(high - low, 1) * 118
           point = "#{Float.round(x, 1)},#{Float.round(y, 1)}"
 
@@ -241,7 +243,10 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
 
     assigns =
       assign(assigns,
-        points: segments |> Enum.filter(&(length(&1) > 1)) |> Enum.map(&(Enum.reverse(&1) |> Enum.join(" "))),
+        points:
+          segments
+          |> Enum.filter(&(length(&1) > 1))
+          |> Enum.map(&(Enum.reverse(&1) |> Enum.join(" "))),
         minimum: if(values != [], do: minimum),
         maximum: if(values != [], do: maximum)
       )
@@ -252,7 +257,13 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
         <h2><%= @title %></h2>
         <span><%= scalar(@minimum, @unit, 0) %> ～ <%= scalar(@maximum, @unit, 0) %></span>
       </div>
-      <svg :if={@points != []} viewBox="0 0 600 140" preserveAspectRatio="none" role="img" aria-label={@title}>
+      <svg
+        :if={@points != []}
+        viewBox="0 0 600 140"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={@title}
+      >
         <path d="M8 12H592 M8 71H592 M8 130H592" class="drive-trend__grid" />
         <polyline :for={points <- @points} points={points} fill="none" class="drive-trend__line" />
       </svg>

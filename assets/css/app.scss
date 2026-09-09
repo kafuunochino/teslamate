@@ -2311,107 +2311,414 @@ img.leaflet-tile {
 }
 
 /* Driving dashboard and persistent desktop sidebar controls */
-.sidebar-desktop-toggle { display: none; }
+.sidebar-desktop-toggle {
+  display: none;
+}
 
 @media (min-width: 981px) {
-  .platform-sidebar { transition: transform 180ms ease, visibility 180ms; }
-  .platform-main { transition: margin-left 180ms ease; }
+  .platform-sidebar {
+    transition:
+      transform 180ms ease,
+      visibility 180ms;
+  }
+  .platform-main {
+    transition: margin-left 180ms ease;
+  }
   .sidebar-desktop-toggle {
-    position: fixed; left: 256px; top: calc(50vh - 30px); z-index: 720;
-    display: grid; width: 32px; height: 60px; place-items: center;
-    border: 1px solid var(--platform-border); border-radius: 12px;
-    color: var(--platform-text); background: var(--platform-surface);
-    box-shadow: var(--platform-shadow); cursor: pointer;
-    font-size: 1.4rem; transition: left 180ms ease;
+    position: fixed;
+    left: 256px;
+    top: calc(50vh - 30px);
+    z-index: 720;
+    display: grid;
+    width: 32px;
+    height: 60px;
+    place-items: center;
+    border: 1px solid var(--platform-border);
+    border-radius: 12px;
+    color: var(--platform-text);
+    background: var(--platform-surface);
+    box-shadow: var(--platform-shadow);
+    cursor: pointer;
+    font-size: 1.4rem;
+    transition: left 180ms ease;
   }
   .sidebar-collapsed {
-    .platform-sidebar { transform: translateX(-105%); visibility: hidden; }
-    .platform-main { margin-left: 0; }
-    .sidebar-desktop-toggle { left: 0; border-radius: 0 12px 12px 0; }
+    .platform-sidebar {
+      transform: translateX(-105%);
+      visibility: hidden;
+    }
+    .platform-main {
+      margin-left: 0;
+    }
+    .sidebar-desktop-toggle {
+      left: 0;
+      border-radius: 0 12px 12px 0;
+    }
   }
 }
 
-.driving-dashboard { gap: 20px; font-variant-numeric: tabular-nums; }
-.drive-heading { align-items: center; flex-wrap: wrap; }
-.drive-controls { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-left: auto; }
-.drive-controls .vehicle-picker { width: 200px; }
-.drive-refresh label { display: block; margin-bottom: 5px; color: var(--platform-muted); font-size: .75rem; }
-.drive-refresh select, .drive-refresh-button {
-  min-height: 44px; border-color: var(--platform-border);
-  color: var(--platform-text); background: var(--platform-surface);
+.driving-dashboard {
+  gap: 20px;
+  font-variant-numeric: tabular-nums;
 }
-.drive-refresh-button { gap: 7px; }
-.drive-status-bar, .drive-status-bar > div { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.drive-status-bar { justify-content: space-between; color: var(--platform-muted); font-size: .8rem; }
-.drive-status-bar strong { color: var(--platform-text); }
-.drive-timestamps { font-size: .72rem; }
-.drive-live-badge { padding: 5px 9px; border-radius: 8px; background: var(--platform-surface-soft); font-weight: 700; }
-.drive-live-badge.is-live { color: #136d4b; background: #d9f5e8; }
-.drive-notice, .drive-disconnected { padding: 12px 16px; border: 1px solid #be8429; border-radius: 12px; color: var(--platform-text); background: var(--platform-surface); font-size: .85rem; }
-.drive-disconnected { display: none; }
+.drive-heading {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.drive-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-left: auto;
+}
+.drive-controls .vehicle-picker {
+  width: 200px;
+}
+.drive-refresh label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--platform-muted);
+  font-size: 0.75rem;
+}
+.drive-refresh select,
+.drive-refresh-button {
+  min-height: 44px;
+  border-color: var(--platform-border);
+  color: var(--platform-text);
+  background: var(--platform-surface);
+}
+.drive-refresh-button {
+  gap: 7px;
+}
+.drive-status-bar,
+.drive-status-bar > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.drive-status-bar {
+  justify-content: space-between;
+  color: var(--platform-muted);
+  font-size: 0.8rem;
+}
+.drive-status-bar strong {
+  color: var(--platform-text);
+}
+.drive-timestamps {
+  font-size: 0.72rem;
+}
+.drive-live-badge {
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--platform-surface-soft);
+  font-weight: 700;
+}
+.drive-live-badge.is-live {
+  color: #136d4b;
+  background: #d9f5e8;
+}
+.drive-notice,
+.drive-disconnected {
+  padding: 12px 16px;
+  border: 1px solid #be8429;
+  border-radius: 12px;
+  color: var(--platform-text);
+  background: var(--platform-surface);
+  font-size: 0.85rem;
+}
+.drive-disconnected {
+  display: none;
+}
 .driving-dashboard.is-disconnected {
-  .drive-disconnected { display: block; }
-  .drive-current-value { opacity: .35; }
-  .drive-live-badge { color: var(--platform-muted); background: var(--platform-surface-soft); }
+  .drive-disconnected {
+    display: block;
+  }
+  .drive-current-value {
+    opacity: 0.35;
+  }
+  .drive-live-badge {
+    color: var(--platform-muted);
+    background: var(--platform-surface-soft);
+  }
 }
-.drive-primary-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 16px; }
-.drive-altitude-card { position: relative; overflow: hidden; padding: 24px; border-radius: 20px; color: #fff; background: linear-gradient(140deg, #13264a, #214678); }
-.drive-altitude-card__header { display: flex; justify-content: space-between; gap: 12px; color: #d2e4ff; font-size: .85rem; }
-.drive-altitude-card__header > span:last-child { font-size: .7rem; opacity: .65; }
-.drive-altitude-value { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 9px; margin: 12px 0 18px; }
-.drive-altitude-value strong { color: #fff; font-size: clamp(3rem, 5.5vw, 5.3rem); font-weight: 750; line-height: 1.15; letter-spacing: -.05em; }
-.drive-altitude-value > span { color: #bad5f7; font-size: 1.3rem; }
-.drive-altitude-summary { position: relative; z-index: 1; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-.drive-altitude-summary span, .drive-altitude-summary strong { display: block; }
-.drive-altitude-summary span { color: #adc7e9; font-size: .72rem; }
-.drive-altitude-summary strong { margin-top: 5px; color: #fff; font-size: 1.1rem; }
-.drive-mountain { position: absolute; right: 0; bottom: 0; width: 100%; height: 70%; pointer-events: none; }
-.drive-mountain path:first-child { fill: #5b9ad9; opacity: .12; }
-.drive-mountain path:last-child { fill: #8ac9f7; opacity: .08; }
-.drive-primary-metric { display: flex; justify-content: center; flex-direction: column; gap: 15px; min-width: 0; }
-.drive-primary-metric > strong { color: var(--platform-text); font-size: clamp(1.7rem, 3vw, 3rem); letter-spacing: -.04em; white-space: nowrap; }
-.drive-primary-metric > span:last-of-type, .drive-primary-metric small { color: var(--platform-muted); font-size: .75rem; line-height: 1.6; }
-.drive-inline-stat { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--platform-border); padding-top: 13px; font-size: .85rem; }
-.drive-inline-stat span { color: var(--platform-muted); }
-.drive-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 14px; }
-.drive-section-heading h2 { font-size: 1.15rem; margin-top: 4px; color: var(--platform-text); font-weight: 700; }
-.drive-section-heading > a { font-size: .8rem; white-space: nowrap; }
-.drive-metrics-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.drive-metrics-grid .metric-card { padding: 16px; gap: 9px; }
-.drive-metrics-grid .metric-card__icon { width: 32px; height: 32px; }
-.drive-metrics-grid .metric-card__value { font-size: 1.5rem; white-space: normal; }
-.drive-metrics-grid .metric-card__hint { max-width: 23em; }
-.drive-trip-strip { display: flex; flex-wrap: wrap; gap: 15px 30px; margin-top: 14px; padding: 14px 17px; border-radius: 12px; color: var(--platform-muted); background: var(--platform-surface-soft); font-size: .8rem; }
-.drive-trip-strip b { margin-left: 8px; color: var(--platform-text); }
-.drive-method { margin-top: 10px; color: var(--platform-muted); font-size: .72rem; line-height: 1.6; }
-.drive-trend .data-card__header > span { font-size: .75rem; color: var(--platform-muted); }
-.drive-trend svg { width: 100%; height: 150px; overflow: visible; }
-.drive-trend__grid { stroke: var(--platform-border); stroke-width: 1; fill: none; }
-.drive-trend__line { stroke: #628cff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.drive-trend--green .drive-trend__line { stroke: #28b787; }
-.drive-trend > p { margin-top: 10px; color: var(--platform-muted); font-size: .7rem; }
-.drive-map { height: 250px; }
-.drive-support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 20px; }
-.drive-support-grid dt { margin-bottom: 6px; color: var(--platform-muted); font-size: .8rem; }
-.drive-support-grid dd { color: var(--platform-text); font-size: 1.05rem; font-weight: 700; }
-.drive-shortcuts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
-.drive-shortcuts a { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--platform-border); border-radius: 10px; font-size: .8rem; }
+.drive-primary-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 16px;
+}
+.drive-altitude-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(140deg, #13264a, #214678);
+}
+.drive-altitude-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #d2e4ff;
+  font-size: 0.85rem;
+}
+.drive-altitude-card__header > span:last-child {
+  font-size: 0.7rem;
+  opacity: 0.65;
+}
+.drive-altitude-value {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin: 12px 0 18px;
+}
+.drive-altitude-value strong {
+  color: #fff;
+  font-size: clamp(3rem, 5.5vw, 5.3rem);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.05em;
+}
+.drive-altitude-value > span {
+  color: #bad5f7;
+  font-size: 1.3rem;
+}
+.drive-altitude-summary {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.drive-altitude-summary span,
+.drive-altitude-summary strong {
+  display: block;
+}
+.drive-altitude-summary span {
+  color: #adc7e9;
+  font-size: 0.72rem;
+}
+.drive-altitude-summary strong {
+  margin-top: 5px;
+  color: #fff;
+  font-size: 1.1rem;
+}
+.drive-mountain {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 70%;
+  pointer-events: none;
+}
+.drive-mountain path:first-child {
+  fill: #5b9ad9;
+  opacity: 0.12;
+}
+.drive-mountain path:last-child {
+  fill: #8ac9f7;
+  opacity: 0.08;
+}
+.drive-primary-metric {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 15px;
+  min-width: 0;
+}
+.drive-primary-metric > strong {
+  color: var(--platform-text);
+  font-size: clamp(1.7rem, 3vw, 3rem);
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+.drive-primary-metric > span:last-of-type,
+.drive-primary-metric small {
+  color: var(--platform-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+.drive-inline-stat {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid var(--platform-border);
+  padding-top: 13px;
+  font-size: 0.85rem;
+}
+.drive-inline-stat span {
+  color: var(--platform-muted);
+}
+.drive-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.drive-section-heading h2 {
+  font-size: 1.15rem;
+  margin-top: 4px;
+  color: var(--platform-text);
+  font-weight: 700;
+}
+.drive-section-heading > a {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.drive-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.drive-metrics-grid .metric-card {
+  padding: 16px;
+  gap: 9px;
+}
+.drive-metrics-grid .metric-card__icon {
+  width: 32px;
+  height: 32px;
+}
+.drive-metrics-grid .metric-card__value {
+  font-size: 1.5rem;
+  white-space: normal;
+}
+.drive-metrics-grid .metric-card__hint {
+  max-width: 23em;
+}
+.drive-trip-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px 30px;
+  margin-top: 14px;
+  padding: 14px 17px;
+  border-radius: 12px;
+  color: var(--platform-muted);
+  background: var(--platform-surface-soft);
+  font-size: 0.8rem;
+}
+.drive-trip-strip b {
+  margin-left: 8px;
+  color: var(--platform-text);
+}
+.drive-method {
+  margin-top: 10px;
+  color: var(--platform-muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+.drive-trend .data-card__header > span {
+  font-size: 0.75rem;
+  color: var(--platform-muted);
+}
+.drive-trend svg {
+  width: 100%;
+  height: 150px;
+  overflow: visible;
+}
+.drive-trend__grid {
+  stroke: var(--platform-border);
+  stroke-width: 1;
+  fill: none;
+}
+.drive-trend__line {
+  stroke: #628cff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.drive-trend--green .drive-trend__line {
+  stroke: #28b787;
+}
+.drive-trend > p {
+  margin-top: 10px;
+  color: var(--platform-muted);
+  font-size: 0.7rem;
+}
+.drive-map {
+  height: 250px;
+}
+.drive-support-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px 20px;
+}
+.drive-support-grid dt {
+  margin-bottom: 6px;
+  color: var(--platform-muted);
+  font-size: 0.8rem;
+}
+.drive-support-grid dd {
+  color: var(--platform-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.drive-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 25px;
+}
+.drive-shortcuts a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--platform-border);
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
 
 @media (max-width: 1280px) {
-  .drive-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .drive-primary-grid { grid-template-columns: 1.3fr 1fr 1fr; }
+  .drive-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .drive-primary-grid {
+    grid-template-columns: 1.3fr 1fr 1fr;
+  }
 }
 @media (max-width: 720px) {
-  .drive-controls { margin-left: 0; width: 100%; }
-  .drive-controls .vehicle-picker { width: 100%; }
-  .drive-primary-grid { grid-template-columns: 1fr 1fr; }
-  .drive-altitude-card { grid-column: 1 / -1; }
-  .drive-altitude-value strong { font-size: 4.5rem; }
-  .drive-primary-metric { padding: 18px; gap: 10px; }
-  .drive-metrics-grid .metric-card__icon { display: none; }
-  .drive-metrics-grid .metric-card__value { font-size: 1.25rem; }
-  .drive-support-grid { gap: 18px; }
+  .drive-controls {
+    margin-left: 0;
+    width: 100%;
+  }
+  .drive-controls .vehicle-picker {
+    width: 100%;
+  }
+  .drive-primary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .drive-altitude-card {
+    grid-column: 1 / -1;
+  }
+  .drive-altitude-value strong {
+    font-size: 4.5rem;
+  }
+  .drive-primary-metric {
+    padding: 18px;
+    gap: 10px;
+  }
+  .drive-metrics-grid .metric-card__icon {
+    display: none;
+  }
+  .drive-metrics-grid .metric-card__value {
+    font-size: 1.25rem;
+  }
+  .drive-support-grid {
+    gap: 18px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .platform-sidebar, .platform-main, .sidebar-desktop-toggle { transition: none; }
+  .platform-sidebar,
+  .platform-main,
+  .sidebar-desktop-toggle {
+    transition: none;
+  }
 }
