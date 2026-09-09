@@ -23,6 +23,45 @@ defmodule TeslaMate.TerrainTest do
     :ok
   end
 
+  describe "with_elevation/2" do
+    test "resolves a saved location while retaining its original timestamp" do
+      position = %TeslaMate.Log.Position{
+        latitude: Decimal.new("30"),
+        longitude: Decimal.new("100"),
+        date: ~U[2026-09-01 00:00:00.000000Z]
+      }
+
+      result = Terrain.with_elevation(position, fn {30.0, 100.0} -> 1234 end)
+
+      assert result.elevation == 1234
+      assert result.date == position.date
+      assert position.elevation == nil
+    end
+
+    test "keeps an existing elevation without querying terrain" do
+      position = %TeslaMate.Log.Position{elevation: 900}
+      lookup = fn _ -> flunk("unexpected terrain lookup") end
+      assert Terrain.with_elevation(position, lookup) == position
+    end
+
+    test "preserves missing data when terrain is unavailable or restarting" do
+      position = %TeslaMate.Log.Position{
+        latitude: Decimal.new("30"),
+        longitude: Decimal.new("100")
+      }
+
+      assert Terrain.with_elevation(position, fn _ -> nil end) == position
+      assert Terrain.with_elevation(position, fn _ -> exit(:noproc) end) == position
+    end
+
+    test "does not query terrain without a recorded position and coordinates" do
+      lookup = fn _ -> flunk("unexpected terrain lookup") end
+      assert Terrain.with_elevation(nil, lookup) == nil
+      position = %TeslaMate.Log.Position{}
+      assert Terrain.with_elevation(position, lookup) == position
+    end
+  end
+
   describe "get_elevation/1" do
     test "return the elevation", %{test: name} do
       :ok = start_terrain(name, %{{0, 0} => fn -> {:ok, 42} end})

@@ -21,6 +21,24 @@ defmodule TeslaMate.Terrain do
     GenStateMachine.call(name, {:get_elevation, coordinates}, 2000)
   end
 
+  # Resolve missing terrain height for saved locations without changing their timestamps
+  # or writing estimated data back to the original telemetry.
+  def with_elevation(position, lookup \\ &get_elevation/1)
+
+  def with_elevation(
+        %Position{elevation: nil, latitude: %Decimal{} = lat, longitude: %Decimal{} = lng} = position,
+        lookup
+      ) do
+    case lookup.({Decimal.to_float(lat), Decimal.to_float(lng)}) do
+      elevation when is_number(elevation) -> %{position | elevation: elevation}
+      _ -> position
+    end
+  catch
+    :exit, _ -> position
+  end
+
+  def with_elevation(position, _lookup), do: position
+
   # Callbacks
 
   @impl true

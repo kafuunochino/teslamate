@@ -307,6 +307,7 @@ defmodule TeslaMate.Fleet do
     |> order_by([p], desc: p.date, desc: p.id)
     |> limit(1)
     |> Repo.one()
+    |> TeslaMate.Terrain.with_elevation()
   end
 
   defp latest_pressures(car_id) do
