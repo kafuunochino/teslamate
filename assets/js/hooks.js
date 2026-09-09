@@ -554,3 +554,71 @@ export const ThemeSelector = {
     }
   },
 };
+
+export const DrivingDashboard = {
+  mounted() {
+    this.onVisibility = () => {
+      this.pushEvent("visibility", { visible: !document.hidden });
+    };
+    document.addEventListener("visibilitychange", this.onVisibility);
+    if (document.hidden) this.onVisibility();
+  },
+
+  disconnected() {
+    this.el.classList.add("is-disconnected");
+  },
+
+  reconnected() {
+    this.el.classList.remove("is-disconnected");
+    this.onVisibility();
+  },
+
+  destroyed() {
+    document.removeEventListener("visibilitychange", this.onVisibility);
+  },
+};
+
+export const DrivingMap = {
+  mounted() {
+    this.map = new M(this.el, { zoomControl: true, scrollWheelZoom: false });
+    new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+    }).addTo(this.map);
+    this.updatePosition();
+    this.resizeObserver = new ResizeObserver(() => this.map.invalidateSize({ pan: false }));
+    this.resizeObserver.observe(this.el);
+  },
+
+  updated() {
+    this.updatePosition();
+  },
+
+  updatePosition() {
+    let point;
+    try {
+      [point] = JSON.parse(this.el.dataset.points || "[]");
+    } catch (_error) {
+      return;
+    }
+    if (point?.latitude == null || point?.longitude == null) return;
+    const lat = Number(point.latitude);
+    const lng = Number(point.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+
+    if (!this.marker) {
+      this.marker = new Marker([lat, lng], { icon }).addTo(this.map);
+      this.map.setView([lat, lng], 15);
+    } else {
+      this.marker.setLatLng([lat, lng]);
+      if (!this.map.getBounds().contains([lat, lng])) {
+        this.map.panTo([lat, lng], { animate: false });
+      }
+    }
+  },
+
+  destroyed() {
+    this.resizeObserver?.disconnect();
+    this.map?.remove();
+  },
+};

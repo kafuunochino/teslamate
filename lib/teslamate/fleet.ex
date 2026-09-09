@@ -44,6 +44,66 @@ defmodule TeslaMate.Fleet do
     end
   end
 
+  def driving(%User{} = user, requested_car_id \\ nil, previous \\ nil) do
+    {cars, car} = resolve_vehicle(user, requested_car_id)
+
+    if car do
+      drive =
+        Drive
+        |> where([d], d.car_id == ^car.id)
+        |> order_by([d], desc: d.start_date, desc: d.id)
+        |> limit(1)
+        |> Repo.one()
+
+      stats = driving_samples(drive, previous)
+
+      %{
+        cars: cars,
+        car: car,
+        live: driving_summary(car.id),
+        position: latest_position(car.id),
+        state: current_state(car.id),
+        drive: drive,
+        driving_stats: stats,
+        metrics: TeslaMate.DrivingStats.metrics(stats)
+      }
+    else
+      empty_report(cars)
+      |> Map.merge(%{state: nil, drive: nil, driving_stats: nil, metrics: %{}})
+    end
+  end
+
+  defp driving_samples(nil, _previous), do: TeslaMate.DrivingStats.new(nil)
+
+  defp driving_samples(drive, previous) do
+    stats =
+      case previous do
+        %TeslaMate.DrivingStats{drive_id: id} when id == drive.id -> previous
+        _ -> TeslaMate.DrivingStats.new(drive.id)
+      end
+
+    query =
+      Position
+      |> where([p], p.car_id == ^drive.car_id and p.drive_id == ^drive.id and p.id > ^stats.last_id)
+      |> order_by([p], asc: p.id)
+      |> select([p], map(p, [:id, :date, :elevation, :power, :odometer, :rated_battery_range_km]))
+
+    {:ok, stats} =
+      Repo.transaction(fn ->
+        query
+        |> Repo.stream(max_rows: 1000)
+        |> Enum.reduce(stats, &TeslaMate.DrivingStats.append(&2, &1))
+      end)
+
+    stats
+  end
+
+  defp driving_summary(car_id) do
+    Vehicles.summary(car_id)
+  catch
+    :exit, _ -> nil
+  end
+
   def trips(%User{} = user, requested_car_id, requested_days \\ 30) do
     days = normalize_days(requested_days)
     {cars, car} = resolve_vehicle(user, requested_car_id)

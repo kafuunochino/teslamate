@@ -6,7 +6,7 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
   alias TeslaMate.Log.Car
 
   defstruct ~w(
-    car display_name state since healthy latitude longitude heading battery_level charging_state usable_battery_level
+    car display_name state since healthy data_updated_at latitude longitude heading battery_level charging_state usable_battery_level
     ideal_battery_range_km est_battery_range_km rated_battery_range_km charge_energy_added
     speed outside_temp inside_temp is_climate_on is_preconditioning locked sentry_mode
     plugged_in scheduled_charging_start_time charge_limit_soc charger_power windows_open
@@ -80,6 +80,7 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
       display_name: vehicle.display_name,
 
       # Drive State
+      data_updated_at: data_updated_at(vehicle),
       active_route_destination: get_in_struct(vehicle, [:drive_state, :active_route_destination]),
       active_route_latitude: get_in_struct(vehicle, [:drive_state, :active_route_latitude]),
       active_route_longitude: get_in_struct(vehicle, [:drive_state, :active_route_longitude]),
@@ -292,6 +293,19 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
     case get_in_struct(vehicle, [:vehicle_state, :software_update, :version]) do
       version when is_binary(version) -> List.first(String.split(version, " "))
       nil -> nil
+    end
+  end
+
+  defp data_updated_at(vehicle) do
+    case get_in_struct(vehicle, [:drive_state, :timestamp]) do
+      timestamp when is_integer(timestamp) ->
+        case DateTime.from_unix(timestamp, :millisecond) do
+          {:ok, date} -> date
+          {:error, _reason} -> nil
+        end
+
+      _ ->
+        nil
     end
   end
 

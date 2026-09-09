@@ -12,11 +12,56 @@ const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 const sidebarOpen = document.getElementById("sidebar-open");
 const sidebarClose = document.getElementById("sidebar-close");
 
+const sidebarToggle = document.getElementById("sidebar-desktop-toggle");
+const desktopSidebar = window.matchMedia("(min-width: 981px)");
+let sidebarCollapsed = false;
+try {
+  sidebarCollapsed = localStorage.getItem("teslamate:sidebar-collapsed") === "true";
+} catch (_error) {
+  // Browsers may disable storage; the toggle still works for this page.
+}
+
+function syncSidebarVisibility() {
+  if (!sidebar) return;
+  const hidden = desktopSidebar.matches
+    ? sidebarCollapsed
+    : !sidebar.classList.contains("is-open");
+  sidebar.inert = hidden;
+  sidebar.setAttribute("aria-hidden", String(hidden));
+}
+
+function setSidebarCollapsed(collapsed) {
+  sidebarCollapsed = collapsed;
+  document.documentElement.classList.toggle("sidebar-collapsed", collapsed);
+  if (sidebarToggle) {
+    const label = collapsed ? "展开侧栏" : "折叠侧栏";
+    sidebarToggle.setAttribute("aria-label", label);
+    sidebarToggle.setAttribute("title", label);
+    sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+    const icon = sidebarToggle.querySelector("i");
+    icon.classList.toggle("mdi-chevron-left", !collapsed);
+    icon.classList.toggle("mdi-chevron-right", collapsed);
+  }
+  syncSidebarVisibility();
+}
+
+setSidebarCollapsed(sidebarCollapsed);
+if (sidebarToggle) {
+  sidebarToggle.addEventListener("click", () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+    try {
+      localStorage.setItem("teslamate:sidebar-collapsed", String(sidebarCollapsed));
+    } catch (_error) {}
+  });
+}
+desktopSidebar.addEventListener("change", () => setSidebar(false));
+
 function setSidebar(open) {
   if (!sidebar || !sidebarBackdrop) return;
   sidebar.classList.toggle("is-open", open);
   sidebarBackdrop.classList.toggle("is-open", open);
   document.documentElement.classList.toggle("is-clipped", open);
+  syncSidebarVisibility();
 }
 
 if (sidebarOpen) sidebarOpen.addEventListener("click", () => setSidebar(true));

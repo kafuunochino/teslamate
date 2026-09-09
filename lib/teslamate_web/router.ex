@@ -87,6 +87,7 @@ defmodule TeslaMateWeb.Router do
         {TeslaMateWeb.UserAuth, :ensure_authenticated}
       ] do
       live "/", DashboardLive.Home, :home, as: :dashboard
+      live "/driving", DashboardLive.Driving, :driving, as: :dashboard
       live "/trips", DashboardLive.Trips, :trips, as: :dashboard
       live "/trips/:id", DashboardLive.Trip, :trip, as: :dashboard
       live "/battery", DashboardLive.Battery, :battery, as: :dashboard

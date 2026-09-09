@@ -71,6 +71,9 @@
             <.link navigate={Routes.dashboard_path(@conn, :home)} class={nav_class(@conn, "/")}>
               <i class="mdi mdi-view-dashboard-outline"></i><span>首页</span>
             </.link>
+            <.link navigate={~p"/driving"} class={nav_class(@conn, "/driving")}>
+              <i class="mdi mdi-gauge"></i><span>行车仪表盘</span>
+            </.link>
             <.link
               navigate={Routes.dashboard_path(@conn, :trips)}
               class={nav_class(@conn, "/trips")}
@@ -137,6 +140,18 @@
             </.link>
           </div>
         </aside>
+
+        <button
+          id="sidebar-desktop-toggle"
+          class="sidebar-desktop-toggle"
+          type="button"
+          aria-label="折叠侧栏"
+          aria-controls="platform-sidebar"
+          aria-expanded="true"
+          title="折叠侧栏"
+        >
+          <i class="mdi mdi-chevron-left" aria-hidden="true"></i>
+        </button>
 
         <div class="platform-main">
           <header class="mobile-topbar">
