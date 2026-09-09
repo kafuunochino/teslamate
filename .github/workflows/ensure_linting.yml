@@ -58,7 +58,3 @@ jobs:
         # treefmt, passing through `--ci`.
         run: nix run .#lint -- --ci
         # or use: https://github.com/cachix/git-hooks.nix?tab=readme-ov-file
-
-      - name: Show formatter changes
-        if: failure()
-        run: git diff --no-ext-diff

@@ -48,7 +48,8 @@
     <% active_drive = @report.drive && is_nil(@report.drive.end_date) %>
     <% grade =
       if fresh && active_drive && stats.last &&
-           DateTime.diff(@refreshed_at, stats.last.date) in -5..30, do: metrics.grade %>
+           DateTime.diff(@refreshed_at, stats.last.date) in -5..30,
+         do: metrics.grade %>
     <% latitude = reading(@report, :latitude) %>
     <% longitude = reading(@report, :longitude) %>
 
