@@ -18,6 +18,9 @@ jobs:
           node scripts/audit-visible-text.mjs --check --sql-aliases
           node scripts/audit-zh-hans-translations.mjs
 
+      - name: Test Beijing time formatting
+        run: node --test assets/test/*.test.mjs
+
       - name: Install Nix
         uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
 
@@ -58,3 +61,7 @@ jobs:
         # treefmt, passing through `--ci`.
         run: nix run .#lint -- --ci
         # or use: https://github.com/cachix/git-hooks.nix?tab=readme-ov-file
+
+      - name: Show formatter changes
+        if: failure()
+        run: git diff --no-ext-diff

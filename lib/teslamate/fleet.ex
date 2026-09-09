@@ -18,6 +18,13 @@ defmodule TeslaMate.Fleet do
 
   @allowed_ranges [7, 30, 90, 365]
 
+  # Telemetry timestamps are stored as UTC without a PostgreSQL time zone.
+  defmacrop beijing_timestamp(field) do
+    quote do
+      fragment("(? AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai')", unquote(field))
+    end
+  end
+
   def home(%User{} = user, requested_car_id \\ nil) do
     {cars, car} = resolve_vehicle(user, requested_car_id)
 
@@ -407,10 +414,10 @@ defmodule TeslaMate.Fleet do
   defp daily_distance(car_id, days) do
     Drive
     |> where([d], d.car_id == ^car_id and d.start_date >= ^since(days))
-    |> group_by([d], fragment("date_trunc('day', ?)", d.start_date))
-    |> order_by([d], fragment("date_trunc('day', ?)", d.start_date))
+    |> group_by([d], fragment("?::date", beijing_timestamp(d.start_date)))
+    |> order_by([d], fragment("?::date", beijing_timestamp(d.start_date)))
     |> select([d], %{
-      period: fragment("date_trunc('day', ?)", d.start_date),
+      period: fragment("?::date", beijing_timestamp(d.start_date)),
       value: fragment("COALESCE(SUM(?), 0)", d.distance)
     })
     |> Repo.all()
@@ -419,10 +426,10 @@ defmodule TeslaMate.Fleet do
   defp monthly_distance(car_id, days) do
     Drive
     |> where([d], d.car_id == ^car_id and d.start_date >= ^since(days))
-    |> group_by([d], fragment("date_trunc('month', ?)", d.start_date))
-    |> order_by([d], fragment("date_trunc('month', ?)", d.start_date))
+    |> group_by([d], fragment("date_trunc('month', ?)::date", beijing_timestamp(d.start_date)))
+    |> order_by([d], fragment("date_trunc('month', ?)::date", beijing_timestamp(d.start_date)))
     |> select([d], %{
-      period: fragment("date_trunc('month', ?)", d.start_date),
+      period: fragment("date_trunc('month', ?)::date", beijing_timestamp(d.start_date)),
       value: fragment("COALESCE(SUM(?), 0)", d.distance)
     })
     |> Repo.all()
@@ -431,10 +438,10 @@ defmodule TeslaMate.Fleet do
   defp daily_charge_energy(car_id, days) do
     ChargingProcess
     |> where([c], c.car_id == ^car_id and c.start_date >= ^since(days))
-    |> group_by([c], fragment("date_trunc('day', ?)", c.start_date))
-    |> order_by([c], fragment("date_trunc('day', ?)", c.start_date))
+    |> group_by([c], fragment("?::date", beijing_timestamp(c.start_date)))
+    |> order_by([c], fragment("?::date", beijing_timestamp(c.start_date)))
     |> select([c], %{
-      period: fragment("date_trunc('day', ?)", c.start_date),
+      period: fragment("?::date", beijing_timestamp(c.start_date)),
       value: fragment("COALESCE(SUM(?), 0)", c.charge_energy_added),
       cost: fragment("COALESCE(SUM(?), 0)", c.cost)
     })
@@ -448,10 +455,10 @@ defmodule TeslaMate.Fleet do
       p.car_id == ^car_id and p.date >= ^since(days) and p.battery_level >= 20 and
         not is_nil(p.rated_battery_range_km) and p.rated_battery_range_km > 0
     )
-    |> group_by([p], fragment("date_trunc('day', ?)", p.date))
-    |> order_by([p], fragment("date_trunc('day', ?)", p.date))
+    |> group_by([p], fragment("?::date", beijing_timestamp(p.date)))
+    |> order_by([p], fragment("?::date", beijing_timestamp(p.date)))
     |> select([p], %{
-      period: fragment("date_trunc('day', ?)", p.date),
+      period: fragment("?::date", beijing_timestamp(p.date)),
       full_range:
         fragment("AVG((? / NULLIF(?, 0)) * 100.0)", p.rated_battery_range_km, p.battery_level),
       average_level: avg(p.battery_level)
@@ -524,7 +531,7 @@ defmodule TeslaMate.Fleet do
       count: count(d.id),
       distance: fragment("COALESCE(SUM(?), 0)", d.distance),
       duration_min: fragment("COALESCE(SUM(?), 0)", d.duration_min),
-      active_days: fragment("COUNT(DISTINCT date_trunc('day', ?))", d.start_date),
+      active_days: fragment("COUNT(DISTINCT ?::date)", beijing_timestamp(d.start_date)),
       short_trip_ratio:
         fragment(
           "COALESCE(AVG(CASE WHEN ? < 5 THEN 1.0 ELSE 0.0 END), 0)",
@@ -533,13 +540,13 @@ defmodule TeslaMate.Fleet do
       night_trip_ratio:
         fragment(
           "COALESCE(AVG(CASE WHEN EXTRACT(HOUR FROM ?) >= 22 OR EXTRACT(HOUR FROM ?) < 6 THEN 1.0 ELSE 0.0 END), 0)",
-          d.start_date,
-          d.start_date
+          beijing_timestamp(d.start_date),
+          beijing_timestamp(d.start_date)
         ),
       weekend_ratio:
         fragment(
           "COALESCE(AVG(CASE WHEN EXTRACT(ISODOW FROM ?) >= 6 THEN 1.0 ELSE 0.0 END), 0)",
-          d.start_date
+          beijing_timestamp(d.start_date)
         ),
       range_used:
         fragment(

@@ -175,11 +175,13 @@ defmodule TeslaMateWeb.PlatformComponents do
   def date_time(nil), do: "—"
 
   def date_time(%DateTime{} = value) do
-    Calendar.strftime(value, "%Y-%m-%d %H:%M")
+    value
+    |> DateTime.shift_zone!("Asia/Shanghai")
+    |> Calendar.strftime("%Y-%m-%d %H:%M")
   end
 
   def date_time(%NaiveDateTime{} = value) do
-    Calendar.strftime(value, "%Y-%m-%d %H:%M")
+    value |> DateTime.from_naive!("Etc/UTC") |> date_time()
   end
 
   def state_label(nil), do: "未知"
@@ -238,10 +240,12 @@ defmodule TeslaMateWeb.PlatformComponents do
   defp bar_height(_value, maximum) when maximum <= 0, do: 4
   defp bar_height(value, maximum), do: max(4, round(number(value) / maximum * 100))
 
+  defp format_period(%Date{} = value), do: Calendar.strftime(value, "%Y-%m-%d")
   defp format_period(%NaiveDateTime{} = value), do: Calendar.strftime(value, "%Y-%m-%d")
   defp format_period(%DateTime{} = value), do: Calendar.strftime(value, "%Y-%m-%d")
   defp format_period(value), do: to_string(value)
 
+  defp compact_period(%Date{} = value), do: Calendar.strftime(value, "%m/%d")
   defp compact_period(%NaiveDateTime{} = value), do: Calendar.strftime(value, "%m/%d")
   defp compact_period(%DateTime{} = value), do: Calendar.strftime(value, "%m/%d")
   defp compact_period(value), do: to_string(value)

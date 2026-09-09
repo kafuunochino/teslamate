@@ -1,22 +1,7 @@
-const LANG = navigator.languages
-  ? navigator.languages[0]
-  : navigator.language || navigator.userLanguage;
-
-function toLocalTime(dateStr, opts) {
-  const date = new Date(dateStr);
-
-  return date instanceof Date && !isNaN(date.valueOf())
-    ? date.toLocaleTimeString(LANG, opts)
-    : "–";
-}
-
-function toLocalDate(dateStr, opts) {
-  const date = new Date(dateStr);
-
-  return date instanceof Date && !isNaN(date.valueOf())
-    ? date.toLocaleDateString(LANG, opts)
-    : "–";
-}
+import {
+  toBeijingTime as toLocalTime,
+  toBeijingDate as toLocalDate,
+} from "./time.mjs";
 
 export const Dropdown = {
   mounted() {

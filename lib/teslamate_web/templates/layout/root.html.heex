@@ -183,7 +183,7 @@
                 <strong><%= [gettext("Update available"), ": ", update] %></strong>
               <% end %>
             <% else %>
-              <span>数据仅对授权账号开放</span>
+              <span>北京时间（UTC+8） · 数据仅对授权账号开放</span>
             <% end %>
             <%= form_for @conn, Routes.user_session_path(@conn, :delete), [method: :delete], fn _f -> %>
               <button type="submit"><i class="mdi mdi-logout"></i> 退出登录</button>
