@@ -57,6 +57,7 @@ defmodule TeslaMate.Updater do
   end
 
   def current_revision, do: normalize_revision(@revision)
+  def releases_url, do: "https://github.com/#{@repository}/releases"
 
   def check_repository(receiver \\ self(), name \\ @name) when is_pid(receiver) do
     GenServer.cast(name, {:check_repository, receiver})
@@ -87,7 +88,7 @@ defmodule TeslaMate.Updater do
   def handle_continue(:check_for_updates, %State{version: current_vsv} = state) do
     Logger.debug("Checking for updates …")
 
-    case fetch_release() do
+    case fetch_release(state.repository) do
       {:ok, %Release{version: version, prerelease: false}} ->
         case Version.compare(current_vsv, version) do
           :lt ->
@@ -98,6 +99,9 @@ defmodule TeslaMate.Updater do
             Logger.debug("No update available")
             {:noreply, state}
         end
+
+      {:ok, nil} ->
+        {:noreply, %State{state | update: nil}}
 
       {:ok, %Release{version: version, prerelease: true}} ->
         Logger.debug("Prerelease available: #{version}")
@@ -132,10 +136,13 @@ defmodule TeslaMate.Updater do
 
   ## Private
 
-  defp fetch_release do
-    case get("/repos/teslamate-org/teslamate/releases/latest") do
+  defp fetch_release(repository) do
+    case get("/repos/#{repository}/releases/latest") do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
         parse_release(body)
+
+      {:ok, %Tesla.Env{status: 404}} ->
+        {:ok, nil}
 
       {:ok, %Tesla.Env{} = env} ->
         {:error, reason: "Unexpected response", env: env}
@@ -148,17 +155,33 @@ defmodule TeslaMate.Updater do
   defp check_repository_revision(_repository, nil), do: {:error, :unknown_current_revision}
 
   defp check_repository_revision(repository, current) do
-    case fetch_repository_revision(repository) do
-      {:ok, remote} ->
-        status = if current == remote, do: :current, else: :update_available
+    with {:ok, remote} <- fetch_repository_revision(repository),
+         {:ok, status} <- compare_revisions(repository, current, remote) do
+      {:ok,
+       %RepositoryCheck{
+         status: status,
+         current_revision: current,
+         remote_revision: remote,
+         compare_url: "https://github.com/#{repository}/compare/#{current}...#{remote}"
+       }}
+    end
+  end
 
-        {:ok,
-         %RepositoryCheck{
-           status: status,
-           current_revision: current,
-           remote_revision: remote,
-           compare_url: "https://github.com/#{repository}/compare/#{current}...#{remote}"
-         }}
+  defp compare_revisions(_repository, revision, revision), do: {:ok, :current}
+
+  defp compare_revisions(repository, current, remote) do
+    case get("/repos/#{repository}/compare/#{current}...#{remote}") do
+      {:ok, %Tesla.Env{status: 200, body: %{"status" => status}}} ->
+        case status do
+          "ahead" -> {:ok, :update_available}
+          "behind" -> {:ok, :ahead}
+          "identical" -> {:ok, :current}
+          "diverged" -> {:ok, :diverged}
+          _ -> {:error, :invalid_comparison}
+        end
+
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, reason: "Unexpected response", env: env}
 
       {:error, reason} ->
         {:error, reason}

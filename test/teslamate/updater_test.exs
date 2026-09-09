@@ -1,5 +1,5 @@
 defmodule TeslaMate.UpdaterTest do
-  use TeslaMate.DataCase, async: true
+  use ExUnit.Case, async: false
 
   alias TeslaMate.Updater
   import Mock
@@ -18,7 +18,7 @@ defmodule TeslaMate.UpdaterTest do
         {Tesla.Adapter.Finch, [],
          call: fn %Tesla.Env{} = env, _opts ->
            assert env.url ==
-                    "https://api.github.com/repos/teslamate-org/teslamate/releases/latest"
+                    "https://api.github.com/repos/kafuunochino/teslamate/releases/latest"
 
            resp
          end}
@@ -123,8 +123,14 @@ defmodule TeslaMate.UpdaterTest do
     with_mocks [
       {Tesla.Adapter.Finch, [],
        call: fn %Tesla.Env{} = env, _opts ->
-         assert env.url == "https://api.github.com/repos/kafuunochino/teslamate/commits/main"
-         {:ok, %Tesla.Env{status: 200, body: %{"sha" => remote}}}
+         case env.url do
+           "https://api.github.com/repos/kafuunochino/teslamate/commits/main" ->
+             {:ok, %Tesla.Env{status: 200, body: %{"sha" => remote}}}
+
+           "https://api.github.com/repos/kafuunochino/teslamate/compare/" <> comparison ->
+             assert comparison == "#{current}...#{remote}"
+             {:ok, %Tesla.Env{status: 200, body: %{"status" => "ahead"}}}
+         end
        end}
     ] do
       pid = start_supervised!({Updater, updater_opts})
@@ -144,4 +150,91 @@ defmodule TeslaMate.UpdaterTest do
                "https://github.com/kafuunochino/teslamate/compare/#{current}...#{remote}"
     end
   end
+  test "does not offer an update when the fork has no published release", %{test: name} do
+    with_mocks HTTPMocck.response({:ok, %Tesla.Env{status: 404}}) do
+      {:ok, pid} = start_updater(name, "1.0.0")
+      assert_update_check_count(1)
+      assert nil == Updater.get_update(pid)
+      assert Updater.releases_url() == "https://github.com/kafuunochino/teslamate/releases"
+    end
+  end
+
+  test "recognizes the same revision without comparing it" do
+    current = String.duplicate("a", 40)
+
+    with_mocks [
+      {Tesla.Adapter.Finch, [],
+       call: fn %Tesla.Env{} = env, _opts ->
+         assert env.url == "https://api.github.com/repos/kafuunochino/teslamate/commits/main"
+         {:ok, %Tesla.Env{status: 200, body: %{"sha" => current}}}
+       end}
+    ] do
+      pid =
+        start_supervised!(
+          {Updater, name: nil, revision: current, check_after: :timer.hours(1)}
+        )
+
+      assert :ok = Updater.check_repository(self(), pid)
+      assert_receive {:repository_update_check, {:ok, %Updater.RepositoryCheck{status: :current}}}
+    end
+  end
+
+  for {comparison, expected} <- [{"behind", :ahead}, {"diverged", :diverged}] do
+    test "classifies a #{comparison} main branch without recommending an overwrite" do
+      current = String.duplicate("a", 40)
+      remote = String.duplicate("b", 40)
+
+      with_mocks [
+        {Tesla.Adapter.Finch, [],
+         call: fn %Tesla.Env{} = env, _opts ->
+           case env.url do
+             "https://api.github.com/repos/kafuunochino/teslamate/commits/main" ->
+               {:ok, %Tesla.Env{status: 200, body: %{"sha" => remote}}}
+
+             "https://api.github.com/repos/kafuunochino/teslamate/compare/" <> revisions ->
+               assert revisions == "#{current}...#{remote}"
+               {:ok, %Tesla.Env{status: 200, body: %{"status" => unquote(comparison)}}}
+           end
+         end}
+      ] do
+        pid =
+          start_supervised!(
+            {Updater, name: nil, revision: current, check_after: :timer.hours(1)}
+          )
+
+        assert :ok = Updater.check_repository(self(), pid)
+
+        assert_receive {:repository_update_check,
+                        {:ok, %Updater.RepositoryCheck{status: unquote(expected)}}}
+      end
+    end
+  end
+
+  test "does not claim an update when the comparison fails" do
+    current = String.duplicate("a", 40)
+    remote = String.duplicate("b", 40)
+
+    with_mocks [
+      {Tesla.Adapter.Finch, [],
+       call: fn %Tesla.Env{} = env, _opts ->
+         case env.url do
+           "https://api.github.com/repos/kafuunochino/teslamate/commits/main" ->
+             {:ok, %Tesla.Env{status: 200, body: %{"sha" => remote}}}
+
+           "https://api.github.com/repos/kafuunochino/teslamate/compare/" <> revisions ->
+             assert revisions == "#{current}...#{remote}"
+             {:error, :timeout}
+         end
+       end}
+    ] do
+      pid =
+        start_supervised!(
+          {Updater, name: nil, revision: current, check_after: :timer.hours(1)}
+        )
+
+      assert :ok = Updater.check_repository(self(), pid)
+      assert_receive {:repository_update_check, {:error, :timeout}}
+    end
+  end
+
 end

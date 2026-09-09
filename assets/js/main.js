@@ -25,6 +25,29 @@ if (sidebarClose)
 if (sidebarBackdrop)
   sidebarBackdrop.addEventListener("click", () => setSidebar(false));
 
+// The root layout survives LiveView navigation, so update it when the URL changes.
+function syncSidebarNavigation() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+
+  document.querySelectorAll(".sidebar-nav a[href]").forEach((link) => {
+    const target = new URL(link.href, window.location.href);
+    const route = target.pathname.replace(/\/+$/, "") || "/";
+    const active =
+      target.origin === window.location.origin &&
+      (path === route || (route !== "/" && path.startsWith(route + "/")));
+
+    link.classList.toggle("is-active", active);
+    if (active) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
+}
+
+syncSidebarNavigation();
+window.addEventListener("phx:navigate", () => {
+  syncSidebarNavigation();
+  setSidebar(false);
+});
+
 for (const navDropdown of document.querySelectorAll(
   ".navbar-item.has-dropdown",
 )) {

@@ -159,7 +159,7 @@
           <% update = TeslaMate.Updater.get_update() %>
           <footer class="platform-footer footer">
             <%= if update do %>
-              <%= link to: "https://github.com/teslamate-org/teslamate/releases",
+              <%= link to: TeslaMate.Updater.releases_url(),
                   class: "button is-rounded is-text is-small has-text-grey",
                   type: "button",
                   target: "_blank",

@@ -376,7 +376,7 @@
           <th align="right"><%= gettext("Version") %></th>
           <td>
             <%= Application.spec(:teslamate, :vsn) %><strong><%= if @update do
-                  vsn = link @update, to: "https://github.com/teslamate-org/teslamate/releases",
+                  vsn = link @update, to: TeslaMate.Updater.releases_url(),
                                       target: "_blank", rel: "noopener noreferrer"
 
                   [" (", gettext("Update available"), ": ", vsn, ")"]
@@ -406,6 +406,8 @@
               <%= gettext("Check for updates") %>
             </button>
 
+            <p class="help">仅检查本项目，不会自动安装更新。</p>
+
             <%= case @repository_check do %>
               <% :idle -> %>
               <% :checking -> %>
@@ -430,6 +432,21 @@
                   <%= gettext("Project differences found (%{revision})",
                     revision: String.slice(revision, 0, 8)
                   ) %>
+                  <%= link(gettext("View changes"),
+                    to: compare_url,
+                    target: "_blank",
+                    rel: "noopener noreferrer"
+                  ) %>
+                </p>
+              <% {:ok, %TeslaMate.Updater.RepositoryCheck{status: :ahead}} -> %>
+                <p class="help is-success">当前版本已包含主分支，并包含额外修复。</p>
+              <% {:ok,
+                   %TeslaMate.Updater.RepositoryCheck{
+                     status: :diverged,
+                     compare_url: compare_url
+                   }} -> %>
+                <p class="help is-warning">
+                  当前版本与主分支各有改动，需先合并并验证兼容性。
                   <%= link(gettext("View changes"),
                     to: compare_url,
                     target: "_blank",
