@@ -2722,3 +2722,54 @@ img.leaflet-tile {
     transition: none;
   }
 }
+
+.charge-cost-edit {
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid var(--platform-border);
+  border-radius: 8px;
+  color: var(--platform-primary);
+  background: var(--platform-surface-soft);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.charge-cost-edit:disabled {
+  color: var(--platform-muted);
+  cursor: default;
+}
+.charge-cost-editor {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--platform-surface-soft);
+}
+.charge-cost-editor .label {
+  color: var(--platform-text);
+  font-size: 0.85rem;
+}
+.charge-cost-help {
+  margin-bottom: 12px;
+  color: var(--platform-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+.charge-cost-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.charge-cost-controls .input {
+  width: 200px;
+  max-width: 100%;
+}
+.charge-cost-notice {
+  margin: 14px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--platform-border);
+  border-radius: 12px;
+  color: var(--platform-text);
+  background: var(--platform-surface-soft);
+}
+.charge-cost-notice--error {
+  border-color: var(--platform-warning);
+}

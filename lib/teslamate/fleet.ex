@@ -384,6 +384,13 @@ defmodule TeslaMate.Fleet do
       energy_added: fragment("COALESCE(SUM(?), 0)", c.charge_energy_added),
       energy_used: fragment("COALESCE(SUM(?), 0)", c.charge_energy_used),
       cost: fragment("COALESCE(SUM(?), 0)", c.cost),
+      cost_count: count(c.cost),
+      priced_energy_added:
+        fragment(
+          "COALESCE(SUM(?) FILTER (WHERE ? IS NOT NULL), 0)",
+          c.charge_energy_added,
+          c.cost
+        ),
       duration_min: fragment("COALESCE(SUM(?), 0)", c.duration_min),
       average_end_level: avg(c.end_battery_level)
     })
@@ -520,7 +527,8 @@ defmodule TeslaMate.Fleet do
         ),
       count: count(c.id),
       energy: fragment("COALESCE(SUM(?), 0)", c.charge_energy_added),
-      cost: fragment("COALESCE(SUM(?), 0)", c.cost)
+      cost: fragment("COALESCE(SUM(?), 0)", c.cost),
+      cost_count: count(c.cost)
     })
     |> Repo.all()
   end
