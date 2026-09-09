@@ -26,7 +26,8 @@ defmodule TeslaMate.Terrain do
   def with_elevation(position, lookup \\ &get_elevation/1)
 
   def with_elevation(
-        %Position{elevation: nil, latitude: %Decimal{} = lat, longitude: %Decimal{} = lng} = position,
+        %Position{elevation: nil, latitude: %Decimal{} = lat, longitude: %Decimal{} = lng} =
+          position,
         lookup
       ) do
     case lookup.({Decimal.to_float(lat), Decimal.to_float(lng)}) do
