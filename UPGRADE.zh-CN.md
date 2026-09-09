@@ -90,6 +90,15 @@ docker inspect <PostgreSQL容器名> --format '{{json .NetworkSettings.Networks}
 `teslamate-cn_default` 上显示别名 `postgres` 时，应设置
 `PANEL_NETWORK=teslamate-cn_default`，不要把数据库主机名改成另一个值。
 
+
+如果旧的 `DATABASE_HOST` 别名已经随 PostgreSQL 容器重建而丢失，不要仅靠
+`docker network connect` 临时补接：1Panel 下次重建容器仍可能丢失该连接。
+应从 PostgreSQL 自身的 Compose 配置确认持久网络和服务名，让应用加入相同的
+外部网络，并使用该网络内稳定的服务名（例如 `postgresql`）。这种修复可能
+需要更正 `DATABASE_HOST`；必须先使用原有用户名、密码和库名验证连接到的是
+同一个数据库，并核对车辆和遥测行数。下文要求保留数据库主机配置，是为了
+防止误连新库；不禁止经过上述验证后修正失效的 DNS 别名。
+
 创建外部 PostgreSQL 自定义格式备份。把 `<PostgreSQL容器名>` 替换为真实容器名；不要改数据库密码、主机或库名：
 
 ```bash
@@ -422,3 +431,24 @@ git pull --ff-only origin main
 - OpenStreetMap 瓦片的外部请求是否符合你的轨迹隐私要求；
 - `GRAFANA_VOLUME_NAME` 是否等于旧容器 `/var/lib/grafana` 的真实挂载卷；
 - 旧 Grafana 卷需要保留多久以及是否已完成离线备份。
+
+## 十、重启或容器重建后的连通性验证
+
+Docker 的 `Up` 只表示入口进程仍在运行。若日志持续显示
+`waiting for postgres`，采集器尚未启动，不能把它当作数据采集正常。
+1Panel Compose 的应用健康检查同时检查 Web 监听和数据库 TCP 连接；它用于
+显示就绪状态，不会自动修改网络，也不会仅因 `unhealthy` 重启容器。
+
+```bash
+docker compose -f docker-compose.1panel.yml ps
+docker compose -f docker-compose.1panel.yml exec teslamate \\
+  sh -c 'getent hosts "$DATABASE_HOST" && nc -z -w 2 "$DATABASE_HOST" "$DATABASE_PORT"'
+docker compose -f docker-compose.1panel.yml logs --tail=50 teslamate
+```
+
+应用和外部 PostgreSQL 都必须在各自的 Compose 文件中声明同一个网络；
+数据库地址应使用该网络上的持久服务名，不要固定容器 IP 或依赖手工补接的
+网络别名。两侧都保留 `restart: always`，并确认 Docker 服务开机启动。
+数据库启动较慢时，应用入口会等待连接可用，再执行迁移和启动 Web 与采集器；
+迁移失败会退出并由 Docker 重试。重建应用后应恢复 `healthy`，历史记录行数
+不应减少。TCP 健康检查不能替代数据库查询、Tesla Token 和实际采集状态验证。

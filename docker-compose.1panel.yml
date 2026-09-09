@@ -7,6 +7,16 @@ services:
       args:
         TESLAMATE_REVISION: ${TESLAMATE_REVISION:-}
     restart: always
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          nc -z -w 2 127.0.0.1 "$${PORT:-3000}" &&
+          nc -z -w 2 "$${DATABASE_HOST}" "$${DATABASE_PORT:-5432}"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     environment:
       PORT: 3000
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?请在 .env 中设置 ENCRYPTION_KEY}
