@@ -22,7 +22,7 @@ defmodule TeslaMateWeb.DrivingLiveTest do
       Repo.insert!(%Position{
         car_id: car.id, drive_id: drive.id, date: date,
         latitude: Decimal.new("30"), longitude: Decimal.new("100"),
-        elevation: 900, power: 36, odometer: 1000,
+        elevation: 900, power: 36, odometer: 1000.0,
         rated_battery_range_km: Decimal.new("300")
       })
 
@@ -69,6 +69,7 @@ defmodule TeslaMateWeb.DrivingLiveTest do
       elevation: 950, power: 36, odometer: 1000.1
     })
 
+    render_hook(view, "visibility", %{"visible" => true})
     send(view.pid, {:refresh, old_token})
     refute render(view) =~ ">950</strong>"
     assert has_element?(view, "#drive-altitude strong", "900")

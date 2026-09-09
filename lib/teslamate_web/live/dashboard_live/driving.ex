@@ -48,12 +48,14 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
   end
 
   def handle_event("refresh", _params, socket) do
-    {:noreply, socket |> refresh() |> schedule_refresh()}
+    # An explicit refresh also incorporates any enriched historical samples.
+    {:noreply, socket |> assign(report: nil) |> refresh() |> schedule_refresh()}
+  end
   end
 
   def handle_event("visibility", %{"visible" => visible}, socket) when is_boolean(visible) do
     socket = assign(socket, visible?: visible)
-    socket = if visible, do: refresh(socket), else: socket
+    socket = if visible and socket.assigns.refresh_interval > 0, do: refresh(socket), else: socket
     {:noreply, schedule_refresh(socket)}
   end
 
@@ -148,9 +150,14 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
     live = report.live && Map.get(report.live, key)
     stored = report.position && Map.get(report.position, key)
 
-    case live do
-      nil -> stored
-      value -> value
+    stored_newer =
+      report.position && report.live && report.live.data_updated_at &&
+        DateTime.compare(report.position.date, report.live.data_updated_at) == :gt
+
+    cond do
+      stored_newer && not is_nil(stored) -> stored
+      is_nil(live) -> stored
+      true -> live
     end
   end
 

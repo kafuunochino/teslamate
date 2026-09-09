@@ -78,7 +78,11 @@ defmodule TeslaMate.Fleet do
   defp driving_samples(drive, previous) do
     stats =
       case previous do
-        %TeslaMate.DrivingStats{drive_id: id} when id == drive.id -> previous
+        %TeslaMate.DrivingStats{drive_id: id, rebuilt_at: rebuilt_at} when id == drive.id ->
+          # Terrain enrichment can update older rows without changing their IDs.
+          if DateTime.diff(DateTime.utc_now(), rebuilt_at) < 60,
+            do: previous,
+            else: TeslaMate.DrivingStats.new(drive.id)
         _ -> TeslaMate.DrivingStats.new(drive.id)
       end
 

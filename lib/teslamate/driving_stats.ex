@@ -5,6 +5,7 @@ defmodule TeslaMate.DrivingStats do
   """
 
   defstruct drive_id: nil,
+            rebuilt_at: nil,
             last_id: 0,
             first: nil,
             last: nil,
@@ -19,7 +20,7 @@ defmodule TeslaMate.DrivingStats do
             altitude_max: nil,
             trail: []
 
-  def new(drive_id), do: %__MODULE__{drive_id: drive_id}
+  def new(drive_id), do: %__MODULE__{drive_id: drive_id, rebuilt_at: DateTime.utc_now()}
 
   def append(%__MODULE__{} = stats, position) do
     point =
