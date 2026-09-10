@@ -23,7 +23,7 @@
   ) %>
 </div>
 
-<div class="table-container">
+<div class="responsive-table">
   <table class="table is-narrow is-hoverable is-fullwidth">
     <thead></thead>
     <tbody>
@@ -36,9 +36,9 @@
             _ -> {"????", "??"}
           end %>
         <tr>
-          <td style="font-variant-numeric: tabular-nums;"><%= "#{month}/#{year}" %></td>
-          <td><%= Path.absname(path) %></td>
-          <td class="has-text-centered" style="min-width: 30px;">
+          <td data-label="月份" style="font-variant-numeric: tabular-nums;"><%= "#{month}/#{year}" %></td>
+          <td data-label="文件"><%= Path.absname(path) %></td>
+          <td data-label="状态">
             <span class="spinner">
               <%= case {@status.state, complete} do %>
                 <% {:running, true}   -> %>

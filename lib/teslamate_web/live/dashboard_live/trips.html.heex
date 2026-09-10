@@ -84,7 +84,7 @@
                 <td data-label="海拔变化">
                   +<%= drive.ascent || 0 %> / -<%= drive.descent || 0 %> m
                 </td>
-                <td>
+                <td data-label="详情">
                   <.link
                     navigate={Routes.dashboard_path(@socket, :trip, drive.id)}
                     class="table-action"

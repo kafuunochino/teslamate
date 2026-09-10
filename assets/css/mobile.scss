@@ -1,0 +1,654 @@
+// Shared phone and tablet layout for the dashboard and operational pages.
+.settings-wide-control {
+  min-width: 280px;
+}
+.charge-save-control {
+  min-width: 300px;
+}
+.geofence-map {
+  height: 400px;
+}
+
+@media (max-width: 980px) {
+  body.platform-body,
+  body.auth-body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .platform-shell,
+  .platform-main,
+  .platform-content,
+  .platform-page,
+  .platform-content .column,
+  .platform-content .field-body,
+  .platform-content .field,
+  .platform-content .control {
+    min-width: 0;
+  }
+
+  .platform-sidebar {
+    width: min(300px, calc(100vw - 48px));
+    height: 100vh;
+    height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .sidebar-brand {
+    min-height: 76px;
+    flex-shrink: 0;
+    padding: 14px 16px;
+  }
+
+  .sidebar-nav {
+    min-height: 0;
+    overscroll-behavior: contain;
+  }
+
+  .sidebar-account {
+    flex-shrink: 0;
+  }
+
+  .sidebar-close,
+  .mobile-topbar button,
+  .mobile-topbar > a {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    place-items: center;
+  }
+
+  .mobile-topbar {
+    height: auto;
+    min-height: 60px;
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .platform-footer {
+    height: auto;
+    min-height: 58px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    line-height: 1.5;
+  }
+
+  .platform-footer button {
+    min-height: 44px;
+  }
+
+  .platform-content .input,
+  .platform-content .textarea,
+  .platform-content select,
+  .auth-form .input,
+  .auth-form select {
+    max-width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .platform-content .select,
+  .platform-content .select select {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .platform-content .button,
+  .auth-submit,
+  .range-picker button,
+  .charge-cost-edit {
+    min-height: 44px;
+    height: auto;
+    white-space: normal;
+    line-height: 1.4;
+  }
+
+  .platform-content .button {
+    padding-block: 10px;
+  }
+
+  .platform-content .button .icon {
+    flex-shrink: 0;
+  }
+
+  .platform-content .checkbox,
+  .platform-content .switch + label {
+    min-height: 44px;
+    padding-block: 10px;
+    line-height: 1.5;
+  }
+
+  .platform-content .tabs {
+    max-width: 100%;
+  }
+
+  .platform-content .tabs a {
+    min-height: 44px;
+  }
+
+  .claim-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .claim-secret {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .claim-secret small {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .platform-content {
+    padding: 20px max(14px, env(safe-area-inset-right)) 28px
+      max(14px, env(safe-area-inset-left));
+  }
+
+  .platform-page {
+    gap: 18px;
+  }
+
+  .page-heading {
+    gap: 16px;
+  }
+
+  .page-heading h1 {
+    font-size: 1.65rem;
+    line-height: 1.25;
+  }
+
+  .page-heading p:not(.page-kicker) {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .vehicle-picker label,
+  .drive-refresh label,
+  .claim-form label,
+  .inline-admin-form label {
+    font-size: 0.8rem;
+  }
+
+  .range-picker {
+    width: 100%;
+  }
+
+  .range-picker button {
+    min-width: 0;
+    flex: 1;
+    padding-inline: 5px;
+    font-size: 0.85rem;
+  }
+
+  .metrics-grid,
+  .metrics-grid--six,
+  .drive-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .metric-card,
+  .drive-metrics-grid .metric-card {
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .metric-card__icon,
+  .drive-metrics-grid .metric-card__icon {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .metric-card__label {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .metric-card__value,
+  .drive-metrics-grid .metric-card__value {
+    overflow: visible;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .metric-card__hint,
+  .drive-method,
+  .drive-trend > p {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .data-card__header {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 16px 14px 12px;
+  }
+
+  .data-card__header h2 {
+    font-size: 1rem;
+  }
+
+  .data-card__header > span,
+  .data-card__header a,
+  .coordinate-line,
+  .privacy-note {
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
+  }
+
+  .activity-item {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px 10px;
+    min-height: 76px;
+  }
+
+  .activity-item > b {
+    grid-column: 2;
+    font-size: 0.875rem;
+  }
+
+  .activity-item__body strong,
+  .activity-item__body small {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+  }
+
+  .activity-item__body strong {
+    font-size: 0.875rem;
+  }
+
+  .activity-item__body small {
+    font-size: 0.75rem;
+  }
+
+  .responsive-table {
+    max-width: 100%;
+    padding: 0 12px 12px;
+    clear: both;
+  }
+
+  .responsive-table table,
+  .responsive-table tbody,
+  .responsive-table tr {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    padding: 6px;
+  }
+
+  .responsive-table td {
+    position: relative;
+    display: block;
+    min-width: 0;
+    min-height: 40px;
+    max-width: none;
+    padding: 10px;
+    border: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .responsive-table td[data-label] {
+    padding-left: 104px;
+  }
+
+  .responsive-table td[data-label]::before {
+    position: absolute;
+    top: 12px;
+    left: 10px;
+    width: 84px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    content: attr(data-label);
+  }
+
+  .responsive-table td:not([data-label])::before {
+    content: none;
+  }
+
+  .responsive-table .table-subline {
+    font-size: 0.75rem;
+  }
+
+  .responsive-table .table-action {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .table-buttons,
+  .vehicle-access-card__actions,
+  .claim-secret > div {
+    gap: 10px;
+  }
+
+  .table-buttons .button,
+  .vehicle-access-card__actions .button {
+    flex: 1 1 auto;
+  }
+
+  .binding-chips {
+    max-width: 100%;
+  }
+
+  .binding-chips span,
+  .binding-chips em {
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
+  }
+
+  .binding-chips button {
+    min-width: 36px;
+    min-height: 44px;
+  }
+
+  .charge-cost-editor-row > td {
+    padding: 0;
+  }
+
+  .charge-cost-editor {
+    padding: 14px;
+    white-space: normal;
+  }
+
+  .charge-cost-editor .label {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .charge-cost-help,
+  .charge-cost-notice {
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .charge-cost-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .charge-cost-controls .input {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ranking-card strong,
+  .ranking-card b,
+  .quick-stats dt,
+  .quick-stats dd,
+  .detail-grid div strong,
+  .tire-grid div strong {
+    font-size: 0.875rem;
+  }
+
+  .ranking-card small,
+  .detail-grid div span,
+  .tire-grid div span,
+  .score-card p,
+  .recommendations-card p,
+  .audit-event small {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .ranking-card strong,
+  .ranking-card small {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-grid,
+  .tire-grid {
+    padding: 0 14px 14px;
+  }
+
+  .detail-grid div {
+    min-width: 0;
+    padding: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  .score-card h3,
+  .audit-event strong {
+    font-size: 0.9rem;
+  }
+
+  .analysis-disclaimer {
+    align-items: flex-start;
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .claim-card,
+  .admin-action-card,
+  .settings-card,
+  .vehicle-access-card {
+    padding: 16px;
+  }
+
+  .settings-card .data-card__header {
+    padding-inline: 0;
+  }
+
+  .vehicle-access-card__head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .vehicle-access-card__head > .access-chip {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .vehicle-access-card__metrics span,
+  .vehicle-access-card__metrics strong {
+    font-size: 0.75rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .platform-content .field.is-horizontal .field-label {
+    min-width: 0;
+    margin: 0 0 8px;
+    text-align: left;
+  }
+
+  .platform-content .field.has-addons,
+  .platform-content .field.is-grouped {
+    flex-wrap: wrap;
+  }
+
+  .platform-content .field.has-addons .help {
+    width: 100%;
+  }
+
+  .platform-content .field.has-addons .control.is-expanded {
+    flex-basis: 120px;
+  }
+
+  .platform-content .label {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .platform-content .help {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .platform-content .settings-layout {
+    margin-inline: 0;
+    flex-direction: column;
+  }
+
+  .settings-layout > .column {
+    width: 100%;
+    padding-inline: 0;
+  }
+
+  .settings-wide-control,
+  .charge-save-control {
+    min-width: 0;
+  }
+
+  .settings-layout .about {
+    width: 100%;
+    margin-top: 24px;
+    table-layout: fixed;
+    font-size: 0.8rem;
+  }
+
+  .settings-layout .about th {
+    width: 30%;
+  }
+
+  .settings-layout .about td {
+    overflow-wrap: anywhere;
+  }
+
+  .geofence-map {
+    height: 280px;
+  }
+
+  .platform-content .modal-card {
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .platform-content .modal-card-foot {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .drive-controls {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .drive-controls .vehicle-picker {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .drive-refresh .select,
+  .drive-refresh select {
+    width: 100%;
+  }
+
+  .drive-timestamps {
+    align-items: flex-start;
+    flex-direction: column;
+    font-size: 0.75rem;
+  }
+
+  .drive-section-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .drive-primary-metric {
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .drive-current-value {
+    overflow-wrap: anywhere;
+  }
+
+  .drive-trip-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .drive-trip-strip > span {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .drive-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .drive-shortcuts a {
+    justify-content: center;
+  }
+
+  .auth-main {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+
+  .auth-brand {
+    gap: 12px;
+  }
+
+  .auth-brand h1 {
+    font-size: 1.3rem;
+  }
+
+  .auth-brand p:not(.auth-eyebrow),
+  .auth-form .label,
+  .auth-form .help,
+  .auth-switch {
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 360px) {
+  .metric-card,
+  .drive-metrics-grid .metric-card {
+    padding: 11px;
+  }
+
+  .metric-card__value,
+  .drive-metrics-grid .metric-card__value {
+    font-size: 1rem;
+  }
+
+  .drive-primary-grid,
+  .drive-support-grid,
+  .drive-shortcuts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .drive-altitude-card {
+    grid-column: auto;
+  }
+
+  .responsive-table td[data-label] {
+    padding-left: 88px;
+  }
+
+  .responsive-table td[data-label]::before {
+    width: 68px;
+  }
+}

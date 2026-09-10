@@ -26,7 +26,7 @@
     phx-change="change"
     as={:"car_settings_#{@car}"}
   >
-    <div class="columns is-mobile is-centered">
+    <div class="columns is-mobile is-centered settings-layout">
       <div class="column">
         <h2 class="title is-4"><%= gettext("Data Collection") %></h2>
         <div class="field is-horizontal center-vertically">
@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <div class="columns is-mobile is-centered">
+    <div class="columns is-mobile is-centered settings-layout">
       <div class="column">
         <h2 class="title is-4"><%= gettext("Sleep Mode") %></h2>
 
@@ -101,7 +101,7 @@
             <label class="label"><%= gettext("Requirements") %></label>
           </div>
           <div class="field-body">
-            <div class="field" style="min-width: 280px;">
+            <div class="field settings-wide-control">
               <div class="control">
                 <div class="columns is-multiline is-mobile is-gapless">
                   <div class="column is-full">
@@ -119,7 +119,7 @@
       </div>
     </div>
 
-    <div class="columns is-mobile is-centered">
+    <div class="columns is-mobile is-centered settings-layout">
       <div class="column">
         <h2 class="title is-4"><%= gettext("Charge cost") %></h2>
         <div class="field is-horizontal center-vertically">
@@ -138,7 +138,7 @@
       </div>
     </div>
 
-    <div class="columns is-mobile is-centered">
+    <div class="columns is-mobile is-centered settings-layout">
       <div class="column">
         <h2 class="title is-4"><%= gettext("Streaming API") %></h2>
         <div class="field is-horizontal center-vertically">
@@ -157,7 +157,7 @@
       </div>
     </div>
 
-    <div class="columns is-mobile is-centered">
+    <div class="columns is-mobile is-centered settings-layout">
       <div class="column">
         <h2 class="title is-4"><%= gettext("Battery") %></h2>
         <div class="field is-horizontal center-vertically">
@@ -183,7 +183,7 @@
 </div>
 
 <.form :let={f} for={@global_settings.changeset} phx-change="change">
-  <div class="columns is-mobile is-centered">
+  <div class="columns is-mobile is-centered settings-layout">
     <div class="column">
       <h2 class="title is-4"><%= gettext("Range") %></h2>
       <div class="field is-horizontal center-vertically">
@@ -209,7 +209,7 @@
     </div>
   </div>
 
-  <div class="columns is-mobile is-centered">
+  <div class="columns is-mobile is-centered settings-layout">
     <div class="column">
       <h2 class="title is-4"><%= gettext("Language") %></h2>
 
@@ -248,7 +248,7 @@
     </div>
   </div>
 
-  <div class="columns is-mobile is-centered">
+  <div class="columns is-mobile is-centered settings-layout">
     <div class="column">
       <h2 class="title is-4"><%= gettext("Theme") %></h2>
       <div class="field is-horizontal">
@@ -273,7 +273,7 @@
     </div>
   </div>
 
-  <div class="columns is-mobile is-centered">
+  <div class="columns is-mobile is-centered settings-layout">
     <div class="column">
       <h2 class="title is-4"><%= gettext("Units") %></h2>
       <div class="field is-horizontal">
@@ -324,7 +324,7 @@
     </div>
   </div>
 
-  <div class="columns is-mobile is-centered">
+  <div class="columns is-mobile is-centered settings-layout">
     <div class="column">
       <h2 class="title is-4"><%= gettext("URLs") %></h2>
       <div class="field is-horizontal center-vertically">
@@ -368,7 +368,7 @@
   </div>
 </.form>
 
-<div class="columns is-mobile is-centered">
+<div class="columns is-mobile is-centered settings-layout">
   <div class="column is-narrow table-container">
     <table class="about table is-narrow">
       <tbody>
@@ -479,7 +479,7 @@
 </div>
 
 <%= if TeslaMate.Api.signed_in?() and not TeslaMate.Import.enabled?() do %>
-  <div class="columns is-mobile is-centered">
+  <div class="columns is-mobile is-centered settings-layout">
     <div class="column is-narrow table-container">
       <button
         class="button is-text is-rounded"

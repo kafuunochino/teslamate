@@ -13,6 +13,7 @@ const sidebarOpen = document.getElementById("sidebar-open");
 const sidebarClose = document.getElementById("sidebar-close");
 
 const sidebarToggle = document.getElementById("sidebar-desktop-toggle");
+const platformMain = document.querySelector(".platform-main");
 const desktopSidebar = window.matchMedia("(min-width: 981px)");
 let sidebarCollapsed = false;
 try {
@@ -29,6 +30,8 @@ function syncSidebarVisibility() {
     : !sidebar.classList.contains("is-open");
   sidebar.inert = hidden;
   sidebar.setAttribute("aria-hidden", String(hidden));
+  sidebarOpen?.setAttribute("aria-expanded", String(!hidden && !desktopSidebar.matches));
+  if (platformMain) platformMain.inert = !desktopSidebar.matches && !hidden;
 }
 
 function setSidebarCollapsed(collapsed) {
@@ -62,11 +65,23 @@ desktopSidebar.addEventListener("change", () => setSidebar(false));
 
 function setSidebar(open) {
   if (!sidebar || !sidebarBackdrop) return;
+  const restoreFocus = sidebar.contains(document.activeElement);
   sidebar.classList.toggle("is-open", open);
   sidebarBackdrop.classList.toggle("is-open", open);
   document.documentElement.classList.toggle("is-clipped", open);
   syncSidebarVisibility();
+  if (!desktopSidebar.matches) {
+    if (open) sidebarClose?.focus();
+    else if (restoreFocus) sidebarOpen?.focus();
+  }
 }
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !desktopSidebar.matches && sidebar?.classList.contains("is-open")) {
+    event.preventDefault();
+    setSidebar(false);
+  }
+});
 
 if (sidebarOpen) sidebarOpen.addEventListener("click", () => setSidebar(true));
 if (sidebarClose)
