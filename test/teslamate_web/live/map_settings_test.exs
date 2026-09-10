@@ -54,6 +54,7 @@ defmodule TeslaMateWeb.MapSettingsTest do
     })
 
     assert has_element?(view, "#map_settings_amap_key[value='#{key}']")
+
     render_submit(view, "save_map_settings", %{
       "map_settings" => %{"provider" => "amap", "amap_key" => key, "amap_security_code" => ""}
     })

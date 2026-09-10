@@ -72,6 +72,7 @@ defmodule TeslaMateWeb.SettingsLive.Index do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         errors = Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
+
         {:noreply,
          assign(socket,
            map_errors: errors,
