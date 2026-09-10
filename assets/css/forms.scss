@@ -1,0 +1,187 @@
+// Shared form controls follow the platform theme on every screen size.
+:root {
+  --platform-control-bg: #f8faff;
+  --platform-control-border: #ccd6e6;
+  --platform-control-hover: #94a5bf;
+  --platform-control-focus: #3867f4;
+  --platform-control-ring: rgba(56, 103, 244, 0.16);
+  --platform-field-danger: #c33f56;
+}
+
+[data-theme="dark"] {
+  --platform-control-bg: #0e1523;
+  --platform-control-border: #334057;
+  --platform-control-hover: #61728f;
+  --platform-control-focus: #7b9cff;
+  --platform-control-ring: rgba(123, 156, 255, 0.2);
+  --platform-field-danger: #ff94a9;
+}
+
+body.platform-body,
+body.auth-body {
+  color-scheme: light;
+}
+
+[data-theme="dark"] body.platform-body,
+[data-theme="dark"] body.auth-body {
+  color-scheme: dark;
+}
+
+.platform-content,
+.auth-main {
+  .input,
+  .textarea,
+  .select select {
+    min-height: 44px;
+    height: auto;
+    border: 1px solid var(--platform-control-border);
+    border-radius: 10px;
+    color: var(--platform-text);
+    background-color: var(--platform-control-bg);
+    box-shadow: none;
+    font-size: 1rem;
+    line-height: 1.4;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+
+    &::placeholder {
+      color: var(--platform-muted);
+      opacity: 0.85;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: var(--platform-control-hover);
+    }
+
+    &:focus,
+    &:focus-visible {
+      border-color: var(--platform-control-focus);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--platform-control-ring);
+    }
+
+    &[readonly],
+    &:disabled {
+      color: var(--platform-muted);
+      background-color: var(--platform-surface-soft);
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    &.is-danger {
+      border-color: var(--platform-field-danger);
+    }
+
+    &:is(:autofill, :-webkit-autofill) {
+      -webkit-text-fill-color: var(--platform-text);
+      caret-color: var(--platform-text);
+      box-shadow: 0 0 0 1000px var(--platform-control-bg) inset;
+    }
+
+    &:is(:autofill, :-webkit-autofill):focus {
+      box-shadow:
+        0 0 0 1000px var(--platform-control-bg) inset,
+        0 0 0 3px var(--platform-control-ring);
+    }
+  }
+
+  .input,
+  .textarea {
+    padding: 10px 12px;
+  }
+
+  .textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .select {
+    max-width: 100%;
+    height: auto;
+
+    select {
+      padding: 10px 38px 10px 12px;
+    }
+
+    &:not(.is-multiple):not(.is-loading)::after {
+      border-color: var(--platform-muted);
+    }
+  }
+
+  .label {
+    margin-bottom: 8px;
+    color: var(--platform-text);
+    font-weight: 600;
+  }
+
+  .help {
+    color: var(--platform-muted);
+    line-height: 1.5;
+  }
+
+  .help.is-danger {
+    color: var(--platform-field-danger);
+  }
+
+  .control.has-icons-left .input {
+    padding-left: 44px;
+  }
+
+  .control.has-icons-right .input {
+    padding-right: 44px;
+  }
+
+  .control.has-icons-left > .icon,
+  .control.has-icons-right > .icon {
+    width: 44px;
+    height: 44px;
+    color: var(--platform-muted);
+  }
+
+  .field .button {
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
+  .box {
+    border: 1px solid var(--platform-border);
+    border-radius: 16px;
+    color: var(--platform-text);
+    background: var(--platform-surface);
+    box-shadow: none;
+  }
+}
+
+.auth-main {
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(79, 124, 255, 0.15),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 85% 85%,
+      rgba(86, 209, 164, 0.08),
+      transparent 35%
+    ),
+    var(--platform-bg);
+}
+
+.auth-card {
+  border-color: var(--platform-border);
+  background: var(--platform-surface);
+  box-shadow: var(--platform-shadow);
+}
+
+.auth-brand h1 {
+  color: var(--platform-text);
+}
+
+.auth-brand p:not(.auth-eyebrow),
+.auth-switch {
+  color: var(--platform-muted);
+}
