@@ -111,4 +111,52 @@ defmodule TeslaMate.MapsTest do
                {:error, :timeout}
              end)
   end
+
+  test "proxy serves validated JSONP with a script MIME type under nosniff" do
+    config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
+
+    for headers <- [
+          [{"content-type", "application/json"}],
+          [{"Content-Type", "application/octet-stream"}],
+          []
+        ] do
+      request = fn _, _ ->
+        {:ok,
+         %Finch.Response{status: 200, headers: headers, body: "AMap.cb({\"status\":\"1\"});"}}
+      end
+
+      assert {:ok, "application/javascript; charset=utf-8", ~s(AMap.cb({"status":"1"});)} =
+               AmapProxy.request(config, ["v3", "log", "init"], "callback=AMap.cb", request)
+    end
+  end
+
+  test "proxy does not turn mismatched callbacks or executable payloads into scripts" do
+    config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
+
+    for body <- [
+          "another_callback({});",
+          "AMap.cb({});alert(1);",
+          "AMap.cb(alert(1));",
+          "<html>upstream error</html>"
+        ] do
+      request = fn _, _ ->
+        {:ok, %Finch.Response{status: 200, headers: [], body: body}}
+      end
+
+      assert {:error, :upstream_unavailable} =
+               AmapProxy.request(config, ["v3", "log", "init"], "callback=AMap.cb", request)
+    end
+  end
+
+  test "proxy keeps non-JSONP responses and handles case-insensitive MIME headers" do
+    config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
+
+    request = fn _, _ ->
+      {:ok,
+       %Finch.Response{status: 200, headers: [{"Content-Type", "application/json"}], body: "{}"}}
+    end
+
+    assert {:ok, "application/json", "{}"} =
+             AmapProxy.request(config, ["v4", "map", "styles"], "", request)
+  end
 end

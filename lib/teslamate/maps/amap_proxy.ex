@@ -21,19 +21,43 @@ defmodule TeslaMate.Maps.AmapProxy do
              pool_timeout: 5_000,
              headers: [{"referer", TeslaMateWeb.Endpoint.url() <> "/"}]
            ),
-         true <- is_binary(body) and byte_size(body) <= 4_194_304 do
-      content_type =
-        Enum.find_value(headers, "application/octet-stream", fn
-          {"content-type", value} -> value
-          _ -> nil
-        end)
-
+         true <- is_binary(body) and byte_size(body) <= 4_194_304,
+         {:ok, content_type, body} <- normalize_response(query, headers, body) do
       # Never reflect the server credential in an upstream diagnostic response.
       body = :binary.replace(body, settings.amap_security_code, "[REDACTED]", [:global])
       {:ok, content_type, body}
     else
       {:error, :invalid_request} -> {:error, :invalid_request}
       _ -> {:error, :upstream_unavailable}
+    end
+  end
+
+  # AMap can send JSONP as application/json or application/octet-stream.
+  # With nosniff enabled browsers correctly reject those as scripts. Only
+  # promote the requested callback wrapping valid JSON to JavaScript.
+  defp normalize_response(query, headers, body) do
+    case URI.decode_query(query)["callback"] do
+      callback when is_binary(callback) and callback != "" ->
+        prefix = callback <> "("
+        payload = String.trim(body) |> String.trim_trailing(";") |> String.trim_trailing()
+
+        with true <- String.starts_with?(payload, prefix) and String.ends_with?(payload, ")"),
+             json <-
+               binary_part(payload, byte_size(prefix), byte_size(payload) - byte_size(prefix) - 1),
+             {:ok, decoded} <- Jason.decode(json) do
+          {:ok, "application/javascript; charset=utf-8",
+           callback <> "(" <> Jason.encode!(decoded) <> ");"}
+        else
+          _ -> {:error, :upstream_unavailable}
+        end
+
+      _ ->
+        content_type =
+          Enum.find_value(headers, "application/octet-stream", fn {name, value} ->
+            if String.downcase(name) == "content-type", do: value
+          end)
+
+        {:ok, content_type, body}
     end
   end
 

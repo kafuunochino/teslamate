@@ -42,13 +42,21 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
     amap? = TeslaMate.Maps.preferences().provider == :amap
     sources = if amap?, do: " https://*.amap.com https://*.autonavi.com", else: ""
 
+    # JS API 2.0 loads its renderer from a separate official CDN and uses
+    # dynamic functions. Keep this compatibility exception provider-specific;
+    # inline scripts, arbitrary script hosts and frames remain blocked.
+    amap_scripts =
+      if amap?,
+        do: " 'unsafe-eval' https://webapi.amap.com https://jsapi-service.amap.com",
+        else: ""
+
     csp =
       [
         "default-src 'self'",
         "base-uri 'self'",
         "img-src 'self' data: blob: https://tile.openstreetmap.org#{sources}",
         "font-src 'self' data:",
-        "script-src #{script_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
+        "script-src #{script_src()}#{amap_scripts}",
         "style-src #{style_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
         "connect-src 'self' ws: wss:#{sources}",
         "worker-src 'self'#{if amap?, do: " blob:", else: ""}",

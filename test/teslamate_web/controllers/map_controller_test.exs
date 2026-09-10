@@ -15,6 +15,15 @@ defmodule TeslaMateWeb.MapControllerTest do
     assert conn |> get("/_AMapService/v4/map/styles") |> json_response(404)
   end
 
+  test "default provider keeps dynamic evaluation and provider scripts disabled", %{conn: conn} do
+    page = get(conn, "/admin/settings")
+    [policy] = get_resp_header(page, "content-security-policy")
+    refute policy =~ "'unsafe-eval'"
+    refute policy =~ "https://webapi.amap.com"
+    refute policy =~ "https://jsapi-service.amap.com"
+    assert policy =~ "worker-src 'self';"
+  end
+
   test "browser config excludes the security code and applies CSP for the saved provider", %{
     conn: conn,
     current_user: user
@@ -43,6 +52,11 @@ defmodule TeslaMateWeb.MapControllerTest do
     page = get(conn, "/admin/settings")
     [policy] = get_resp_header(page, "content-security-policy")
     assert policy =~ "https://webapi.amap.com"
+    assert policy =~ "https://jsapi-service.amap.com"
+    [script] = Regex.run(~r/script-src [^;]+/, policy)
+    assert script =~ "'unsafe-eval'"
+    refute script =~ "'unsafe-inline'"
+    assert policy =~ "frame-src 'none'"
     assert policy =~ "worker-src 'self' blob:"
     refute page.resp_body =~ code
     refute inspect(get_session(page)) =~ code
