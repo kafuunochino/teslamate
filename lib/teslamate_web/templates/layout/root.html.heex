@@ -14,6 +14,8 @@
     <script
       phx-track-static
       type="text/javascript"
+      nonce={@conn.assigns[:csp_nonce]}
+      data-cfasync="false"
       src={Routes.static_path(@conn, "/assets/theme.js")}
     >
     </script>
@@ -47,6 +49,8 @@
       defer
       phx-track-static
       type="text/javascript"
+      nonce={@conn.assigns[:csp_nonce]}
+      data-cfasync="false"
       src={Routes.static_path(@conn, "/assets/app.js")}
     >
     </script>

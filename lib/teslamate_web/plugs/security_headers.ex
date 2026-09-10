@@ -39,12 +39,15 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
   # ---- builders ----------------------------------------------------------
 
   defp put_csp(conn) do
+    # Cloudflare forwards this per-response nonce to its injected detection
+    # scripts. Never allow all inline scripts or reuse a nonce across pages.
+    nonce = :crypto.strong_rand_bytes(24) |> Base.encode64()
     amap? = TeslaMate.Maps.preferences().provider == :amap
     sources = if amap?, do: " https://*.amap.com https://*.autonavi.com", else: ""
 
     # JS API 2.0 loads its renderer from a separate official CDN and uses
     # dynamic functions. Keep this compatibility exception provider-specific;
-    # inline scripts, arbitrary script hosts and frames remain blocked.
+    # untrusted inline scripts, arbitrary script hosts and frames stay blocked.
     amap_scripts =
       if amap?,
         do:
@@ -57,7 +60,7 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
         "base-uri 'self'",
         "img-src 'self' data: blob: https://tile.openstreetmap.org#{sources}",
         "font-src 'self' data:",
-        "script-src #{script_src()}#{amap_scripts}",
+        "script-src #{script_src()} 'nonce-#{nonce}'#{amap_scripts}",
         "style-src #{style_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
         "connect-src 'self' ws: wss:#{sources}",
         "worker-src 'self'#{if amap?, do: " blob:", else: ""}",
@@ -68,7 +71,9 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
       ]
       |> Enum.join("; ")
 
-    put_resp_header(conn, "content-security-policy", csp)
+    conn
+    |> assign(:csp_nonce, nonce)
+    |> put_resp_header("content-security-policy", csp)
   end
 
   defp put_optional_hsts(conn) do

@@ -102,6 +102,7 @@ test("uses native dark styles and moves the current marker without recreating th
   assert.equal(calls.markers.length, 1);
   assert.deepEqual(calls.markers[0].position, toGCJ02(next));
   assert.equal(calls.maps[0].options.mapStyle, "amap://styles/dark");
+  assert.equal(calls.maps[0].options.resizeEnable, false);
   adapter.setTheme("light");
   assert.equal(calls.maps[0].style, "amap://styles/normal");
   adapter.resize();
@@ -211,4 +212,76 @@ test("shows a recoverable error instead of silently falling back to a foreign pr
   assert.equal(hook.statusText.textContent, "高德地图加载失败");
   assert.equal(hook.reload.hidden, false);
   hook.destroyed();
+});
+
+test("resizes maps through ResizeObserver and ignores notifications after teardown", async () => {
+  const { win, doc, element } = environment();
+  let notify,
+    observed,
+    disconnected = false,
+    resized = 0;
+  win.ResizeObserver = class {
+    constructor(callback) {
+      notify = callback;
+    }
+    observe(target) {
+      observed = target;
+    }
+    disconnect() {
+      disconnected = true;
+    }
+  };
+  const hook = createVehicleMapHook(
+    () => ({
+      render() {},
+      resize() {
+        resized++;
+      },
+      destroy() {},
+    }),
+    {
+      window: win,
+      document: doc,
+      fetchConfig: async () => ({ provider: "openstreetmap" }),
+    },
+  );
+  hook.el = element();
+  hook.mounted();
+  notify();
+  assert.equal(resized, 0);
+  await hook.loading;
+  assert.equal(observed, hook.el);
+  notify();
+  assert.equal(resized, 1);
+  hook.destroyed();
+  notify();
+  assert.equal(resized, 1);
+  assert.ok(disconnected);
+});
+
+test("falls back to window resize and removes the listener on navigation", async () => {
+  const { win, doc, element } = environment();
+  let resized = 0;
+  const hook = createVehicleMapHook(
+    () => ({
+      render() {},
+      resize() {
+        resized++;
+      },
+      destroy() {},
+    }),
+    {
+      window: win,
+      document: doc,
+      fetchConfig: async () => ({ provider: "openstreetmap" }),
+    },
+  );
+  hook.el = element();
+  hook.mounted();
+  await hook.loading;
+  win.dispatchEvent(new Event("resize"));
+  assert.equal(resized, 1);
+  hook.destroyed();
+  win.dispatchEvent(new Event("resize"));
+  assert.equal(resized, 1);
 });

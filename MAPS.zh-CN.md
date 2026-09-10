@@ -34,6 +34,11 @@ JS API 2.0，地图跟随页面切换深浅色，不需要单独设置地图颜�
 高德的脚本权限。应用代理会校验高德 JSONP 的回调名和 JSON 内容，
 以正确的 JavaScript 响应类型返回，同时保留 `nosniff` 保护。
 
+HTML 响应为脚本生成每次请求独立的 CSP nonce，兼容 Cloudflare 自动
+注入的检测脚本；页面的主题和应用脚本保持原有加载顺序。地图尺寸
+由页面的 ResizeObserver 监听，旧浏览器退回窗口 resize 事件，
+不再启用高德内部的 JavaScript URL iframe 监听方式。
+
 ## OpenStreetMap
 
 无需 Key。国内网络可能无法连接其地图服务。深色模式只调整地图

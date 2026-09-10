@@ -123,7 +123,9 @@ export function createAMapAdapter(
   const map = new AMap.Map(canvas, {
     viewMode: "2D",
     zoom: 15,
-    resizeEnable: true,
+    // The shared hook observes container size. The SDK fallback uses a
+    // javascript: iframe, which strict CSP correctly blocks.
+    resizeEnable: false,
     mapStyle: amapStyle(theme),
     scrollWheel: false,
     showIndoorMap: false,
@@ -226,10 +228,14 @@ export function createVehicleMapHook(createLeaflet, dependencies = {}) {
       this.onTheme = () =>
         this.adapter?.setTheme(doc.documentElement.dataset.theme || "light");
       win.addEventListener("themechange", this.onTheme);
+      this.onResize = () => {
+        if (!this.disposed) this.adapter?.resize();
+      };
       this.resizeObserver = win.ResizeObserver
-        ? new win.ResizeObserver(() => this.adapter?.resize())
+        ? new win.ResizeObserver(this.onResize)
         : null;
-      this.resizeObserver?.observe(this.el);
+      if (this.resizeObserver) this.resizeObserver.observe(this.el);
+      else win.addEventListener("resize", this.onResize);
       this.loading = this.startMap(
         fetchConfig,
         loadSDK,
@@ -309,6 +315,7 @@ export function createVehicleMapHook(createLeaflet, dependencies = {}) {
       win.clearTimeout(this.timeout);
       win.removeEventListener("themechange", this.onTheme);
       this.resizeObserver?.disconnect();
+      win.removeEventListener("resize", this.onResize);
       this.adapter?.destroy();
       if (this.reload) this.reload.onclick = null;
     },
