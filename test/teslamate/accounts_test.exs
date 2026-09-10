@@ -87,6 +87,18 @@ defmodule TeslaMate.AccountsTest do
 
     assert {:ok, _binding} = Accounts.grant_car(admin, member, car.id)
     assert Enum.map(Accounts.list_accessible_cars(member), & &1.id) == [car.id]
+
+    assert Enum.map(Repo.preload(member, :cars).cars, & &1.id) == [car.id]
+
+    binding = Repo.get_by!(Accounts.UserCar, user_id: member.id, car_id: car.id)
+    assert Repo.preload(binding, :car).car.id == car.id
+
+    event =
+      Enum.find(Accounts.list_audit_events(admin), &(&1.action == "vehicle_access_granted"))
+
+    assert event.car.id == car.id
+    assert event.actor_user.id == admin.id
+    assert event.target_user.id == member.id
   end
 
   test "one-time claims are hashed, bind the intended car and cannot be reused", %{
@@ -102,6 +114,11 @@ defmodule TeslaMate.AccountsTest do
     assert {:ok, _binding} = Accounts.redeem_vehicle_claim(member, raw_code)
     assert Accounts.can_access_car?(member, car.id)
     refute Accounts.can_access_car?(other_member, car.id)
+
+    [loaded_claim] = Accounts.list_vehicle_claims(admin)
+    assert loaded_claim.car.id == car.id
+    assert loaded_claim.created_by_user.id == admin.id
+    assert loaded_claim.claimed_by_user.id == member.id
 
     assert {:error, :invalid_or_expired_claim} =
              Accounts.redeem_vehicle_claim(other_member, raw_code)
