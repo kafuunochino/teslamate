@@ -437,7 +437,10 @@ export const Map = {
 
     const map = createMap({ enableHybridLayer: true });
     map.setView(location, 17, { animate: false });
-    map.pm.setLang(LANG);
+    const language = document.documentElement.lang.toLowerCase();
+    const mapLanguage =
+      { "zh-hans": "zh", "zh-hant": "zh_tw" }[language] || language || "en";
+    map.pm.setLang(mapLanguage);
     map.pm.addControls(controlOpts);
     map.pm.enableGlobalEditMode(editOpts);
 
@@ -461,16 +464,9 @@ export const Map = {
       .on("markgeocode", (e) => {
         const { bbox, center } = e.geocode;
 
-        const poly = L.polygon([
-          bbox.getSouthEast(),
-          bbox.getNorthEast(),
-          bbox.getNorthWest(),
-          bbox.getSouthWest(),
-        ]);
-
         circle.setLatLng(center);
 
-        const lBox = poly.getBounds();
+        const lBox = bbox;
         const cBox = circle.getBounds();
         const bounds = cBox.contains(lBox) ? cBox : lBox;
 
