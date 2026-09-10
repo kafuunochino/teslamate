@@ -47,7 +47,8 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
     # inline scripts, arbitrary script hosts and frames remain blocked.
     amap_scripts =
       if amap?,
-        do: " 'unsafe-eval' https://webapi.amap.com https://jsapi-service.amap.com",
+        do:
+          " 'unsafe-eval' https://webapi.amap.com https://jsapi-service.amap.com https://mapplugin.amap.com",
         else: ""
 
     csp =

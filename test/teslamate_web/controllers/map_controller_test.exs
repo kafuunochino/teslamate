@@ -21,6 +21,7 @@ defmodule TeslaMateWeb.MapControllerTest do
     refute policy =~ "'unsafe-eval'"
     refute policy =~ "https://webapi.amap.com"
     refute policy =~ "https://jsapi-service.amap.com"
+    refute policy =~ "https://mapplugin.amap.com"
     assert policy =~ "worker-src 'self';"
   end
 
@@ -53,6 +54,7 @@ defmodule TeslaMateWeb.MapControllerTest do
     [policy] = get_resp_header(page, "content-security-policy")
     assert policy =~ "https://webapi.amap.com"
     assert policy =~ "https://jsapi-service.amap.com"
+    assert policy =~ "https://mapplugin.amap.com"
     [script] = Regex.run(~r/script-src [^;]+/, policy)
     assert script =~ "'unsafe-eval'"
     refute script =~ "'unsafe-inline'"

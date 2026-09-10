@@ -28,7 +28,8 @@ JS API 2.0，地图跟随页面切换深浅色，不需要单独设置地图颜�
 仍使用原有地图实现。
 
 启用高德时，页面安全策略允许官方 SDK 和绘图模块域名
-`webapi.amap.com`、`jsapi-service.amap.com`，以及 JS API 2.0 所需的
+`webapi.amap.com`、`jsapi-service.amap.com`、`mapplugin.amap.com`，
+以及 JS API 2.0 所需的
 动态函数执行。内联脚本仍被限制；切换为 OpenStreetMap 后不再增加
 高德的脚本权限。应用代理会校验高德 JSONP 的回调名和 JSON 内容，
 以正确的 JavaScript 响应类型返回，同时保留 `nosniff` 保护。
