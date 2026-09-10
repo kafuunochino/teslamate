@@ -127,7 +127,7 @@ msgid "Units"
 msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:165
-#: lib/teslamate_web/live/geofence_live/form.html.heex:124
+#: lib/teslamate_web/live/geofence_live/form.html.heex:125
 #, elixir-autogen
 msgid "Back"
 msgstr ""
@@ -150,32 +150,32 @@ msgstr ""
 msgid "Idle Time Before Trying to Sleep"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:46
-#: lib/teslamate_web/live/geofence_live/form.html.heex:52
-#: lib/teslamate_web/live/geofence_live/index.html.heex:23
+#: lib/teslamate_web/live/geofence_live/form.html.heex:47
+#: lib/teslamate_web/live/geofence_live/form.html.heex:53
+#: lib/teslamate_web/live/geofence_live/index.html.heex:24
 #, elixir-autogen
 msgid "Name"
 msgstr ""
 
 #: lib/teslamate_web/live/geofence_live/form.html.heex:19
-#: lib/teslamate_web/live/geofence_live/index.html.heex:24
+#: lib/teslamate_web/live/geofence_live/index.html.heex:25
 #, elixir-autogen
 msgid "Position"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/index.html.heex:25
+#: lib/teslamate_web/live/geofence_live/index.html.heex:26
 #, elixir-autogen
 msgid "Radius"
 msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:168
-#: lib/teslamate_web/live/geofence_live/form.html.heex:128
+#: lib/teslamate_web/live/geofence_live/form.html.heex:129
 #, elixir-autogen
 msgid "Save"
 msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:169
-#: lib/teslamate_web/live/geofence_live/form.html.heex:129
+#: lib/teslamate_web/live/geofence_live/form.html.heex:130
 #: lib/teslamate_web/live/import_live/index.html.heex:153
 #: lib/teslamate_web/live/signin_live/index.html.heex:84
 #, elixir-autogen
@@ -305,7 +305,7 @@ msgstr ""
 msgid "Windows open"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/index.html.heex:60
+#: lib/teslamate_web/live/geofence_live/index.html.heex:63
 #, elixir-autogen
 msgid "Delete '%{geo_fence}'?"
 msgstr ""
@@ -400,7 +400,7 @@ msgid "Charge Cost"
 msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:132
-#: lib/teslamate_web/live/geofence_live/form.html.heex:64
+#: lib/teslamate_web/live/geofence_live/form.html.heex:65
 #, elixir-autogen
 msgid "Cost"
 msgstr ""
@@ -480,7 +480,7 @@ msgstr ""
 msgid "General Settings"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:96
+#: lib/teslamate_web/live/geofence_live/form.html.heex:97
 #, elixir-autogen
 msgid "Session fee"
 msgstr ""
@@ -491,7 +491,7 @@ msgid "Doors open"
 msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:140
-#: lib/teslamate_web/live/geofence_live/form.html.heex:72
+#: lib/teslamate_web/live/geofence_live/form.html.heex:73
 #, elixir-autogen
 msgid "Per kWh"
 msgstr ""
@@ -501,24 +501,24 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:167
+#: lib/teslamate_web/live/geofence_live/form.html.heex:168
 #, elixir-autogen
 msgid "There is <strong>%{n} charging session</strong> at this location for which no costs have been added yet."
 msgid_plural "There are <strong>%{n} charging sessions</strong> at this location for which no costs have been added yet."
 msgstr[0] ""
 msgstr[1] ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:181
+#: lib/teslamate_web/live/geofence_live/form.html.heex:182
 #, elixir-autogen
 msgid "Add costs retroactively"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:155
+#: lib/teslamate_web/live/geofence_live/form.html.heex:156
 #, elixir-autogen
 msgid "Charging Costs"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:178
+#: lib/teslamate_web/live/geofence_live/form.html.heex:179
 #, elixir-autogen
 msgid "Continue"
 msgstr ""
@@ -544,7 +544,7 @@ msgid "GitHub"
 msgstr ""
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:382
-#: lib/teslamate_web/templates/layout/root.html.heex:183
+#: lib/teslamate_web/templates/layout/root.html.heex:189
 #, elixir-autogen
 msgid "Update available"
 msgstr ""
@@ -560,7 +560,7 @@ msgid "Trunk is open"
 msgstr ""
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:141
-#: lib/teslamate_web/live/geofence_live/form.html.heex:73
+#: lib/teslamate_web/live/geofence_live/form.html.heex:74
 #, elixir-autogen
 msgid "Per Minute"
 msgstr ""
@@ -700,7 +700,7 @@ msgstr ""
 msgid "Breadcrumbs"
 msgstr ""
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:158
+#: lib/teslamate_web/live/geofence_live/form.html.heex:159
 #, elixir-autogen
 msgid "Close"
 msgstr ""
