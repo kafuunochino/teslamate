@@ -46,7 +46,9 @@
             <div class="field is-grouped is-pulled-right">
               <p class="control">
                 <.link
-                  navigate={Routes.live_path(@socket, TeslaMateWeb.GeoFenceLive.Form, geofence, [])}
+                  navigate={
+                    Routes.live_path(@socket, TeslaMateWeb.GeoFenceLive.Form, geofence, [])
+                  }
                   class="button is-info is-small is-inverted is-light"
                 >
                   <span class="icon"><span class="mdi mdi-square-edit-outline"></span></span>

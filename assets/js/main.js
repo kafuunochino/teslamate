@@ -30,7 +30,10 @@ function syncSidebarVisibility() {
     : !sidebar.classList.contains("is-open");
   sidebar.inert = hidden;
   sidebar.setAttribute("aria-hidden", String(hidden));
-  sidebarOpen?.setAttribute("aria-expanded", String(!hidden && !desktopSidebar.matches));
+  sidebarOpen?.setAttribute(
+    "aria-expanded",
+    String(!hidden && !desktopSidebar.matches),
+  );
   if (platformMain) platformMain.inert = !desktopSidebar.matches && !hidden;
 }
 
@@ -77,7 +80,11 @@ function setSidebar(open) {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !desktopSidebar.matches && sidebar?.classList.contains("is-open")) {
+  if (
+    event.key === "Escape" &&
+    !desktopSidebar.matches &&
+    sidebar?.classList.contains("is-open")
+  ) {
     event.preventDefault();
     setSidebar(false);
   }

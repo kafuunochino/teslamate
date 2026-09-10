@@ -63,7 +63,8 @@
   .mobile-topbar {
     height: auto;
     min-height: 60px;
-    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px
+    padding: max(8px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right)) 8px
       max(12px, env(safe-area-inset-left));
   }
 
@@ -598,7 +599,8 @@
   .auth-main {
     min-height: 100vh;
     min-height: 100dvh;
-    padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+    padding: max(20px, env(safe-area-inset-top)) 16px
+      max(20px, env(safe-area-inset-bottom));
   }
 
   .auth-card {

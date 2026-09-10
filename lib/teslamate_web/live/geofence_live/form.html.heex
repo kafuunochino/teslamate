@@ -22,7 +22,8 @@
       <div class="field">
         <div class="control">
           <div id="map_container" phx-update="ignore">
-            <figure id="map" class="geofence-map" style="position: relative;" phx-hook="Map"></figure>
+            <figure id="map" class="geofence-map" style="position: relative;" phx-hook="Map">
+            </figure>
           </div>
           <%= hidden_input(f, :latitude) %>
           <%= hidden_input(f, :longitude) %>
