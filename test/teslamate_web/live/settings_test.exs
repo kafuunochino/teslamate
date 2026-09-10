@@ -614,9 +614,11 @@ defmodule TeslaMateWeb.SettingsLiveTest do
         |> element("#check-project-update")
         |> render_click()
 
-        html = render(view)
-        assert html =~ "Project differences found (bbbbbbbb)"
-        assert html =~ "kafuunochino/teslamate/compare/#{current}...#{remote}"
+        TestHelper.eventually(fn ->
+          html = render(view)
+          assert html =~ "Project differences found (bbbbbbbb)"
+          assert html =~ "kafuunochino/teslamate/compare/#{current}...#{remote}"
+        end)
       end
     end
   end
