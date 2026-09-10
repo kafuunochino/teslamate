@@ -280,6 +280,34 @@ defmodule TeslaMateWeb.SettingsLiveTest do
       car
     end
 
+    test "saves collection frequency and retains it when the page is reopened", %{conn: conn} do
+      car = car_fixture(settings: %{use_streaming_api: true})
+      {:ok, view, _html} = live(conn, "/settings")
+
+      assert has_element?(view, "#car_settings_#{car.id}_polling_interval option[value='0'][selected]")
+
+      render_change(view, :change, %{
+        "car_settings_#{car.id}" => %{polling_interval: "30"}
+      })
+
+      assert Settings.get_car_settings!(car).polling_interval == 30
+
+      {:ok, reopened, _html} = live(conn, "/settings")
+      assert has_element?(reopened, "#car_settings_#{car.id}_polling_interval option[value='30'][selected]")
+
+      render_change(reopened, :change, %{
+        "car_settings_#{car.id}" => %{polling_interval: "0"}
+      })
+
+      assert Settings.get_car_settings!(car).polling_interval == 0
+    end
+
+    test "appearance choice is local to the browser", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/settings")
+      assert has_element?(view, "#browser-theme-mode[data-theme-mode-select]")
+      refute has_element?(view, "select[name='global_settings[theme_mode]']")
+    end
+
     test "hides most of the sleep mode settings if streaming is enabled", %{conn: conn} do
       car = car_fixture(settings: %{use_streaming_api: true})
 

@@ -1,3 +1,4 @@
+import { initializeTheme } from "./theme.mjs";
 import {
   toBeijingTime as toLocalTime,
   toBeijingDate as toLocalDate,
@@ -516,23 +517,22 @@ export const NumericInput = {
 
 export const ThemeSelector = {
   mounted() {
-    const select = this.el.querySelector("select");
-    if (select) {
-      select.addEventListener("change", (e) => {
-        const themeMode = e.target.value;
-        document.documentElement.setAttribute("data-theme-mode", themeMode);
+    this.theme = initializeTheme(window, document);
+    this.select = this.el.querySelector("select");
+    this.onChange = (event) => {
+      event.stopPropagation();
+      this.theme.setMode(event.target.value);
+    };
+    this.select?.addEventListener("change", this.onChange);
+    this.theme.syncControls(this.el);
+  },
 
-        // Apply theme immediately
-        let actualTheme = themeMode;
-        if (themeMode === "system") {
-          actualTheme = window.matchMedia("(prefers-color-scheme: dark)")
-            .matches
-            ? "dark"
-            : "light";
-        }
-        document.documentElement.setAttribute("data-theme", actualTheme);
-      });
-    }
+  updated() {
+    this.theme.syncControls(this.el);
+  },
+
+  destroyed() {
+    this.select?.removeEventListener("change", this.onChange);
   },
 };
 

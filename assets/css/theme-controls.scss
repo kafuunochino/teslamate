@@ -1,0 +1,118 @@
+.platform-topbar,
+.auth-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(8px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right)) 8px
+    max(24px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--platform-border);
+  color: var(--platform-text);
+  background: var(--platform-surface);
+}
+
+.platform-topbar > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-actions,
+.theme-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-controls button,
+.platform-topbar .topbar-account {
+  display: inline-flex;
+  width: auto;
+  min-width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--platform-control-border);
+  border-radius: 10px;
+  color: var(--platform-text);
+  background: var(--platform-control-bg);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.theme-controls button:hover,
+.platform-topbar .topbar-account:hover {
+  border-color: var(--platform-control-hover);
+}
+
+.theme-controls button:focus-visible,
+.platform-topbar .topbar-account:focus-visible {
+  outline: 3px solid var(--platform-control-ring);
+  outline-offset: 2px;
+}
+
+.theme-controls .mdi,
+.platform-topbar .topbar-account .mdi {
+  font-size: 1.2rem;
+}
+
+.theme-controls [hidden] {
+  display: none !important;
+}
+
+.auth-toolbar {
+  justify-content: flex-end;
+}
+
+.auth-main {
+  min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
+}
+
+.platform-content {
+  min-height: calc(100vh - 122px);
+  min-height: calc(100dvh - 122px);
+}
+
+@media (min-width: 981px) {
+  .platform-topbar #sidebar-open {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .platform-topbar,
+  .auth-toolbar {
+    gap: 8px;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-actions,
+  .theme-controls {
+    gap: 4px;
+  }
+
+  .theme-controls button,
+  .platform-topbar .topbar-account {
+    width: 44px;
+    padding: 0;
+  }
+
+  .theme-controls button span {
+    display: none;
+  }
+}

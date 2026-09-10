@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html
   lang={Plug.Conn.get_session(@conn, :locale) || "zh-Hans"}
-  data-theme-mode={@conn.assigns.settings.theme_mode}
+  data-theme-mode="system"
   data-live-path={Routes.static_path(@conn, "/live")}
 >
   <head>
@@ -11,6 +11,12 @@
     <.live_title suffix=" · TeslaMate CN">
       <%= assigns[:page_title] || "车辆数据中心" %>
     </.live_title>
+    <script
+      phx-track-static
+      type="text/javascript"
+      src={Routes.static_path(@conn, "/assets/theme.js")}
+    >
+    </script>
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")} />
     <link
       rel="apple-touch-icon"
@@ -154,7 +160,7 @@
         </button>
 
         <div class="platform-main">
-          <header class="mobile-topbar">
+          <header class="mobile-topbar platform-topbar">
             <button
               id="sidebar-open"
               type="button"
@@ -165,9 +171,16 @@
               <i class="mdi mdi-menu"></i>
             </button>
             <strong>TeslaMate CN</strong>
-            <.link href={Routes.user_settings_path(@conn, :edit)} aria-label="账号设置">
-              <i class="mdi mdi-account-circle-outline"></i>
-            </.link>
+            <div class="topbar-actions">
+              <.theme_controls />
+              <.link
+                href={Routes.user_settings_path(@conn, :edit)}
+                class="topbar-account"
+                aria-label="账号设置"
+              >
+                <i class="mdi mdi-account-circle-outline"></i>
+              </.link>
+            </div>
           </header>
 
           <main role="main" class="platform-content">
@@ -198,6 +211,9 @@
         </div>
       </div>
     <% else %>
+      <header class="auth-toolbar">
+        <.theme_controls />
+      </header>
       <main role="main" class="auth-main">
         <%= Enum.map(@flash, fn {flash_key, flash_message} -> %>
           <p class={"platform-flash platform-flash--#{flash_key}"}><%= flash_message %></p>

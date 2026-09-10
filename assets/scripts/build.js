@@ -3,9 +3,7 @@ const path = require("path");
 const { sassPlugin } = require("esbuild-sass-plugin");
 const esbuild = require("esbuild");
 
-const ENTRY_FILE = "app.js";
 const OUTPUT_DIR = path.resolve(__dirname, "../../priv/static/assets");
-const OUTPUT_FILE = "app.js";
 const MODE = process.env["NODE_ENV"] || "production";
 const TARGET = "es2017";
 
@@ -25,8 +23,11 @@ const buildLogger = {
 };
 
 const build_opts = {
-  entryPoints: [path.join(__dirname, "..", "js", ENTRY_FILE)],
-  outfile: `${OUTPUT_DIR}/${OUTPUT_FILE}`,
+  entryPoints: {
+    app: path.join(__dirname, "..", "js", "app.js"),
+    theme: path.join(__dirname, "..", "js", "theme-init.js"),
+  },
+  outdir: OUTPUT_DIR,
   minify: !isDevMode,
   bundle: true,
   target: TARGET,
@@ -51,15 +52,15 @@ const build_opts = {
 async function build() {
   try {
     console.log(`[+] Starting static assets build with esbuild (${MODE})...`);
-    ctx = await esbuild.context(build_opts);
+    const ctx = await esbuild.context(build_opts);
 
     if (isDevMode) {
-      ctx.watch();
+      await ctx.watch();
       process.stdin.pipe(process.stdout);
       process.stdin.on("end", () => ctx.dispose());
     } else {
-      ctx.rebuild();
-      ctx.dispose();
+      await ctx.rebuild();
+      await ctx.dispose();
     }
   } catch (e) {
     console.error("[-] Error building:", e.message);

@@ -11,6 +11,7 @@ defmodule TeslaMate.Settings.CarSettings do
     field :free_supercharging, :boolean, default: false
     field :use_streaming_api, :boolean, default: true
     field :enabled, :boolean, default: true
+    field :polling_interval, :integer, default: 0
     field :lfp_battery, :boolean, default: false
 
     has_one :car, Car, foreign_key: :settings_id
@@ -23,13 +24,18 @@ defmodule TeslaMate.Settings.CarSettings do
     :free_supercharging,
     :use_streaming_api,
     :enabled,
+    :polling_interval,
     :lfp_battery
   ]
+
+  def polling_intervals, do: [0, 5, 10, 15, 30, 60, 120, 300]
 
   @doc false
   def changeset(units, attrs) do
     units
     |> cast(attrs, @all_fields)
     |> validate_required(@all_fields)
+    |> validate_inclusion(:polling_interval, polling_intervals())
+    |> check_constraint(:polling_interval, name: :car_settings_polling_interval_valid)
   end
 end

@@ -42,6 +42,33 @@
             </div>
           </div>
         </div>
+        <div class="field is-horizontal center-vertically">
+          <div class="field-label is-normal">
+            <%= label(f, :polling_interval, "采集频率", class: "label") %>
+          </div>
+          <div class="field-body">
+            <div class="field">
+              <div class="control">
+                <div class="select is-fullwidth">
+                  <%= select(
+                    f,
+                    :polling_interval,
+                    Enum.map(CarSettings.polling_intervals(), fn
+                      0 -> {"自动（按车辆状态调整）", 0}
+                      seconds -> {"每 #{seconds} 秒", seconds}
+                    end),
+                    aria_describedby: "collection-interval-help"
+                  ) %>
+                </div>
+              </div>
+              <p class="help" id="collection-interval-help">
+                用于当前车辆在线时的定时采集，下一轮采集起生效。间隔越短，请求越多；页面刷新频率单独设置。
+                休眠、离线和接口限流时会自动延长等待，实时推送的数据仍即时接收。
+              </p>
+              <p class="help is-danger"><%= error_tag(f, :polling_interval) %></p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -253,20 +280,25 @@
       <h2 class="title is-4"><%= gettext("Theme") %></h2>
       <div class="field is-horizontal">
         <div class="field-label is-normal">
-          <%= label(f, :theme_mode, gettext("Appearance"), class: "label") %>
+          <label class="label" for="browser-theme-mode"><%= gettext("Appearance") %></label>
         </div>
         <div class="field-body">
           <div class="field">
             <div class="control">
-              <div class="select is-fullwidth" id="theme-selector" phx-hook="ThemeSelector">
-                <%= select(f, :theme_mode, [
-                  {gettext("Light"), :light},
-                  {gettext("Follow System"), :system},
-                  {gettext("Dark"), :dark}
-                ]) %>
+              <div
+                class="select is-fullwidth"
+                id="theme-selector"
+                phx-hook="ThemeSelector"
+                phx-update="ignore"
+              >
+                <select id="browser-theme-mode" data-theme-mode-select>
+                  <option value="system"><%= gettext("Follow System") %></option>
+                  <option value="light"><%= gettext("Light") %></option>
+                  <option value="dark"><%= gettext("Dark") %></option>
+                </select>
               </div>
             </div>
-            <p class="help is-danger"><%= error_tag(f, :theme_mode) %></p>
+            <p class="help">仅保存到当前浏览器。首次访问跟随设备系统，顶部按钮可随时切换。</p>
           </div>
         </div>
       </div>

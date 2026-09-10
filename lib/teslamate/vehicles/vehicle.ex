@@ -1106,7 +1106,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
         {:next_state, {:driving, :available, drive}, data,
          [
            broadcast_summary(),
-           schedule_fetch(interval, data)
+           schedule_collection(interval, data)
          ]}
 
       %V{charge_state: %Charge{charging_state: charging_state, battery_level: lvl}}
@@ -1140,7 +1140,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
            | last_state_change: DateTime.utc_now(),
              last_used: DateTime.utc_now(),
              stream_pid: nil
-         }, [broadcast_summary(), schedule_fetch(5, data), schedule_position_storing()]}
+         }, [broadcast_summary(), schedule_collection(5, data), schedule_position_storing()]}
 
       _ ->
         try_to_suspend(vehicle, state, data)
@@ -1185,7 +1185,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
           |> determince_interval()
 
         {:next_state, {:charging, cproc}, data,
-         [broadcast_summary(), schedule_fetch(interval, data)]}
+         [broadcast_summary(), schedule_collection(interval, data)]}
 
       %Vehicle{charge_state: %Charge{charging_state: state}} ->
         Repo.transaction(fn ->
@@ -1368,7 +1368,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
           end)
 
         {:keep_state, %{data | last_used: DateTime.utc_now(), geofence: geofence},
-         [broadcast_summary(), schedule_fetch(interval, data)]}
+         [broadcast_summary(), schedule_collection(interval, data)]}
 
       %Vehicle{drive_state: %Drive{shift_state: shift_state}} when shift_state in [nil, "P"] ->
         {:ok, {%Log.Drive{distance: km, duration_min: min}, geofence}} =
@@ -1392,7 +1392,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
 
       %Vehicle{drive_state: nil} ->
         Logger.warning("drive_state is nil!", car_id: data.car.id)
-        {:keep_state_and_data, schedule_fetch(interval, data)}
+        {:keep_state_and_data, schedule_collection(interval, data)}
     end
   end
 
@@ -1751,55 +1751,55 @@ defmodule TeslaMate.Vehicles.Vehicle do
     case can_fall_asleep(vehicle, data) do
       {:error, :sentry_mode} ->
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(30 * i, data)]}
+         [broadcast_summary(), schedule_collection(30 * i, data)]}
 
       {:error, :preconditioning} ->
         if suspend?, do: Logger.warning("Preconditioning ...", car_id: car.id)
 
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(30 * i, data)]}
+         [broadcast_summary(), schedule_collection(30 * i, data)]}
 
       {:error, :dogmode} ->
         if suspend?, do: Logger.warning("Dog Mode is enabled ...", car_id: car.id)
 
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(30 * i, data)]}
+         [broadcast_summary(), schedule_collection(30 * i, data)]}
 
       {:error, :user_present} ->
         if suspend?, do: Logger.warning("User present ...", car_id: car.id)
 
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(default_interval(), data)]}
+         [broadcast_summary(), schedule_collection(default_interval(), data)]}
 
       {:error, :downloading_update} ->
         if suspend?, do: Logger.warning("Downloading update ...", car_id: car.id)
 
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(default_interval() * i, data)]}
+         [broadcast_summary(), schedule_collection(default_interval() * i, data)]}
 
       {:error, :doors_open} ->
         if suspend?, do: Logger.warning("Doors open ...", car_id: car.id)
 
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(default_interval() * i, data)]}
+         [broadcast_summary(), schedule_collection(default_interval() * i, data)]}
 
       {:error, :trunk_open} ->
         if suspend?, do: Logger.warning("Trunk open ...", car_id: car.id)
 
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(default_interval() * i, data)]}
+         [broadcast_summary(), schedule_collection(default_interval() * i, data)]}
 
       {:error, :power_usage} ->
         if suspend?, do: Logger.warning("Power usage ...", car_id: car.id)
 
         {:keep_state, %Data{data | last_used: DateTime.utc_now()},
-         [broadcast_summary(), schedule_fetch(default_interval() * i, data)]}
+         [broadcast_summary(), schedule_collection(default_interval() * i, data)]}
 
       {:error, :unlocked} ->
         if suspend? and not service_mode?, do: Logger.warning("Unlocked ...", car_id: car.id)
 
         {:keep_state_and_data,
-         [broadcast_summary(), schedule_fetch(default_interval() * i, data)]}
+         [broadcast_summary(), schedule_collection(default_interval() * i, data)]}
 
       :ok ->
         if suspend? do
@@ -1820,7 +1820,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
           end
         else
           {:keep_state_and_data,
-           [broadcast_summary(), schedule_fetch(default_interval() * i, data)]}
+           [broadcast_summary(), schedule_collection(default_interval() * i, data)]}
         end
     end
   end
@@ -2071,6 +2071,16 @@ defmodule TeslaMate.Vehicles.Vehicle do
   defp date_opts(%Vehicle{}), do: []
 
   defp parse_timestamp(ts), do: DateTime.from_unix!(ts, :millisecond)
+
+  defp schedule_collection(default, %Data{car: %Car{settings: settings}} = data) do
+    interval =
+      case settings.polling_interval do
+        value when is_integer(value) and value > 0 -> value
+        _ -> default
+      end
+
+    schedule_fetch(interval, data)
+  end
 
   defp schedule_fetch(%Data{} = data), do: schedule_fetch(10, :seconds, data)
 

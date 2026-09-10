@@ -143,6 +143,36 @@ defmodule TeslaMate.SettingsTest do
       lfp_battery: nil
     }
 
+    test "persists and broadcasts collection interval choices for each car" do
+      car = car_fixture()
+      :ok = Settings.subscribe_to_changes(car)
+      settings = Settings.get_car_settings!(car)
+      assert settings.polling_interval == 0
+
+      for interval <- [5, 30, 300, 0] do
+        settings = Settings.get_car_settings!(car)
+
+        assert {:ok, updated} =
+                 Settings.update_car_settings(settings, %{polling_interval: interval})
+
+        assert_receive ^updated
+        assert Settings.get_car_settings!(car).polling_interval == interval
+      end
+    end
+
+    test "rejects invalid collection intervals without changing the saved setting" do
+      car = car_fixture()
+      settings = Settings.get_car_settings!(car)
+
+      for value <- [nil, -1, 1, 301, "5.5", "invalid"] do
+        assert {:error, changeset} =
+                 Settings.update_car_settings(settings, %{polling_interval: value})
+
+        assert errors_on(changeset)[:polling_interval]
+        assert Settings.get_car_settings!(car).polling_interval == 0
+      end
+    end
+
     test "get_car_settings/0 returns the settings" do
       car = car_fixture()
 
