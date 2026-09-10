@@ -37,7 +37,7 @@ body.auth-body {
     border: 1px solid var(--platform-control-border);
     border-radius: 10px;
     color: var(--platform-text);
-    background-color: var(--platform-control-bg);
+    background: var(--platform-control-bg);
     box-shadow: none;
     font-size: 1rem;
     line-height: 1.4;
@@ -76,13 +76,24 @@ body.auth-body {
       border-color: var(--platform-field-danger);
     }
 
-    &:is(:autofill, :-webkit-autofill) {
+    &:-webkit-autofill {
       -webkit-text-fill-color: var(--platform-text);
       caret-color: var(--platform-text);
       box-shadow: 0 0 0 1000px var(--platform-control-bg) inset;
     }
 
-    &:is(:autofill, :-webkit-autofill):focus {
+    &:-webkit-autofill:focus {
+      box-shadow:
+        0 0 0 1000px var(--platform-control-bg) inset,
+        0 0 0 3px var(--platform-control-ring);
+    }
+
+    &:autofill {
+      caret-color: var(--platform-text);
+      box-shadow: 0 0 0 1000px var(--platform-control-bg) inset;
+    }
+
+    &:autofill:focus {
       box-shadow:
         0 0 0 1000px var(--platform-control-bg) inset,
         0 0 0 3px var(--platform-control-ring);
@@ -91,6 +102,8 @@ body.auth-body {
 
   .input,
   .textarea {
+    -webkit-appearance: none;
+    appearance: none;
     padding: 10px 12px;
   }
 
@@ -115,11 +128,14 @@ body.auth-body {
   .label {
     margin-bottom: 8px;
     color: var(--platform-text);
+    font-size: 0.875rem;
     font-weight: 600;
+    line-height: 1.5;
   }
 
   .help {
     color: var(--platform-muted);
+    font-size: 0.8125rem;
     line-height: 1.5;
   }
 
@@ -142,9 +158,37 @@ body.auth-body {
     color: var(--platform-muted);
   }
 
-  .field .button {
+  .field .button,
+  .platform-form > .button,
+  .auth-form > .button {
     min-height: 44px;
+    height: auto;
+    padding: 10px 18px;
     border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .button.is-primary,
+  .auth-submit {
+    border-color: var(--platform-primary);
+    color: #fff;
+    background: var(--platform-primary);
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.08);
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--platform-control-ring);
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      filter: none;
+    }
   }
 
   .box {
@@ -184,4 +228,21 @@ body.auth-body {
 .auth-brand p:not(.auth-eyebrow),
 .auth-switch {
   color: var(--platform-muted);
+}
+
+.platform-form,
+.auth-form {
+  .field {
+    margin-bottom: 18px;
+  }
+
+  > .help {
+    margin: 10px 0 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .platform-form > .button {
+    width: 100%;
+  }
 }

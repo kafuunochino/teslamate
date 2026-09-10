@@ -12,9 +12,10 @@
       <div class="data-card__header">
         <h2>个人资料</h2>
       </div>
-      <%= form_for @profile_changeset, Routes.user_settings_path(@conn, :update_profile), [as: :user, method: :put, class: "auth-form"], fn f -> %>
+      <%= form_for @profile_changeset, Routes.user_settings_path(@conn, :update_profile), [as: :user, method: :put, class: "platform-form"], fn f -> %>
         <div class="field">
           <%= label(f, :email, "邮箱", class: "label") %><input
+            id="user_email"
             class="input"
             value={@conn.assigns.current_user.email}
             disabled
@@ -35,7 +36,7 @@
       <div class="data-card__header">
         <h2>修改密码</h2>
       </div>
-      <%= form_for @password_changeset, Routes.user_settings_path(@conn, :update_password), [as: :user, method: :put, class: "auth-form"], fn f -> %>
+      <%= form_for @password_changeset, Routes.user_settings_path(@conn, :update_password), [as: :user, method: :put, class: "platform-form"], fn f -> %>
         <div class="field">
           <label class="label" for="user_current_password">当前密码</label>
           <input

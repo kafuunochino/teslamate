@@ -1880,41 +1880,6 @@ body.auth-body {
   font-size: 0.72rem;
 }
 
-.auth-form {
-  .field {
-    margin-bottom: 15px;
-  }
-
-  .label {
-    margin-bottom: 6px;
-    color: #3e4c64;
-    font-size: 0.72rem;
-  }
-
-  .input {
-    height: 44px;
-    border-color: #dce3ef;
-    border-radius: 10px;
-    color: #172033;
-    background: #fff;
-    box-shadow: none;
-
-    &:focus {
-      border-color: #5c7ff1;
-      box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
-    }
-  }
-
-  .help {
-    color: #7b879c;
-    font-size: 0.62rem;
-  }
-
-  .help.is-danger {
-    color: #c33f56;
-  }
-}
-
 .auth-submit {
   height: 44px;
   margin-top: 7px;
