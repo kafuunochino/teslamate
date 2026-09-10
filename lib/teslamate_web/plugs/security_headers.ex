@@ -24,8 +24,10 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
 
   import Plug.Conn
 
-  # SHA-256 of the SDK's fixed "void(0)" resize-frame navigation only.
+  # Browsers hash either the full JavaScript URL or its body. Both hashes
+  # authorize only the SDK's fixed "javascript:void(0)" resize navigation.
   @amap_resize_noop_hash "97l24HYIWEdSIQ8PoMHzpxiGCZuyBDXtN19RPKFsOgk="
+  @amap_resize_url_hash "rRMdkshZyJlCmDX27XnL7g3zXaxv7ei6Sg+yt4R3svU="
 
   def init(opts), do: opts
 
@@ -60,6 +62,7 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
               "'unsafe-eval'",
               "'unsafe-hashes'",
               "'sha256-#{@amap_resize_noop_hash}'",
+              "'sha256-#{@amap_resize_url_hash}'",
               "https://webapi.amap.com",
               "https://jsapi-service.amap.com",
               "https://mapplugin.amap.com"

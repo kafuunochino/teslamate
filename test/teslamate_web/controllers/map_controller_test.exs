@@ -61,7 +61,8 @@ defmodule TeslaMateWeb.MapControllerTest do
     assert script =~ "'unsafe-hashes'"
 
     assert Regex.scan(~r/'sha256-([^']+)'/, script, capture: :all_but_first) == [
-             ["97l24HYIWEdSIQ8PoMHzpxiGCZuyBDXtN19RPKFsOgk="]
+             ["97l24HYIWEdSIQ8PoMHzpxiGCZuyBDXtN19RPKFsOgk="],
+             ["rRMdkshZyJlCmDX27XnL7g3zXaxv7ei6Sg+yt4R3svU="]
            ]
 
     refute script =~ "'unsafe-inline'"
