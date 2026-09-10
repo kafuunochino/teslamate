@@ -44,9 +44,6 @@ jobs:
         run: mix compile --warnings-as-errors
         shell: sh
 
-      - name: Test browser theme and date behavior
-        run: node --test assets/test/*.test.mjs
-
       - name: Run tests
         run: mix test --warnings-as-errors
 

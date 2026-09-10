@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { initializeTheme, THEME_STORAGE_KEY } from "../js/theme.mjs";
 
-function browser({ dark = false, stored = null, blocked = false, legacy = false } = {}) {
+function browser({
+  dark = false,
+  stored = null,
+  blocked = false,
+  legacy = false,
+} = {}) {
   const values = new Map(stored ? [[THEME_STORAGE_KEY, stored]] : []);
   const attributes = new Map([["data-theme-mode", "light"]]);
   const media = new EventTarget();
@@ -51,7 +56,8 @@ function browser({ dark = false, stored = null, blocked = false, legacy = false 
   const buttonAttributes = new Map();
   const toggle = {
     setAttribute: (key, value) => buttonAttributes.set(key, value),
-    querySelector: (selector) => (selector === "[data-theme-icon]" ? icon : label),
+    querySelector: (selector) =>
+      selector === "[data-theme-icon]" ? icon : label,
   };
   const system = { hidden: false };
   const select = { value: "" };

@@ -95,7 +95,9 @@ export function initializeTheme(win, doc) {
       setMode("system");
     }
   });
-  doc.addEventListener("DOMContentLoaded", () => syncControls(), { once: true });
+  doc.addEventListener("DOMContentLoaded", () => syncControls(), {
+    once: true,
+  });
   win.addEventListener("phx:navigate", () => syncControls());
   win.addEventListener("phx:page-loading-stop", () => syncControls());
 

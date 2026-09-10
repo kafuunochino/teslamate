@@ -17,7 +17,10 @@ defmodule TeslaMate.Vehicles.Vehicle.PollingIntervalTest do
 
   defp data(interval) do
     %Data{
-      car: %Car{id: 1, settings: %CarSettings{polling_interval: interval, use_streaming_api: false}},
+      car: %Car{
+        id: 1,
+        settings: %CarSettings{polling_interval: interval, use_streaming_api: false}
+      },
       last_used: DateTime.utc_now(),
       deps: %{log: LogStub, locations: LocationsStub}
     }
@@ -28,7 +31,12 @@ defmodule TeslaMate.Vehicles.Vehicle.PollingIntervalTest do
 
     for {interval, expected} <- [{0, Vehicle.default_interval()}, {5, 5}, {30, 30}, {300, 300}] do
       assert {:keep_state, _, actions} =
-               Vehicle.handle_event(:internal, {:update, {:online, vehicle}}, :online, data(interval))
+               Vehicle.handle_event(
+                 :internal,
+                 {:update, {:online, vehicle}},
+                 :online,
+                 data(interval)
+               )
 
       assert {:state_timeout, round(expected), :fetch} in actions
     end
@@ -89,7 +97,8 @@ defmodule TeslaMate.Vehicles.Vehicle.PollingIntervalTest do
   @tag :capture_log
   test "honors server rate-limit backoff even with a shorter collection interval" do
     ref = make_ref()
-    data = %{data(5) | task: %Task{ref: ref}}
+    task = %Task{ref: ref, owner: self(), pid: self(), mfa: {Vehicle, :handle_event, 4}}
+    data = %{data(5) | task: task}
 
     assert {:keep_state, _, actions} =
              Vehicle.handle_event(

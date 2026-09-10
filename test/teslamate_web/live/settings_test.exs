@@ -214,7 +214,7 @@ defmodule TeslaMateWeb.SettingsLiveTest do
                  html
                  |> Floki.parse_document!()
                  |> Floki.find("form .field-body")
-                 |> Floki.find("p.help")
+                 |> Floki.find("p.help.is-danger")
                  |> Floki.text()
 
         assert [{"option", [{"selected", "selected"}, {"value", "en"}], ["English"]}] =
@@ -284,7 +284,10 @@ defmodule TeslaMateWeb.SettingsLiveTest do
       car = car_fixture(settings: %{use_streaming_api: true})
       {:ok, view, _html} = live(conn, "/settings")
 
-      assert has_element?(view, "#car_settings_#{car.id}_polling_interval option[value='0'][selected]")
+      assert has_element?(
+               view,
+               "#car_settings_#{car.id}_polling_interval option[value='0'][selected]"
+             )
 
       render_change(view, :change, %{
         "car_settings_#{car.id}" => %{polling_interval: "30"}
@@ -293,7 +296,11 @@ defmodule TeslaMateWeb.SettingsLiveTest do
       assert Settings.get_car_settings!(car).polling_interval == 30
 
       {:ok, reopened, _html} = live(conn, "/settings")
-      assert has_element?(reopened, "#car_settings_#{car.id}_polling_interval option[value='30'][selected]")
+
+      assert has_element?(
+               reopened,
+               "#car_settings_#{car.id}_polling_interval option[value='30'][selected]"
+             )
 
       render_change(reopened, :change, %{
         "car_settings_#{car.id}" => %{polling_interval: "0"}
