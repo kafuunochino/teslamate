@@ -53,13 +53,13 @@ defmodule TeslaMateWeb.MapSettingsTest do
       "map_settings" => %{"provider" => "amap", "amap_key" => key, "amap_security_code" => ""}
     })
 
-    assert has_element?(view, "#map_settings_amap_key[value='#{key}']")
+    assert has_element?(view, "input[name='map_settings[amap_key]'][value='#{key}']")
 
     render_submit(view, "save_map_settings", %{
       "map_settings" => %{"provider" => "amap", "amap_key" => key, "amap_security_code" => ""}
     })
 
-    assert has_element?(view, "#map_settings_amap_key[value='#{key}']")
+    assert has_element?(view, "input[name='map_settings[amap_key]'][value='#{key}']")
     assert Maps.browser_config() == %{provider: "openstreetmap"}
   end
 
