@@ -28,6 +28,10 @@ function syncSidebarVisibility() {
   const hidden = desktopSidebar.matches
     ? sidebarCollapsed
     : !sidebar.classList.contains("is-open");
+  if (hidden && sidebar.contains(document.activeElement)) {
+    if (platformMain) platformMain.inert = false;
+    (desktopSidebar.matches ? sidebarToggle : sidebarOpen)?.focus();
+  }
   sidebar.inert = hidden;
   sidebar.setAttribute("aria-hidden", String(hidden));
   sidebarOpen?.setAttribute(
@@ -68,15 +72,11 @@ desktopSidebar.addEventListener("change", () => setSidebar(false));
 
 function setSidebar(open) {
   if (!sidebar || !sidebarBackdrop) return;
-  const restoreFocus = sidebar.contains(document.activeElement);
   sidebar.classList.toggle("is-open", open);
   sidebarBackdrop.classList.toggle("is-open", open);
   document.documentElement.classList.toggle("is-clipped", open);
   syncSidebarVisibility();
-  if (!desktopSidebar.matches) {
-    if (open) sidebarClose?.focus();
-    else if (restoreFocus) sidebarOpen?.focus();
-  }
+  if (open && !desktopSidebar.matches) sidebarClose?.focus();
 }
 
 document.addEventListener("keydown", (event) => {
