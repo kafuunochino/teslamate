@@ -31,7 +31,10 @@
     align-items: center;
     gap: 12px;
 
-    &[hidden], [hidden] { display: none; }
+    &[hidden],
+    [hidden] {
+      display: none;
+    }
   }
 
   .vehicle-map--osm-dark .leaflet-tile-pane {

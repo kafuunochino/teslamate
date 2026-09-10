@@ -11,8 +11,11 @@ defmodule TeslaMate.Repo.Migrations.CreateMapSettings do
     end
 
     create constraint(:map_settings, :map_settings_singleton, check: "id = 1", prefix: "private")
+
     create constraint(:map_settings, :map_settings_provider,
-      check: "provider IN ('openstreetmap', 'amap')", prefix: "private")
+             check: "provider IN ('openstreetmap', 'amap')",
+             prefix: "private"
+           )
 
     execute(
       "INSERT INTO private.map_settings (id, provider, inserted_at, updated_at) VALUES (1, 'openstreetmap', NOW(), NOW())",

@@ -32,7 +32,9 @@ defmodule TeslaMate.Maps.Settings do
     |> cast(attrs, [:provider, :amap_key, :amap_security_code])
     |> validate_required([:provider], message: "请选择地图提供商")
     |> validate_format(:amap_key, ~r/\A[a-zA-Z0-9_-]{16,128}\z/, message: "请输入有效的高德 Web 端 Key")
-    |> validate_format(:amap_security_code, ~r/\A[a-zA-Z0-9_-]{16,128}\z/, message: "请输入有效的高德安全密钥")
+    |> validate_format(:amap_security_code, ~r/\A[a-zA-Z0-9_-]{16,128}\z/,
+      message: "请输入有效的高德安全密钥"
+    )
     |> require_amap_credentials()
   end
 

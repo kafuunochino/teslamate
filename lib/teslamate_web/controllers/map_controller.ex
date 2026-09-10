@@ -37,8 +37,11 @@ defmodule TeslaMateWeb.MapController do
 
   defp require_map_user(conn, _opts) do
     case conn.assigns[:current_user] do
-      %TeslaMate.Accounts.User{status: :active} -> conn
-      _ -> conn |> put_status(:unauthorized) |> json(%{error: "authentication_required"}) |> halt()
+      %TeslaMate.Accounts.User{status: :active} ->
+        conn
+
+      _ ->
+        conn |> put_status(:unauthorized) |> json(%{error: "authentication_required"}) |> halt()
     end
   end
 end

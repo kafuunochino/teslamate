@@ -407,38 +407,69 @@
       当前使用：<%= if @map_preferences.provider == :amap, do: "高德地图", else: "OpenStreetMap" %>。
       用于首页实时位置、行车仪表盘和行程轨迹，地图颜色跟随页面深浅色模式。
     </p>
-    <.form :let={f} for={@map_form} as={:map_settings} id="map-settings-form"
-      phx-change="map_draft" phx-submit="save_map_settings" autocomplete="off">
+    <.form
+      :let={f}
+      for={@map_form}
+      as={:map_settings}
+      id="map-settings-form"
+      phx-change="map_draft"
+      phx-submit="save_map_settings"
+      autocomplete="off"
+    >
       <div class="field">
         <%= label(f, :provider, "地图提供商", class: "label") %>
         <div class="control">
           <div class="select is-fullwidth">
-            <%= select(f, :provider, [{"高德地图（国内推荐）", "amap"}, {"OpenStreetMap（无需 Key）", "openstreetmap"}]) %>
+            <%= select(f, :provider, [
+              {"高德地图（国内推荐）", "amap"},
+              {"OpenStreetMap（无需 Key）", "openstreetmap"}
+            ]) %>
           </div>
         </div>
-        <p :for={error <- Map.get(@map_errors, :provider, [])} class="help is-danger"><%= error %></p>
+        <p :for={error <- Map.get(@map_errors, :provider, [])} class="help is-danger">
+          <%= error %>
+        </p>
       </div>
       <div :if={@map_form["provider"] == "amap"} id="amap-credentials">
         <div class="field">
           <%= label(f, :amap_key, "高德 Web 端（JS API）Key", class: "label") %>
           <div class="control">
-            <%= password_input(f, :amap_key, class: "input", autocomplete: "new-password", maxlength: 128,
+            <%= password_input(f, :amap_key,
+              value: @map_form["amap_key"] || "",
+              class: "input",
+              autocomplete: "new-password",
+              maxlength: 128,
               phx_debounce: "300",
-              placeholder: if(@map_preferences.has_amap_key, do: "已保存，留空保留", else: "请输入高德 Web 端 Key")) %>
+              placeholder:
+                if(@map_preferences.has_amap_key, do: "已保存，留空保留", else: "请输入高德 Web 端 Key")
+            ) %>
           </div>
-          <p :for={error <- Map.get(@map_errors, :amap_key, [])} class="help is-danger"><%= error %></p>
+          <p :for={error <- Map.get(@map_errors, :amap_key, [])} class="help is-danger">
+            <%= error %>
+          </p>
         </div>
         <div class="field">
           <%= label(f, :amap_security_code, "高德安全密钥（securityJsCode）", class: "label") %>
           <div class="control">
-            <%= password_input(f, :amap_security_code, class: "input", autocomplete: "new-password", maxlength: 128,
+            <%= password_input(f, :amap_security_code,
+              value: @map_form["amap_security_code"] || "",
+              class: "input",
+              autocomplete: "new-password",
+              maxlength: 128,
               phx_debounce: "300",
-              placeholder: if(@map_preferences.has_amap_security_code, do: "已保存，留空保留", else: "请输入配套安全密钥")) %>
+              placeholder:
+                if(@map_preferences.has_amap_security_code, do: "已保存，留空保留", else: "请输入配套安全密钥")
+            ) %>
           </div>
-          <p :for={error <- Map.get(@map_errors, :amap_security_code, [])} class="help is-danger"><%= error %></p>
+          <p :for={error <- Map.get(@map_errors, :amap_security_code, [])} class="help is-danger">
+            <%= error %>
+          </p>
         </div>
         <p class="help mb-4">
-          在 <a href="https://console.amap.com/dev/key/app" target="_blank" rel="noopener noreferrer">高德开放平台</a>
+          在
+          <a href="https://console.amap.com/dev/key/app" target="_blank" rel="noopener noreferrer">
+            高德开放平台
+          </a>
           创建 Web 端（JS API）Key，并把本站域名加入白名单。安全密钥加密保存，已保存的密钥不会回显。
           如需更换 Key，请同时填写与之配套的安全密钥。
         </p>
@@ -447,7 +478,9 @@
         无需 Key，国内网络可能无法加载地图。
       </p>
       <div class="map-settings-actions">
-        <button type="submit" class="button is-primary" phx-disable-with="正在保存…">保存并应用</button>
+        <button type="submit" class="button is-primary" phx-disable-with="正在保存…">
+          保存并应用
+        </button>
         <span class="help">选择提供商或输入 Key 后，点击保存才会应用。</span>
       </div>
     </.form>

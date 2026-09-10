@@ -10,6 +10,7 @@ defmodule TeslaMate.Maps do
 
   def preferences do
     settings = get_settings!()
+
     %{
       provider: settings.provider,
       has_amap_key: is_binary(settings.amap_key),
@@ -31,6 +32,7 @@ defmodule TeslaMate.Maps do
     if Accounts.admin?(Repo.get(User, id)) do
       Repo.transaction(fn ->
         current = from(s in Settings, where: s.id == 1, lock: "FOR UPDATE") |> Repo.one!()
+
         case current |> Settings.changeset(attrs) |> Repo.update() do
           {:ok, settings} -> settings
           {:error, changeset} -> Repo.rollback(changeset)

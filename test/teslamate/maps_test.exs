@@ -10,28 +10,52 @@ defmodule TeslaMate.MapsTest do
 
   setup do
     start_supervised!(TeslaMate.Vault)
-    user = Repo.insert!(%User{
-      email: "map-admin@example.com", name: "Map Admin",
-      password_hash: "test-only", password_changed_at: DateTime.utc_now(),
-      role: :admin, status: :active
-    })
+
+    user =
+      Repo.insert!(%User{
+        email: "map-admin@example.com",
+        name: "Map Admin",
+        password_hash: "test-only",
+        password_changed_at: DateTime.utc_now(),
+        role: :admin,
+        status: :active
+      })
+
     %{user: user}
   end
 
   test "requires both credentials and leaves active settings unchanged on failure", %{user: user} do
-    assert {:error, changeset} = Maps.update_settings(user, %{"provider" => "amap", "amap_key" => @key})
+    assert {:error, changeset} =
+             Maps.update_settings(user, %{"provider" => "amap", "amap_key" => @key})
+
     assert changeset.errors[:amap_security_code]
     assert Maps.browser_config() == %{provider: "openstreetmap"}
     assert {:error, _} = Maps.update_settings(user, %{"provider" => "other"})
   end
 
   test "encrypts credentials, retains blanks and exposes only the browser key", %{user: user} do
-    assert {:ok, _} = Maps.update_settings(user, %{"provider" => "amap", "amap_key" => @key, "amap_security_code" => @code})
+    assert {:ok, _} =
+             Maps.update_settings(user, %{
+               "provider" => "amap",
+               "amap_key" => @key,
+               "amap_security_code" => @code
+             })
+
     assert Maps.browser_config() == %{provider: "amap", key: @key, service_host: "/_AMapService"}
-    assert {:ok, saved} = Maps.update_settings(user, %{"provider" => "amap", "amap_key" => "", "amap_security_code" => " "})
+
+    assert {:ok, saved} =
+             Maps.update_settings(user, %{
+               "provider" => "amap",
+               "amap_key" => "",
+               "amap_security_code" => " "
+             })
+
     assert saved.amap_security_code == @code
     refute inspect(saved) =~ @code
-    result = Repo.query!("SELECT amap_key, amap_security_code FROM private.map_settings WHERE id = 1")
+
+    result =
+      Repo.query!("SELECT amap_key, amap_security_code FROM private.map_settings WHERE id = 1")
+
     [[key, code]] = result.rows
     refute key == @key
     refute code == @code
@@ -50,21 +74,41 @@ defmodule TeslaMate.MapsTest do
 
   test "proxy restricts destinations and overrides untrusted credentials" do
     config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
-    assert {:ok, url} = AmapProxy.upstream_url(config, ["v4", "map", "styles"], "key=attacker&jscode=attacker&callback=AMap.cb")
+
+    assert {:ok, url} =
+             AmapProxy.upstream_url(
+               config,
+               ["v4", "map", "styles"],
+               "key=attacker&jscode=attacker&callback=AMap.cb"
+             )
+
     uri = URI.parse(url)
     assert uri.host == "webapi.amap.com"
     assert URI.decode_query(uri.query)["jscode"] == @code
     assert URI.decode_query(uri.query)["key"] == @key
+
     for path <- [["..", "maps"], ["v3", "direction", "driving"], ["https:", "", "evil.test"]] do
       assert {:error, :invalid_request} = AmapProxy.upstream_url(config, path, "")
     end
-    assert {:error, :invalid_request} = AmapProxy.upstream_url(config, ["v4", "map", "styles"], "callback=alert(1)")
+
+    assert {:error, :invalid_request} =
+             AmapProxy.upstream_url(config, ["v4", "map", "styles"], "callback=alert(1)")
   end
 
   test "proxy handles failures without exposing upstream secrets" do
     config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
-    request = fn _url, _opts -> {:ok, %Finch.Response{status: 200, headers: [{"content-type", "application/json"}], body: @code}} end
-    assert {:ok, "application/json", "[REDACTED]"} = AmapProxy.request(config, ["v4", "map", "styles"], "", request)
-    assert {:error, :upstream_unavailable} = AmapProxy.request(config, ["v4", "map", "styles"], "", fn _, _ -> {:error, :timeout} end)
+
+    request = fn _url, _opts ->
+      {:ok,
+       %Finch.Response{status: 200, headers: [{"content-type", "application/json"}], body: @code}}
+    end
+
+    assert {:ok, "application/json", "[REDACTED]"} =
+             AmapProxy.request(config, ["v4", "map", "styles"], "", request)
+
+    assert {:error, :upstream_unavailable} =
+             AmapProxy.request(config, ["v4", "map", "styles"], "", fn _, _ ->
+               {:error, :timeout}
+             end)
   end
 end

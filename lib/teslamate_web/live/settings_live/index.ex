@@ -10,6 +10,8 @@ defmodule TeslaMateWeb.SettingsLive.Index do
 
   @impl true
   def mount(_params, %{"settings" => settings}, socket) do
+    map_preferences = Maps.preferences()
+
     assigns = %{
       addresses_migrated?: addresses_migrated?(),
       car_settings: Settings.get_car_settings() |> prepare(),
@@ -19,8 +21,12 @@ defmodule TeslaMateWeb.SettingsLive.Index do
       repository_check: :idle,
       refreshing_addresses?: nil,
       refresh_error: nil,
-      map_preferences: Maps.preferences(),
-      map_form: %{"provider" => to_string(Maps.preferences().provider), "amap_key" => "", "amap_security_code" => ""},
+      map_preferences: map_preferences,
+      map_form: %{
+        "provider" => to_string(map_preferences.provider),
+        "amap_key" => "",
+        "amap_security_code" => ""
+      },
       map_errors: %{},
       page_title: gettext("Settings")
     }
@@ -66,7 +72,11 @@ defmodule TeslaMateWeb.SettingsLive.Index do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         errors = Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
-        {:noreply, assign(socket, map_errors: errors)}
+        {:noreply,
+         assign(socket,
+           map_errors: errors,
+           map_form: Map.take(params, ["provider", "amap_key", "amap_security_code"])
+         )}
 
       {:error, :forbidden} ->
         {:noreply, socket |> put_flash(:error, "需要管理员权限") |> redirect(to: ~p"/")}

@@ -15,14 +15,30 @@ defmodule TeslaMateWeb.MapControllerTest do
     assert conn |> get("/_AMapService/v4/map/styles") |> json_response(404)
   end
 
-  test "browser config excludes the security code and applies CSP for the saved provider", %{conn: conn, current_user: user} do
+  test "browser config excludes the security code and applies CSP for the saved provider", %{
+    conn: conn,
+    current_user: user
+  } do
     start_supervised!(TeslaMate.Vault)
     key = String.duplicate("a", 32)
     code = String.duplicate("b", 32)
-    assert {:ok, _} = Maps.update_settings(user, %{"provider" => "amap", "amap_key" => key, "amap_security_code" => code})
+
+    assert {:ok, _} =
+             Maps.update_settings(user, %{
+               "provider" => "amap",
+               "amap_key" => key,
+               "amap_security_code" => code
+             })
+
     response = get(conn, "/maps/config")
     assert get_resp_header(response, "cache-control") == ["private, no-store"]
-    assert json_response(response, 200) == %{"provider" => "amap", "key" => key, "service_host" => "/_AMapService"}
+
+    assert json_response(response, 200) == %{
+             "provider" => "amap",
+             "key" => key,
+             "service_host" => "/_AMapService"
+           }
+
     refute response.resp_body =~ code
     page = get(conn, "/admin/settings")
     [policy] = get_resp_header(page, "content-security-policy")

@@ -328,23 +328,41 @@ export const SimpleMap = {
 };
 
 function createLeafletVehicleMap(canvas, { theme, mode, ready, failed }) {
-  const map = new M(canvas, { zoomControl: true, preferCanvas: true, scrollWheelZoom: false });
-  let loaded = false;
-  const tiles = new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, attribution: "© OpenStreetMap",
+  const map = new M(canvas, {
+    zoomControl: true,
+    preferCanvas: true,
+    scrollWheelZoom: false,
   });
-  tiles.on("tileload", () => { loaded = true; ready(); });
-  tiles.on("tileerror", () => { if (!loaded) failed(); });
+  let loaded = false;
+  const tiles = new TileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+    },
+  );
+  tiles.on("tileload", () => {
+    loaded = true;
+    ready();
+  });
+  tiles.on("tileerror", () => {
+    if (!loaded) failed();
+  });
   tiles.addTo(map);
   let marker, route, start, end;
-  const setTheme = (value) => canvas.classList.toggle("vehicle-map--osm-dark", value === "dark");
+  const setTheme = (value) =>
+    canvas.classList.toggle("vehicle-map--osm-dark", value === "dark");
   setTheme(theme);
   return {
     render(points) {
       const coordinates = points.map((p) => [p.latitude, p.longitude]);
       if (mode === "route" && coordinates.length > 1) {
         if (!route) {
-          route = new Polyline(coordinates, { color: "#4f7cff", opacity: 0.9, weight: 5 }).addTo(map);
+          route = new Polyline(coordinates, {
+            color: "#4f7cff",
+            opacity: 0.9,
+            weight: 5,
+          }).addTo(map);
           start = new Marker(coordinates[0], { icon }).addTo(map);
           end = new Marker(coordinates.at(-1), { icon }).addTo(map);
         } else {
@@ -358,12 +376,17 @@ function createLeafletVehicleMap(canvas, { theme, mode, ready, failed }) {
         map.setView(coordinates[0], 15);
       } else {
         marker.setLatLng(coordinates[0]);
-        if (!map.getBounds().contains(coordinates[0])) map.panTo(coordinates[0], { animate: false });
+        if (!map.getBounds().contains(coordinates[0]))
+          map.panTo(coordinates[0], { animate: false });
       }
     },
     setTheme,
-    resize() { map.invalidateSize({ pan: false }); },
-    destroy() { map.remove(); },
+    resize() {
+      map.invalidateSize({ pan: false });
+    },
+    destroy() {
+      map.remove();
+    },
   };
 }
 
