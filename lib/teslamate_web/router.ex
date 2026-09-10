@@ -43,6 +43,17 @@ defmodule TeslaMateWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :map_api do
+    plug :fetch_session
+    plug :fetch_current_user
+  end
+
+  scope "/", TeslaMateWeb do
+    pipe_through [:map_api]
+    get "/maps/config", MapController, :config
+    get "/_AMapService/*path", MapController, :proxy
+  end
+
   pipeline :redirect_authenticated_users do
     plug :redirect_if_authenticated
   end

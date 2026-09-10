@@ -14,7 +14,7 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
       behind a reverse proxy that terminates TLS).
     * `X-Content-Type-Options: nosniff`
     * `X-Frame-Options: DENY`
-    * `Referrer-Policy: same-origin`
+    * `Referrer-Policy: strict-origin-when-cross-origin`
     * `Permissions-Policy` — disable camera/microphone/geolocation by
       default; TeslaMate does not need any of these.
     * Removes the `Server` and `X-Powered-By` headers (Plug already strips
@@ -32,22 +32,26 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
     |> put_optional_hsts()
     |> put_resp_header("x-content-type-options", "nosniff")
     |> put_resp_header("x-frame-options", "DENY")
-    |> put_resp_header("referrer-policy", "same-origin")
+    |> put_resp_header("referrer-policy", "strict-origin-when-cross-origin")
     |> put_resp_header("permissions-policy", "camera=(), microphone=(), geolocation=()")
   end
 
   # ---- builders ----------------------------------------------------------
 
   defp put_csp(conn) do
+    amap? = TeslaMate.Maps.preferences().provider == :amap
+    sources = if amap?, do: " https://*.amap.com https://*.autonavi.com", else: ""
+
     csp =
       [
         "default-src 'self'",
         "base-uri 'self'",
-        "img-src 'self' data: blob: https://tile.openstreetmap.org",
+        "img-src 'self' data: blob: https://tile.openstreetmap.org#{sources}",
         "font-src 'self' data:",
-        "script-src #{script_src()}",
-        "style-src #{style_src()}",
-        "connect-src 'self' ws: wss:",
+        "script-src #{script_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
+        "style-src #{style_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
+        "connect-src 'self' ws: wss:#{sources}",
+        "worker-src 'self'#{if amap?, do: " blob:", else: ""}",
         "frame-src 'none'",
         "frame-ancestors #{frame_ancestors()}",
         "form-action 'self'",

@@ -1,0 +1,60 @@
+.vehicle-map {
+  position: relative;
+  isolation: isolate;
+  background: var(--platform-surface-soft);
+  color: var(--platform-text);
+
+  .vehicle-map__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--platform-surface-soft);
+  }
+
+  .vehicle-map__status {
+    position: absolute;
+    z-index: 500;
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    width: max-content;
+    max-width: calc(100% - 32px);
+    padding: 16px;
+    border: 1px solid var(--platform-border);
+    border-radius: 12px;
+    background: var(--platform-surface);
+    color: var(--platform-text);
+    box-shadow: 0 4px 24px rgb(0 0 0 / 12%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    &[hidden], [hidden] { display: none; }
+  }
+
+  .vehicle-map--osm-dark .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.9);
+  }
+
+  .leaflet-control-zoom a,
+  .leaflet-control-attribution {
+    background: var(--platform-surface);
+    color: var(--platform-text);
+    border-color: var(--platform-border);
+  }
+
+  .leaflet-control-zoom a {
+    min-width: 36px;
+    min-height: 36px;
+    line-height: 36px;
+  }
+}
+
+.map-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}

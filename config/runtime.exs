@@ -107,6 +107,10 @@ end
 
 config :phoenix,
   filter_parameters: [
+    "map_settings",
+    "amap_key",
+    "amap_security_code",
+    "jscode",
     "password",
     "password_confirmation",
     "current_password",

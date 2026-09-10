@@ -4,7 +4,7 @@ defmodule TeslaMateWeb.SettingsLive.Index do
   require Logger
 
   alias TeslaMate.Settings.{GlobalSettings, CarSettings}
-  alias TeslaMate.{Settings, Updater, Api}
+  alias TeslaMate.{Settings, Updater, Api, Maps}
 
   on_mount {TeslaMateWeb.InitAssigns, :locale}
 
@@ -19,6 +19,9 @@ defmodule TeslaMateWeb.SettingsLive.Index do
       repository_check: :idle,
       refreshing_addresses?: nil,
       refresh_error: nil,
+      map_preferences: Maps.preferences(),
+      map_form: %{"provider" => to_string(Maps.preferences().provider), "amap_key" => "", "amap_security_code" => ""},
+      map_errors: %{},
       page_title: gettext("Settings")
     }
 
@@ -44,6 +47,30 @@ defmodule TeslaMateWeb.SettingsLive.Index do
   @impl true
   def handle_event("car", %{"id" => id}, socket) do
     {:noreply, add_params(socket, car: id)}
+  end
+
+  def handle_event("map_draft", %{"map_settings" => params}, socket) do
+    draft = Map.take(params, ["provider", "amap_key", "amap_security_code"])
+    {:noreply, assign(socket, map_form: draft, map_errors: %{})}
+  end
+
+  def handle_event("save_map_settings", %{"map_settings" => params}, socket) do
+    case Maps.update_settings(socket.assigns.current_user, params) do
+      {:ok, _settings} ->
+        # A full navigation also refreshes the provider-specific CSP and any
+        # previously loaded SDK. Draft changes never reach the saved config.
+        {:noreply,
+         socket
+         |> put_flash(:success, "地图设置已保存并应用")
+         |> redirect(to: ~p"/admin/settings")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        errors = Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
+        {:noreply, assign(socket, map_errors: errors)}
+
+      {:error, :forbidden} ->
+        {:noreply, socket |> put_flash(:error, "需要管理员权限") |> redirect(to: ~p"/")}
+    end
   end
 
   def handle_event("change", %{"global_settings" => %{"ui" => ui}}, %{assigns: %{locale: lo}} = s)
