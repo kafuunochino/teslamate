@@ -19,6 +19,7 @@ defmodule TeslaMateWeb.MapControllerTest do
     page = get(conn, "/admin/settings")
     [policy] = get_resp_header(page, "content-security-policy")
     refute policy =~ "'unsafe-eval'"
+    refute policy =~ "'unsafe-hashes'"
     refute policy =~ "https://webapi.amap.com"
     refute policy =~ "https://jsapi-service.amap.com"
     refute policy =~ "https://mapplugin.amap.com"
@@ -57,6 +58,12 @@ defmodule TeslaMateWeb.MapControllerTest do
     assert policy =~ "https://mapplugin.amap.com"
     [script] = Regex.run(~r/script-src [^;]+/, policy)
     assert script =~ "'unsafe-eval'"
+    assert script =~ "'unsafe-hashes'"
+
+    assert Regex.scan(~r/'sha256-([^']+)'/, script, capture: :all_but_first) == [
+             ["97l24HYIWEdSIQ8PoMHzpxiGCZuyBDXtN19RPKFsOgk="]
+           ]
+
     refute script =~ "'unsafe-inline'"
     assert policy =~ "frame-src 'none'"
     assert policy =~ "worker-src 'self' blob:"

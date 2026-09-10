@@ -36,8 +36,9 @@ JS API 2.0，地图跟随页面切换深浅色，不需要单独设置地图颜�
 
 HTML 响应为脚本生成每次请求独立的 CSP nonce，兼容 Cloudflare 自动
 注入的检测脚本；页面的主题和应用脚本保持原有加载顺序。地图尺寸
-由页面的 ResizeObserver 监听，旧浏览器退回窗口 resize 事件，
-不再启用高德内部的 JavaScript URL iframe 监听方式。
+由页面的 ResizeObserver 补充监听，旧浏览器退回窗口 resize 事件。
+高德 SDK 内置监听使用的固定 `void(0)` 空操作仅按精确 SHA-256
+哈希授权，其他未授权的内联脚本仍被限制。
 
 ## OpenStreetMap
 

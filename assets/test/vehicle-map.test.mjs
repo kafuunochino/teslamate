@@ -102,7 +102,6 @@ test("uses native dark styles and moves the current marker without recreating th
   assert.equal(calls.markers.length, 1);
   assert.deepEqual(calls.markers[0].position, toGCJ02(next));
   assert.equal(calls.maps[0].options.mapStyle, "amap://styles/dark");
-  assert.equal(calls.maps[0].options.resizeEnable, false);
   adapter.setTheme("light");
   assert.equal(calls.maps[0].style, "amap://styles/normal");
   adapter.resize();

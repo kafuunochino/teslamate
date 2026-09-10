@@ -123,9 +123,6 @@ export function createAMapAdapter(
   const map = new AMap.Map(canvas, {
     viewMode: "2D",
     zoom: 15,
-    // The shared hook observes container size. The SDK fallback uses a
-    // javascript: iframe, which strict CSP correctly blocks.
-    resizeEnable: false,
     mapStyle: amapStyle(theme),
     scrollWheel: false,
     showIndoorMap: false,

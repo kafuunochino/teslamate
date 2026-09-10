@@ -24,6 +24,9 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
 
   import Plug.Conn
 
+  # SHA-256 of the SDK's fixed "void(0)" resize-frame navigation only.
+  @amap_resize_noop_hash "97l24HYIWEdSIQ8PoMHzpxiGCZuyBDXtN19RPKFsOgk="
+
   def init(opts), do: opts
 
   def call(conn, _opts) do
@@ -47,12 +50,25 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
 
     # JS API 2.0 loads its renderer from a separate official CDN and uses
     # dynamic functions. Keep this compatibility exception provider-specific;
-    # untrusted inline scripts, arbitrary script hosts and frames stay blocked.
+    # only the fixed resize no-op can match a navigation hash. Other inline
+    # code, arbitrary script hosts and remote frames remain blocked.
     amap_scripts =
-      if amap?,
-        do:
-          " 'unsafe-eval' https://webapi.amap.com https://jsapi-service.amap.com https://mapplugin.amap.com",
-        else: ""
+      if amap? do
+        " " <>
+          Enum.join(
+            [
+              "'unsafe-eval'",
+              "'unsafe-hashes'",
+              "'sha256-#{@amap_resize_noop_hash}'",
+              "https://webapi.amap.com",
+              "https://jsapi-service.amap.com",
+              "https://mapplugin.amap.com"
+            ],
+            " "
+          )
+      else
+        ""
+      end
 
     csp =
       [
