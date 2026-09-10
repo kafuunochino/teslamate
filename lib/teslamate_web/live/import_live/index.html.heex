@@ -36,9 +36,7 @@
             _ -> {"????", "??"}
           end %>
         <tr>
-          <td data-label="月份" style="font-variant-numeric: tabular-nums;">
-            <%= "#{month}/#{year}" %>
-          </td>
+          <td data-label="月份"><%= "#{month}/#{year}" %></td>
           <td data-label="文件"><%= Path.absname(path) %></td>
           <td data-label="状态">
             <span class="spinner">
