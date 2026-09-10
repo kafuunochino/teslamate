@@ -125,7 +125,7 @@ defmodule TeslaMate.MapsTest do
          %Finch.Response{status: 200, headers: headers, body: "AMap.cb({\"status\":\"1\"});"}}
       end
 
-      assert {:ok, "application/javascript; charset=utf-8", ~s(AMap.cb({"status":"1"});)} =
+      assert {:ok, "application/javascript; charset=utf-8", "AMap.cb({\"status\":\"1\"});"} =
                AmapProxy.request(config, ["v3", "log", "init"], "callback=AMap.cb", request)
     end
   end
