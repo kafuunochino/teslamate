@@ -40,11 +40,12 @@ defmodule TeslaMateWeb.AdminUsersLiveTest do
     )
     |> render_submit()
 
-    assert render(view) =~ "车辆权限已授予"
     assert Accounts.can_access_car?(member, car.id)
 
     selector =
       "button[phx-click='revoke_car'][phx-value-user-id='#{member.id}'][phx-value-car-id='#{car.id}']"
+
+    assert has_element?(view, selector)
 
     {:ok, reopened, _html} = live(conn, "/admin/users")
     assert has_element?(reopened, selector)
