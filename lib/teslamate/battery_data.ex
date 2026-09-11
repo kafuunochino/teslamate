@@ -124,7 +124,17 @@ defmodule TeslaMate.BatteryData do
   defp merge(acc, values, date, fresh, source) do
     Enum.reduce(values, acc, fn {key, value}, readings ->
       cond do
-        value in [nil, :unknown, "unknown", "Unknown", ""] ->
+        value in [
+          nil,
+          :unknown,
+          :invalid,
+          "unknown",
+          "Unknown",
+          "<invalid>",
+          "invalid",
+          "Invalid",
+          ""
+        ] ->
           readings
 
         newer?(date, Map.get(readings, key)) ->

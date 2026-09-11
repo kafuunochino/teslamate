@@ -134,6 +134,17 @@ defmodule TeslaMate.BatteryDataTest do
     refute Map.has_key?(data, :battery_level)
     refute data.charger_power.fresh?
     assert BatteryData.readings(nil, [], @now) == %{}
+
+    for source <- [:vehicle, :record], value <- ["<invalid>", :invalid, "Invalid"] do
+      data =
+        if source == :vehicle do
+          BatteryData.readings(summary(%Charge{fast_charger_brand: value}), [], @now)
+        else
+          BatteryData.readings(nil, [%{date: @now, fast_charger_brand: value}], @now)
+        end
+
+      refute Map.has_key?(data, :fast_charger_brand)
+    end
   end
 
   test "scheduled times are epoch seconds and disabled or invalid timestamps stay absent" do

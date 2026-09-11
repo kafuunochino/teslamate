@@ -154,7 +154,9 @@
                       phx-click="edit_cost"
                       phx-value-id={session.id}
                       disabled={is_nil(session.end_date)}
-                      aria-expanded={!!(@editing_charge && @editing_charge.id == session.id)}
+                      aria-expanded={
+                        to_string(!!(@editing_charge && @editing_charge.id == session.id))
+                      }
                     >
                       <%= cond do
                         is_nil(session.end_date) -> "充电结束后可填写"
@@ -175,6 +177,7 @@
                       as={:charge_cost}
                       id="charge-cost-form"
                       class="charge-cost-editor"
+                      phx-change="validate_cost"
                       phx-submit="save_cost"
                     >
                       <%= label(f, :cost, "本次充电实付总额（元）", class: "label") %>

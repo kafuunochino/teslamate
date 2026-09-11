@@ -138,6 +138,27 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     assert render(view) =~ "并非电池包电压"
   end
 
+  test "unsaved cost input survives automatic and full refresh without changing the database", %{
+    conn: conn,
+    charge: charge
+  } do
+    {:ok, view, _} = live(conn, "/charging")
+    original_cost = Repo.get!(ChargingProcess, charge.id).cost
+    view |> element("#charge-cost-edit-#{charge.id}") |> render_click()
+    view |> form("#charge-cost-form", charge_cost: %{cost: "23.04"}) |> render_change()
+
+    token = :sys.get_state(view.pid).socket.assigns.battery_token
+    send(view.pid, {:battery_refresh, token})
+    assert has_element?(view, "#charge-cost-form input[name='charge_cost[cost]'][value='23.04']")
+    view |> element("#battery-refresh-now") |> render_click()
+    assert has_element?(view, "#charge-cost-form input[name='charge_cost[cost]'][value='23.04']")
+    assert Repo.get!(ChargingProcess, charge.id).cost == original_cost
+
+    view |> element("#charge-cost-form button", "取消") |> render_click()
+    refute has_element?(view, "#charge-cost-form")
+    assert Repo.get!(ChargingProcess, charge.id).cost == original_cost
+  end
+
   test "charging details stay open across new samples and full refreshes", %{conn: conn, car: car} do
     {:ok, view, _} = live(conn, "/charging")
     refute has_element?(view, "#battery-charging-details")

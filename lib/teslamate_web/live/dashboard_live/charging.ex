@@ -75,6 +75,24 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
     end
   end
 
+  def handle_event(
+        "validate_cost",
+        %{"charge_cost" => params},
+        %{assigns: %{editing_charge: %ChargingProcess{} = charge}} = socket
+      )
+      when is_map(params) do
+    case ChargeCosts.get(socket.assigns.current_user, charge.id) do
+      %ChargingProcess{end_date: end_date} when not is_nil(end_date) ->
+        changeset = charge |> ChargeCosts.change(params) |> Map.put(:action, :validate)
+        {:noreply, assign(socket, cost_changeset: changeset)}
+
+      _ ->
+        {:noreply, cost_error(socket, "记录不存在或你已没有修改权限。")}
+    end
+  end
+
+  def handle_event("validate_cost", _params, socket), do: {:noreply, socket}
+
   def handle_event("cancel_cost", _params, socket) do
     {:noreply, assign(socket, editing_charge: nil, cost_changeset: nil, cost_notice: nil)}
   end
