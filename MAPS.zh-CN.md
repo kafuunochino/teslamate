@@ -62,6 +62,5 @@ SHA-256 哈希授权。兼容浏览器分别对完整 URL 或 `void(0)` 正文�
 地图提供商和深浅色与系统设置一致，搜索也使用所选提供商。
 高德地址查找仅向管理员开放；地图安全密钥仍只保存在服务器中。
 
-
 参考：[高德安全密钥配置](https://lbs.amap.com/api/javascript-api-v2/guide/abc/jscode)、
 [地图深浅色样式](https://lbs.amap.com/api/javascript-api-v2/guide/map/map-style)。
