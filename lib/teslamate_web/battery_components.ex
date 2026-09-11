@@ -162,7 +162,9 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:est_battery_range_km, "预计续航", :distance},
           {:ideal_battery_range_km, "理想续航", :distance},
           {:full_rated_range_km, "估算满电额定续航", :distance}
-        ], required: true),
+        ],
+        required: true
+      ),
       group("pack", "电池包状态", "car-battery", "车辆直接上报的电池侧读数，最近记录保留原始采集时间。", [
         {:energy_remaining, "电池剩余能量", :energy},
         {:pack_voltage, "电池包电压", {:unit, " V", 1}},
@@ -195,7 +197,9 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:brick_soc_min, "最低电芯组电量", :percent},
           {:battery_heater_no_power, "电池加热供电不足", :yes_no},
           {:not_enough_power_to_heat, "供电不足以加热", :yes_no}
-        ], advanced: true)
+        ],
+        advanced: true
+      )
     ]
   end
 
@@ -256,7 +260,9 @@ defmodule TeslaMateWeb.BatteryComponents do
         "只展示车辆返回的状态，目标设置以车内或 Tesla App 为准。",
         [
           {:smart_preconditioning, "智能预处理", :on_off}
-        ], advanced: true)
+        ],
+        advanced: true
+      )
     ]
   end
 
@@ -278,7 +284,9 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:charger_power, "充电功率", {:unit, " kW", 1}},
           {:time_to_full_charge, "距充电目标", :hours},
           {:charge_rate_km_h, "续航补充速率", {:unit, " km/h", 1}}
-        ], required: true),
+        ],
+        required: true
+      ),
       group(
         "electrical",
         "充电能量与电气参数",
@@ -317,7 +325,9 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:charge_limit_soc_std, "车辆标准充电上限", :percent},
           {:charge_range_added_rated_km, "本次增加额定续航", :distance},
           {:charge_range_added_ideal_km, "本次增加理想续航", :distance}
-        ], advanced: true),
+        ],
+        advanced: true
+      ),
       group(
         "flags",
         "更多充电状态",
@@ -332,7 +342,9 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:managed_charging_active, "托管充电", :on_off},
           {:managed_charging_start_time, "托管开始（北京时间）", :date},
           {:managed_charging_user_canceled, "用户取消托管充电", :yes_no}
-        ], advanced: true)
+        ],
+        advanced: true
+      )
     ]
   end
 
