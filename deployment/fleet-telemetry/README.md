@@ -72,7 +72,6 @@ camera video access. Hardware, firmware, region, vehicle pairing and Tesla
 usage limits still apply. A missing vehicle signal is not an implementation
 or sensor error by itself.
 
-
 ## Temperature readings
 
 Battery, driving and charging pages have a dedicated temperature panel. Module
