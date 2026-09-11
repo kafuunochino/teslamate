@@ -112,11 +112,7 @@ export function loadAMap(config, win = window, doc = document) {
   return promise;
 }
 
-export function createAMapAdapter(
-  AMap,
-  canvas,
-  { mode, ready, failed },
-) {
+export function createAMapAdapter(AMap, canvas, { mode, ready, failed }) {
   const map = new AMap.Map(canvas, {
     viewMode: "2D",
     zoom: 15,
