@@ -177,7 +177,7 @@ msgstr ""
 #: lib/teslamate_web/live/charge_live/cost.html.heex:169
 #: lib/teslamate_web/live/geofence_live/form.html.heex:130
 #: lib/teslamate_web/live/import_live/index.html.heex:153
-#: lib/teslamate_web/live/signin_live/index.html.heex:84
+#: lib/teslamate_web/live/signin_live/index.html.heex:97
 #, elixir-autogen
 msgid "Saving..."
 msgstr ""
@@ -460,7 +460,7 @@ msgstr ""
 
 #: lib/teslamate_web/live/signin_live/index.ex:15
 #: lib/teslamate_web/live/signin_live/index.ex:30
-#: lib/teslamate_web/live/signin_live/index.html.heex:70
+#: lib/teslamate_web/live/signin_live/index.html.heex:83
 #, elixir-autogen
 msgid "Sign in"
 msgstr ""
@@ -576,12 +576,12 @@ msgstr ""
 msgid "Sign out"
 msgstr ""
 
-#: lib/teslamate_web/live/signin_live/index.html.heex:19
+#: lib/teslamate_web/live/signin_live/index.html.heex:32
 #, elixir-autogen
 msgid "Access Token"
 msgstr ""
 
-#: lib/teslamate_web/live/signin_live/index.html.heex:35
+#: lib/teslamate_web/live/signin_live/index.html.heex:48
 #, elixir-autogen
 msgid "Refresh Token"
 msgstr ""
@@ -591,12 +591,12 @@ msgstr ""
 msgid "Tokens are invalid"
 msgstr ""
 
-#: lib/teslamate_web/live/signin_live/index.html.heex:99
+#: lib/teslamate_web/live/signin_live/index.html.heex:112
 #, elixir-autogen
 msgid "Obtaining tokens through the Tesla API requires programming experience or a 3rd-party service. Information can be found %{here}."
 msgstr ""
 
-#: lib/teslamate_web/live/signin_live/index.html.heex:92
+#: lib/teslamate_web/live/signin_live/index.html.heex:105
 #, elixir-autogen
 msgid "here"
 msgstr ""
@@ -631,7 +631,7 @@ msgstr ""
 msgid "Expected Finish Time"
 msgstr ""
 
-#: lib/teslamate_web/live/signin_live/index.html.heex:59
+#: lib/teslamate_web/live/signin_live/index.html.heex:72
 #, elixir-autogen
 msgid "You are using the API key (%{token}) provided by %{url}. It will allow your TeslaMate to access the official Tesla Fleet API and Tesla Telemetry streaming."
 msgstr ""
@@ -705,7 +705,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: lib/teslamate_web/live/signin_live/index.html.heex:13
+#: lib/teslamate_web/live/signin_live/index.html.heex:26
 #, elixir-autogen
 msgid "Error"
 msgstr ""
