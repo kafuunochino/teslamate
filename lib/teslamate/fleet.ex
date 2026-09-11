@@ -291,6 +291,7 @@ defmodule TeslaMate.Fleet do
       end
 
     TeslaMate.BatteryData.readings(live, [charge, battery_position, position])
+    |> TeslaMate.TeslaFleet.Readings.merge_readings(car_id)
   end
 
   def analysis(%User{} = user, requested_car_id, requested_days \\ 90) do

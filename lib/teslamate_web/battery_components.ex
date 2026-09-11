@@ -43,9 +43,10 @@ defmodule TeslaMateWeb.BatteryComponents do
       <dt><%= @label %></dt>
       <dd><%= display(@reading && @reading.value, @format) %></dd>
       <small :if={@reading} class={if @reading.fresh?, do: "is-current", else: "is-recorded"}>
-        <%= if @reading.fresh?, do: "采集于", else: "最近记录" %>
+        <%= if @reading.source == :telemetry, do: "遥测 · " %><%= if @reading.fresh?, do: "采集于", else: "最近记录" %>
         <time><%= date_time(@reading.measured_at) %></time>
       </small>
+      <small :if={@reading && is_nil(@reading.value)}>车辆上报无效读数</small>
       <small :if={!@reading}>车辆尚未上报</small>
     </div>
     """
@@ -74,7 +75,7 @@ defmodule TeslaMateWeb.BatteryComponents do
         fields: Enum.reject(main.fields, fn {key, _, _} -> key in @primary_charge_fields end)
     }
 
-    [details | rest] ++ groups("charging-extra")
+    [details | rest] ++ [telemetry_group()] ++ groups("charging-extra")
   end
 
   defp panel_groups(mode), do: groups(mode)
@@ -86,6 +87,11 @@ defmodule TeslaMateWeb.BatteryComponents do
         icon: "battery-heart-variant",
         hint: "电量差来自同一次采样；预热状态不代表电芯温度。",
         fields: [
+          {:pack_voltage, "电池包电压", {:unit, " V", 1}},
+          {:pack_current, "电池包电流", {:unit, " A", 1}},
+          {:module_temp_max, "最高模组温度", {:unit, " °C", 1}},
+          {:module_temp_min, "最低模组温度", {:unit, " °C", 1}},
+          {:brick_voltage_delta_mv, "电芯组最大压差", {:unit, " mV", 1}},
           {:usable_battery_level, "可用电量", :percent},
           {:unavailable_level, "显示与可用电量差", :points},
           {:battery_heater_on, "电池加热器", :on_off},
@@ -115,6 +121,7 @@ defmodule TeslaMateWeb.BatteryComponents do
         ]
       },
       thermal_group(),
+      telemetry_group(),
       %{
         title: "充电读数",
         icon: "ev-station",
@@ -199,11 +206,44 @@ defmodule TeslaMateWeb.BatteryComponents do
     ]
   end
 
+  defp telemetry_group do
+    %{
+      title: "电池包遥测",
+      icon: "battery-sync",
+      hint: "来自 Fleet Telemetry。温度为模组热敏传感器极值，电压为电芯组极值；压差和温差仅在同次采样时计算。",
+      fields: [
+        {:pack_voltage, "电池包电压", {:unit, " V", 1}},
+        {:pack_current, "电池包电流", {:unit, " A", 1}},
+        {:energy_remaining, "电池剩余能量", :energy},
+        {:module_temp_max, "最高模组温度", {:unit, " °C", 1}},
+        {:module_temp_min, "最低模组温度", {:unit, " °C", 1}},
+        {:module_temp_delta, "模组温差", {:unit, " °C", 1}},
+        {:num_module_temp_max, "最高温度模组编号", {:unit, "", 0}},
+        {:num_module_temp_min, "最低温度模组编号", {:unit, "", 0}},
+        {:brick_voltage_max, "最高电芯组电压", {:unit, " V", 3}},
+        {:brick_voltage_min, "最低电芯组电压", {:unit, " V", 3}},
+        {:brick_voltage_delta_mv, "电芯组最大压差", {:unit, " mV", 1}},
+        {:num_brick_voltage_max, "最高电压电芯组编号", {:unit, "", 0}},
+        {:num_brick_voltage_min, "最低电压电芯组编号", {:unit, "", 0}},
+        {:bms_state, "电池管理系统状态", :state},
+        {:hvil, "高压互锁状态", :state},
+        {:lifetime_energy_used, "累计放电能量", :energy},
+        {:ac_charging_power, "交流充电输入功率", {:unit, " kW", 1}},
+        {:dc_charging_power, "直流充电输入功率", {:unit, " kW", 1}},
+        {:ac_charging_energy_in, "本次交流充电输入能量", :energy},
+        {:dc_charging_energy_in, "本次直流充电输入能量", :energy},
+        {:nominal_full_pack_energy, "标称满电能量", :energy},
+        {:brick_soc_min, "最低电芯组电量", :percent},
+        {:lifetime_charged_energy, "累计充入能量", :energy}
+      ]
+    }
+  end
+
   defp thermal_group do
     %{
       title: "电池加热与预处理",
       icon: "thermometer",
-      hint: "加热标志来自车辆接口；当前接口不提供电芯温度。",
+      hint: "加热标志来自车辆接口；模组温度在下方遥测读数中显示。",
       fields: [
         {:battery_heater_on, "电池加热器", :on_off},
         {:battery_heater, "气候接口电池加热标志", :on_off},
@@ -229,6 +269,13 @@ defmodule TeslaMateWeb.BatteryComponents do
   defp display(false, :yes_no), do: "否"
   defp display(true, :open_closed), do: "打开"
   defp display(false, :open_closed), do: "关闭"
+  defp display("BMSStateStandby", :state), do: "待机"
+  defp display("BMSStateDrive", :state), do: "行驶"
+  defp display("BMSStateSupport", :state), do: "辅助供电"
+  defp display("BMSStateCharge", :state), do: "充电"
+  defp display("BMSStateFault", :state), do: "故障状态"
+  defp display("HvilStatusOK", :state), do: "正常"
+  defp display("HvilStatusFault", :state), do: "故障状态"
   defp display("Charging", :state), do: "充电中"
   defp display("Complete", :state), do: "已完成"
   defp display("Stopped", :state), do: "已停止"

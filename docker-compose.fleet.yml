@@ -1,0 +1,71 @@
+# Apply alongside docker-compose.1panel.yml after provisioning the files
+# documented in deployment/fleet-telemetry/README.md.
+services:
+  teslamate:
+    environment:
+      TESLA_FLEET_CONFIG: /run/tesla-fleet/client.json
+    volumes:
+      - ${TESLA_FLEET_DIR:-/opt/teslamate-fleet}/app-config:/run/tesla-fleet:ro
+    networks:
+      - fleet-private
+    depends_on:
+      fleet-mqtt:
+        condition: service_started
+
+  fleet-mqtt:
+    image: eclipse-mosquitto:2
+    restart: always
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
+    volumes:
+      - ${TESLA_FLEET_DIR:-/opt/teslamate-fleet}/mqtt:/mosquitto/config:ro
+      - fleet-mqtt-data:/mosquitto/data
+    networks: [fleet-private]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+  fleet-proxy:
+    image: ${TESLA_COMMAND_IMAGE:-tesla/vehicle-command:latest}
+    restart: always
+    user: "1000:1000"
+    command: ["-tls-key", "/config/proxy-key.pem", "-cert", "/config/proxy-cert.pem", "-key-file", "/config/fleet-key.pem", "-host", "0.0.0.0", "-port", "4443"]
+    volumes:
+      - ${TESLA_FLEET_DIR:-/opt/teslamate-fleet}/proxy:/config:ro
+    networks: [fleet-private]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+  fleet-receiver:
+    build: ./deployment/fleet-telemetry
+    restart: always
+    user: "1000:1000"
+    volumes:
+      - ${TESLA_FLEET_DIR:-/opt/teslamate-fleet}/receiver:/config:ro
+    ports:
+      - "${TESLA_TELEMETRY_PORT:-8444}:8444"
+    networks: [fleet-private]
+    depends_on:
+      fleet-mqtt:
+        condition: service_started
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      SUPPRESS_TLS_HANDSHAKE_ERROR_LOGGING: "true"
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+volumes:
+  fleet-mqtt-data:
+
+networks:
+  fleet-private:
+    driver: bridge

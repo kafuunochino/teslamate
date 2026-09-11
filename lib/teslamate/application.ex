@@ -30,6 +30,7 @@ defmodule TeslaMate.Application do
           {Phoenix.PubSub, name: TeslaMate.PubSub},
           TeslaMateWeb.Plugs.LoginRateLimit.TableOwner,
           TeslaMateWeb.Endpoint,
+          TeslaMate.TeslaFleet.Supervisor,
           TeslaMate.Terrain,
           TeslaMate.Vehicles,
           if(mqtt_config != nil, do: {TeslaMate.Mqtt, mqtt_config}),
@@ -47,6 +48,7 @@ defmodule TeslaMate.Application do
           {Phoenix.PubSub, name: TeslaMate.PubSub},
           TeslaMateWeb.Plugs.LoginRateLimit.TableOwner,
           TeslaMateWeb.Endpoint,
+          TeslaMate.TeslaFleet.Supervisor,
           {TeslaMate.Terrain, disabled: true},
           {TeslaMate.Repair, limit: 250},
           {TeslaMate.Import, directory: import_directory}

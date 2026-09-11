@@ -107,6 +107,11 @@ end
 
 config :phoenix,
   filter_parameters: [
+    "client_secret",
+    "code",
+    "state",
+    "access_token",
+    "refresh_token",
     "map_settings",
     "amap_key",
     "amap_security_code",

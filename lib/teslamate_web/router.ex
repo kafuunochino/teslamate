@@ -108,12 +108,29 @@ defmodule TeslaMateWeb.Router do
     end
   end
 
+  scope "/", TeslaMateWeb do
+    get "/.well-known/appspecific/com.tesla.3p.public-key.pem", TeslaFleetController, :public_key
+  end
+
+  scope "/auth/tesla", TeslaMateWeb do
+    pipe_through [:browser]
+    get "/callback", TeslaFleetController, :callback
+  end
+
+  scope "/auth/tesla", TeslaMateWeb do
+    pipe_through [:browser, :authenticated_user, :platform_admin]
+    get "/start", TeslaFleetController, :start
+  end
+
   scope "/admin", TeslaMateWeb do
     pipe_through [:browser, :authenticated_user, :platform_admin]
 
     # Keep legacy operational pages available to administrators while the
     # end-user UI is fully served by the unified platform above.
     get "/collector", CarController, :index
+    get "/tesla-account/fleet", TeslaFleetController, :index
+    post "/tesla-account/fleet/check", TeslaFleetController, :check
+    post "/tesla-account/fleet/configure", TeslaFleetController, :configure
 
     live_session :platform_admin,
       on_mount: [
