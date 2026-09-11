@@ -2,9 +2,7 @@
 name: Update flake.lock
 on:
   workflow_dispatch:
-  schedule:
-    # runs weekly on Saturday at 00:00 UTC time
-    - cron: "0 0 * * 6"
+  # Dependency PRs are opt-in so scheduled runs do not recreate retired branches.
 
 permissions:
   contents: write
