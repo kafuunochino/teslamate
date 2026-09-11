@@ -64,9 +64,6 @@ export function toGCJ02({ latitude: lat, longitude: lng }) {
   return [lng + dlng, lat + dlat];
 }
 
-export const amapStyle = (theme) =>
-  theme === "dark" ? "amap://styles/dark" : "amap://styles/normal";
-
 let sdk;
 export function loadAMap(config, win = window, doc = document) {
   if (sdk) {
@@ -118,12 +115,14 @@ export function loadAMap(config, win = window, doc = document) {
 export function createAMapAdapter(
   AMap,
   canvas,
-  { theme, mode, ready, failed },
+  { mode, ready, failed },
 ) {
   const map = new AMap.Map(canvas, {
     viewMode: "2D",
     zoom: 15,
-    mapStyle: amapStyle(theme),
+    // Some embedded browsers render the map but ignore native map styles.
+    // Keep one base style; CSS themes only the map layers from html[data-theme].
+    mapStyle: "amap://styles/normal",
     scrollWheel: false,
     showIndoorMap: false,
   });
@@ -173,9 +172,6 @@ export function createAMapAdapter(
         }
       }
     },
-    setTheme(value) {
-      map.setMapStyle(amapStyle(value));
-    },
     resize() {
       map.resize();
     },
@@ -223,7 +219,7 @@ export function createVehicleMapHook(createLeaflet, dependencies = {}) {
       this.showStatus("正在加载地图…");
       this.abort = new AbortController();
       this.onTheme = () =>
-        this.adapter?.setTheme(doc.documentElement.dataset.theme || "light");
+        this.adapter?.setTheme?.(doc.documentElement.dataset.theme || "light");
       win.addEventListener("themechange", this.onTheme);
       this.onResize = () => {
         if (!this.disposed) this.adapter?.resize();

@@ -65,8 +65,8 @@ function amap() {
     setCenter(point) {
       this.center = point;
     }
-    setMapStyle(style) {
-      this.style = style;
+    setMapStyle() {
+      assert.fail("embedded browsers may ignore or reject native map styles");
     }
     resize() {
       this.resized = true;
@@ -87,7 +87,7 @@ function amap() {
   return { sdk: { Map, Marker }, calls };
 }
 
-test("uses native dark styles and moves the current marker without recreating the map", () => {
+test("uses a stable base layer for CSS theming even when native styles are unsupported", () => {
   const { sdk, calls } = amap();
   const adapter = createAMapAdapter(
     sdk,
@@ -101,9 +101,7 @@ test("uses native dark styles and moves the current marker without recreating th
   assert.equal(calls.maps.length, 1);
   assert.equal(calls.markers.length, 1);
   assert.deepEqual(calls.markers[0].position, toGCJ02(next));
-  assert.equal(calls.maps[0].options.mapStyle, "amap://styles/dark");
-  adapter.setTheme("light");
-  assert.equal(calls.maps[0].style, "amap://styles/normal");
+  assert.equal(calls.maps[0].options.mapStyle, "amap://styles/normal");
   adapter.resize();
   adapter.destroy();
   assert.ok(calls.maps[0].resized);
@@ -283,4 +281,31 @@ test("falls back to window resize and removes the listener on navigation", async
   hook.destroyed();
   win.dispatchEvent(new Event("resize"));
   assert.equal(resized, 1);
+});
+
+test("AMap stays mounted across CSS theme changes with no native style API dependency", async () => {
+  const { win, doc, element } = environment();
+  const { sdk, calls } = amap();
+  const hook = createVehicleMapHook(() => assert.fail("unexpected fallback"), {
+    window: win,
+    document: doc,
+    fetchConfig: async () => ({ provider: "amap" }),
+    loadSDK: async () => sdk,
+  });
+  hook.el = element();
+  hook.el.dataset.points = '[{"latitude":30,"longitude":110}]';
+  hook.mounted();
+  await hook.loading;
+  calls.maps[0].events.complete();
+  for (const theme of ["light", "dark", "light", "dark"]) {
+    doc.documentElement.dataset.theme = theme;
+    win.dispatchEvent(new Event("themechange"));
+    hook.updated();
+  }
+  assert.equal(hook.el.dataset.mapProvider, "amap");
+  assert.equal(calls.maps.length, 1);
+  assert.equal(calls.markers.length, 1);
+  assert.equal(hook.status.hidden, true);
+  hook.destroyed();
+  assert.ok(calls.maps[0].destroyed);
 });
