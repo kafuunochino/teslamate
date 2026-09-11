@@ -1,7 +1,7 @@
 defmodule TeslaMateWeb.TripEnergyLiveTest do
   use TeslaMateWeb.ConnCase, async: false
 
-  alias TeslaMate.{Accounts, Fleet, Log, Repo, Settings}
+  alias TeslaMate.{Fleet, Log, Repo, Settings}
   alias TeslaMate.Locations.Address
   alias TeslaMate.Log.Drive
 
@@ -93,14 +93,15 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     assert has_element?(view, "#trip-row-#{drive.id} [data-label='净耗电量（估算）']", "1.53 kWh")
   end
 
+  @tag platform_role: :member
   test "members only see energy and addresses for vehicles granted to them", %{
     conn: conn,
     current_user: user,
     car: car,
     drive: drive
   } do
-    {:ok, _binding} = Accounts.grant_car(user, user, car.id)
-    member = user |> Ecto.Changeset.change(role: :member) |> Repo.update!()
+    {:ok, _binding} = TeslaMate.AccountFixtures.grant(user, car)
+    member = user
 
     {:ok, other_car} =
       Log.create_car(%{

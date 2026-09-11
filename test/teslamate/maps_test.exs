@@ -66,8 +66,8 @@ defmodule TeslaMate.MapsTest do
     assert Maps.preferences().has_amap_key
   end
 
-  test "rechecks current administrator status before writing", %{user: user} do
-    Repo.update!(Ecto.Changeset.change(user, role: :member))
+  test "rechecks current administrator status before writing" do
+    user = %{TeslaMate.AccountFixtures.member() | role: :admin, is_system_admin: true}
     assert {:error, :forbidden} = Maps.update_settings(user, %{"provider" => "openstreetmap"})
     assert {:error, :forbidden} = Maps.update_settings(nil, %{})
   end

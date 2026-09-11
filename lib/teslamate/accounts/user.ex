@@ -8,7 +8,10 @@ defmodule TeslaMate.Accounts.User do
     field :email, :string
     field :name, :string
     field :password_hash, :string, redact: true
-    field :role, Ecto.Enum, values: [:admin, :member], default: :member
+    field :role, Ecto.Enum, values: [:admin, :member], default: :member, read_after_writes: true
+    field :is_system_admin, :boolean, default: false, read_after_writes: true
+    field :deletion_requested_at, :utc_datetime_usec
+    field :deletion_scheduled_at, :utc_datetime_usec
     field :status, Ecto.Enum, values: [:active, :disabled], default: :active
     field :auth_version, :integer, default: 1
     field :last_login_at, :utc_datetime_usec
@@ -69,8 +72,8 @@ defmodule TeslaMate.Accounts.User do
 
   def admin_changeset(user, attrs) do
     user
-    |> cast(attrs, [:role, :status])
-    |> validate_required([:role, :status])
+    |> cast(attrs, [:status])
+    |> validate_required([:status])
   end
 
   defp normalize_email(changeset) do

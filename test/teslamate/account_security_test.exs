@@ -6,13 +6,14 @@ defmodule TeslaMate.AccountSecurityTest do
 
   setup do
     start_supervised!(TeslaMate.Vault)
+    admin = TeslaMate.AccountFixtures.system_admin()
     user = user("owner")
     other = user("other")
 
     {:ok, token} =
       Accounts.create_session(user, %{user_agent: "Android Chrome/100", ip_address: "127.0.0.1"})
 
-    %{user: user, other: other, token: token}
+    %{user: user, other: other, token: token, admin: admin}
   end
 
   defp user(prefix) do
@@ -41,20 +42,18 @@ defmodule TeslaMate.AccountSecurityTest do
   end
 
   test "registration defaults closed and only a current administrator can change it", %{
-    user: user
+    user: user, admin: admin
   } do
     refute Accounts.sign_up_allowed?()
     assert {:error, :forbidden} = Accounts.set_registration(user, true)
     assert {:error, :registration_closed} = Accounts.register_public_user(%{})
-    admin = user |> Ecto.Changeset.change(role: :admin) |> Repo.update!()
     assert {:ok, true} = Accounts.set_registration(admin, true)
     assert Accounts.sign_up_allowed?()
-    Repo.update_all(from(u in User, where: u.id == ^admin.id), set: [role: :member])
-    assert {:error, :forbidden} = Accounts.set_registration(admin, false)
+    forged = %{user | role: :admin, is_system_admin: true}
+    assert {:error, :forbidden} = Accounts.set_registration(forged, false)
   end
 
-  test "public signup cannot choose role, status or session version", %{user: user} do
-    admin = user |> Ecto.Changeset.change(role: :admin) |> Repo.update!()
+  test "public signup cannot choose role, status or session version", %{admin: admin} do
     assert {:ok, true} = Accounts.set_registration(admin, true)
 
     assert {:ok, registered} =

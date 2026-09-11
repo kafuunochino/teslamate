@@ -424,6 +424,7 @@ defmodule TeslaMate.TeslaFleet do
 
   def error_message(:not_configured), do: "尚未配置 Tesla 开发者应用"
   def error_message(:not_connected), do: "请先通过 Tesla 官网授权"
+  def error_message(:archived_vehicle), do: "该车辆历史已归档，仅管理员可见。如需重新授权，请联系管理员"
   def error_message(:invalid_state), do: "授权会话已过期或不匹配，请重新发起登录"
   def error_message(:authorization_expired), do: "Tesla 授权已失效，请重新登录 Tesla"
   def error_message(:permission_denied), do: "Tesla 拒绝访问，请检查应用权限、区域或账户额度"

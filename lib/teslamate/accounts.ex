@@ -24,6 +24,8 @@ defmodule TeslaMate.Accounts do
     changeset = User.registration_changeset(%User{}, attrs)
 
     Repo.transaction(fn ->
+      Repo.query!("SELECT pg_advisory_xact_lock(847300001)")
+
       case Repo.insert(changeset) do
         {:ok, user} ->
           audit(:user_registered, user, target_user: user)
@@ -46,7 +48,7 @@ defmodule TeslaMate.Accounts do
       not Password.verify(password, user.password_hash) ->
         {:error, :invalid_credentials}
 
-      user.status != :active ->
+      user.status != :active or deletion_due?(user) ->
         {:error, :invalid_credentials}
 
       true ->
@@ -100,7 +102,7 @@ defmodule TeslaMate.Accounts do
 
   def list_users(_), do: []
 
-  def admin?(%User{role: :admin, status: :active}), do: true
+  def admin?(%User{is_system_admin: true, role: :admin, status: :active}), do: true
   def admin?(_), do: false
 
   @doc "Rechecks an administrator against the database for a privilege boundary."
@@ -146,6 +148,15 @@ defmodule TeslaMate.Accounts do
     end)
   end
 
+  def system_admin?(%User{id: id}) do
+    Repo.exists?(from u in User, where: u.id == ^id and u.is_system_admin)
+  end
+
+  def system_admin?(_), do: false
+
+  def deletion_due?(%User{deletion_scheduled_at: nil}), do: false
+  def deletion_due?(%User{deletion_scheduled_at: deadline}), do: DateTime.compare(deadline, now()) != :gt
+
   def active?(%User{id: id}), do: active_user_id?(id)
   def active?(_), do: false
 
@@ -153,12 +164,28 @@ defmodule TeslaMate.Accounts do
 
   def create_session(user, metadata \\ %{})
 
-  def create_session(%User{} = user, metadata) do
+  def create_session(%User{} = user, metadata), do: insert_session(user, metadata, false)
+  def create_session(_, _), do: {:error, :account_disabled}
+
+  @doc "Completes a fully verified login and atomically cancels an unexpired deletion request."
+  def create_login_session(%User{} = user, metadata), do: insert_session(user, metadata, true)
+  def create_login_session(_, _), do: {:error, :account_disabled}
+
+  defp insert_session(%User{} = user, metadata, login?) do
     Repo.transaction(fn ->
       current = Repo.one(from u in User, where: u.id == ^user.id, lock: "FOR UPDATE")
 
-      if is_nil(current) or current.status != :active or current.auth_version != user.auth_version,
+      if is_nil(current) or current.status != :active or current.auth_version != user.auth_version or
+           deletion_due?(current) or (not login? and not is_nil(current.deletion_scheduled_at)),
         do: Repo.rollback(:account_disabled)
+
+      if login? and current.deletion_scheduled_at do
+        current
+        |> Ecto.Changeset.change(deletion_requested_at: nil, deletion_scheduled_at: nil)
+        |> Repo.update!()
+
+        audit(:account_deletion_cancelled, current, target_user: current)
+      end
 
       token = @session_bytes |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
       time = now()
@@ -180,8 +207,6 @@ defmodule TeslaMate.Accounts do
     end)
   end
 
-  def create_session(_, _), do: {:error, :account_disabled}
-
   def get_user_by_session_token(token) when is_binary(token) and byte_size(token) <= 128 do
     time = now()
 
@@ -190,7 +215,8 @@ defmodule TeslaMate.Accounts do
         join: u in assoc(s, :user),
         where:
           s.token_hash == ^token_hash(token) and s.expires_at > ^time and
-            u.status == :active and s.auth_version == u.auth_version,
+            u.status == :active and is_nil(u.deletion_scheduled_at) and
+            s.auth_version == u.auth_version,
         select: u,
         lock: "FOR SHARE"
     )
@@ -345,17 +371,19 @@ defmodule TeslaMate.Accounts do
   end
 
   def bootstrap_admin(attrs) when is_map(attrs) do
-    normalized_email = attrs |> Map.get(:email, Map.get(attrs, "email", "")) |> normalize_email()
-    existing = get_user_by_email(normalized_email)
-
-    changeset =
-      User.bootstrap_admin_changeset(existing || %User{}, attrs)
-      |> Ecto.Changeset.put_change(
-        :auth_version,
-        if(existing, do: existing.auth_version + 1, else: 1)
-      )
-
     Repo.transaction(fn ->
+      Repo.query!("SELECT pg_advisory_xact_lock(847300001)")
+      primary = Repo.one(from u in User, where: u.is_system_admin, lock: "FOR UPDATE")
+      email = attrs |> Map.get("email", Map.get(attrs, :email, "")) |> normalize_email()
+
+      if primary && normalize_email(primary.email) != email,
+        do: Repo.rollback(:system_admin_exists)
+
+      changeset =
+        (primary || %User{})
+        |> User.bootstrap_admin_changeset(attrs)
+        |> Ecto.Changeset.put_change(:auth_version, if(primary, do: primary.auth_version + 1, else: 1))
+
       case Repo.insert_or_update(changeset) do
         {:ok, user} ->
           delete_user_sessions(user)
@@ -368,39 +396,29 @@ defmodule TeslaMate.Accounts do
     end)
   end
 
-  def update_user_access(%User{} = actor, %User{} = target, attrs) do
+  def update_user_access(%User{} = actor, %User{} = target, attrs) when is_map(attrs) do
     Repo.transaction(fn ->
-      # Serialise role/status changes so two concurrent requests cannot both
-      # demote what each observed as the last active administrator.
-      Repo.query!("SELECT pg_advisory_xact_lock(847300001)")
       unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
+      current = Repo.one(from u in User, where: u.id == ^target.id, lock: "FOR UPDATE")
+      if is_nil(current), do: Repo.rollback(:not_found)
+      role = Map.get(attrs, "role", Map.get(attrs, :role))
 
-      locked_target = Repo.one!(from u in User, where: u.id == ^target.id, lock: "FOR UPDATE")
+      if role && to_string(role) != to_string(current.role), do: Repo.rollback(:role_locked)
+      if current.is_system_admin, do: Repo.rollback(:system_admin_protected)
 
       changeset =
-        locked_target
+        current
         |> User.admin_changeset(attrs)
-        |> Ecto.Changeset.put_change(:auth_version, locked_target.auth_version + 1)
-
-      if removes_last_active_admin?(locked_target, changeset) do
-        Repo.rollback(:last_active_admin)
-      end
+        |> Ecto.Changeset.put_change(:auth_version, current.auth_version + 1)
 
       case Repo.update(changeset) do
-        {:ok, updated_user} ->
-          # Roles and account status are authorization inputs. Requiring a
-          # fresh login prevents an old cookie from retaining stale rights.
-          delete_user_sessions(updated_user)
-
+        {:ok, user} ->
+          delete_user_sessions(user)
           audit(:user_access_updated, actor,
-            target_user: updated_user,
-            metadata: %{
-              "role" => Atom.to_string(updated_user.role),
-              "status" => Atom.to_string(updated_user.status)
-            }
+            target_user: user,
+            metadata: %{"status" => Atom.to_string(user.status)}
           )
-
-          updated_user
+          user
 
         {:error, changeset} ->
           Repo.rollback(changeset)
@@ -425,7 +443,7 @@ defmodule TeslaMate.Accounts do
         on: uc.car_id == c.id,
         join: u in User,
         on: u.id == uc.user_id,
-        where: uc.user_id == ^user_id and u.status == :active
+        where: uc.user_id == ^user_id and u.status == :active and is_nil(u.deletion_scheduled_at)
     end
   end
 
@@ -458,13 +476,13 @@ defmodule TeslaMate.Accounts do
 
       target =
         Repo.one(
-          from u in User, where: u.id == ^target.id and u.status == :active, lock: "FOR UPDATE"
+          from u in User, where: u.id == ^target.id and u.status == :active and is_nil(u.deletion_scheduled_at), lock: "FOR UPDATE"
         )
 
       if is_nil(target), do: Repo.rollback(:forbidden)
       car = Repo.one(from c in Car, where: c.id == ^parse_id(car_id), lock: "FOR UPDATE")
       if is_nil(car), do: Repo.rollback(:car_not_found)
-      binding = bind_exclusive!(target, car, actor.id)
+      binding = bind_exclusive!(target, car, actor.id, allow_archived: true)
       audit(:vehicle_access_granted, actor, target_user: target, car: car)
       binding
     end)
@@ -473,7 +491,12 @@ defmodule TeslaMate.Accounts do
   def grant_car(_, _, _), do: {:error, :forbidden}
 
   @doc false
-  def bind_exclusive!(%User{} = user, %Car{} = car, granted_by_id) do
+  def bind_exclusive!(%User{} = user, %Car{} = car, granted_by_id, opts \\ []) do
+    if car.account_archived_at do
+      unless Keyword.get(opts, :allow_archived, false), do: Repo.rollback(:archived_vehicle)
+      car |> Ecto.Changeset.change(account_archived_at: nil) |> Repo.update!()
+    end
+
     # Call within a transaction while holding the car row lock.
     case Repo.get_by(UserCar, car_id: car.id) do
       nil ->
@@ -580,7 +603,7 @@ defmodule TeslaMate.Accounts do
       active_user =
         Repo.one(
           from u in User,
-            where: u.id == ^user.id and u.status == :active,
+            where: u.id == ^user.id and u.status == :active and is_nil(u.deletion_scheduled_at),
             lock: "FOR UPDATE"
         )
 
@@ -601,7 +624,7 @@ defmodule TeslaMate.Accounts do
 
       binding =
         case Repo.get_by(UserCar, car_id: car.id) do
-          nil -> bind_exclusive!(user, car, claim.created_by_user_id)
+          nil -> bind_exclusive!(active_user, car, claim.created_by_user_id, allow_archived: true)
           %UserCar{user_id: id} = binding when id == user.id -> binding
           _ -> Repo.rollback(:invalid_or_expired_claim)
         end
@@ -709,26 +732,13 @@ defmodule TeslaMate.Accounts do
     Repo.insert!(event)
   end
 
-  defp removes_last_active_admin?(%User{role: :admin, status: :active}, changeset) do
-    next_role = Ecto.Changeset.get_field(changeset, :role)
-    next_status = Ecto.Changeset.get_field(changeset, :status)
-
-    (next_role != :admin or next_status != :active) and active_admin_count() <= 1
-  end
-
-  defp removes_last_active_admin?(_, _), do: false
-
-  defp active_admin_count do
-    Repo.one(from u in User, where: u.role == :admin and u.status == :active, select: count(u.id))
-  end
-
   defp active_admin_actor?(%User{id: id}), do: active_admin_id?(id)
   defp active_admin_actor?(_), do: false
 
   defp active_admin_id?(id) when is_integer(id) do
     Repo.one(
       from u in User,
-        where: u.id == ^id and u.role == :admin and u.status == :active,
+        where: u.id == ^id and u.is_system_admin and u.role == :admin and u.status == :active,
         select: u.id,
         limit: 1
     ) != nil
@@ -739,7 +749,7 @@ defmodule TeslaMate.Accounts do
   defp active_user_id?(id) when is_integer(id) do
     Repo.one(
       from u in User,
-        where: u.id == ^id and u.status == :active,
+        where: u.id == ^id and u.status == :active and is_nil(u.deletion_scheduled_at),
         select: u.id,
         limit: 1
     ) != nil

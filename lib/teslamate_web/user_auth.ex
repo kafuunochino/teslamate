@@ -72,11 +72,21 @@ defmodule TeslaMateWeb.UserAuth do
           conn |> redirect(to: "/sign_in")
       end
     else
-      case Accounts.create_session(user, session_metadata(conn)) do
-        {:ok, token} -> conn |> put_authenticated_session(token) |> redirect(to: "/")
+      case Accounts.create_login_session(user, session_metadata(conn)) do
+        {:ok, token} -> finish_login(conn, user, token)
         _ -> conn |> redirect(to: "/sign_in")
       end
     end
+  end
+
+  def finish_login(conn, user, token) do
+    conn = put_authenticated_session(conn, token)
+    conn =
+      if user.deletion_scheduled_at,
+        do: put_flash(conn, :success, "已取消账号注销，账号恢复正常使用"),
+        else: conn
+
+    redirect(conn, to: "/")
   end
 
   def put_authenticated_session(conn, token) do

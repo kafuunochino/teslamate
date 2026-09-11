@@ -182,16 +182,19 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     assert has_element?(view, ".range-picker button.is-active", "7 天")
   end
 
+  @tag platform_role: :member
   test "refresh clears battery and charge editing after access revocation", %{
     conn: conn,
     current_user: user,
+    car: car,
     charge: charge
   } do
+    {:ok, _} = TeslaMate.AccountFixtures.grant(user, car)
     {:ok, battery, _} = live(conn, "/battery")
     {:ok, charging, _} = live(conn, "/charging")
     charging |> element("#charge-cost-edit-#{charge.id}") |> render_click()
 
-    user |> Ecto.Changeset.change(role: :member) |> Repo.update!()
+    :ok = TeslaMate.AccountFixtures.revoke(user, car)
 
     for view <- [battery, charging] do
       view |> element("#battery-refresh-now") |> render_click()

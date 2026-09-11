@@ -3,7 +3,7 @@
     <div>
       <p class="page-kicker">管理员</p>
       <h1>用户与车辆权限</h1>
-      <p>账号状态、车辆授权、一次性认领码和安全审计集中管理。</p>
+      <p>系统创建的第一个账号是唯一管理员，身份固定。其他账号均为普通用户，在此管理账号状态、车辆授权和安全审计。</p>
     </div>
   </header>
 
@@ -162,19 +162,22 @@
           </tr>
         </thead>
         <tbody>
-          <tr :for={user <- @users}>
+          <tr :for={user <- @users} id={"user-row-#{user.id}"}>
             <td data-label="用户">
               <strong><%= user.name %></strong><small class="table-subline"><%= user.email %></small>
             </td>
             <td data-label="角色">
               <span class={"role-chip role-chip--#{user.role}"}>
-                <%= if user.role == :admin, do: "管理员", else: "普通用户" %>
+                <%= if user.is_system_admin, do: "系统唯一管理员", else: "普通用户" %>
               </span>
             </td>
             <td data-label="状态">
               <span class={"status-chip status-chip--#{user.status}"}>
                 <%= if user.status == :active, do: "有效", else: "已停用" %>
               </span>
+              <small :if={user.deletion_scheduled_at} class="table-subline">
+                注销冷静期 · <%= date_time(user.deletion_scheduled_at) %> 后自动删除
+              </small>
             </td>
             <td data-label="车辆权限">
               <div class="binding-chips">
@@ -197,27 +200,40 @@
             </td>
             <td data-label="最近登录"><%= date_time(user.last_login_at) %></td>
             <td data-label="操作">
-              <div class="table-buttons">
-                <button
-                  type="button"
-                  class="button is-small"
-                  phx-click="update_user"
-                  phx-value-id={user.id}
-                  phx-value-role={if user.role == :admin, do: "member", else: "admin"}
-                  phx-value-status={user.status}
-                >
-                  <%= if user.role == :admin, do: "降为用户", else: "设为管理员" %>
-                </button>
-                <button
-                  type="button"
+              <p :if={user.is_system_admin} class="help">固定管理员，不能停用或删除</p>
+              <div :if={!user.is_system_admin} class="table-buttons">
+                <button type="button"
                   class={"button is-small #{if user.status == :active, do: "is-danger is-light", else: "is-success is-light"}"}
-                  phx-click="update_user"
-                  phx-value-id={user.id}
-                  phx-value-role={user.role}
-                  phx-value-status={if user.status == :active, do: "disabled", else: "active"}
-                >
+                  phx-click="update_user" phx-value-id={user.id}
+                  phx-value-status={if user.status == :active, do: "disabled", else: "active"}>
                   <%= if user.status == :active, do: "停用", else: "启用" %>
                 </button>
+                <button type="button" class="button is-small is-danger is-light"
+                  phx-click="prepare_delete" phx-value-id={user.id}>删除账号</button>
+              </div>
+              <div :if={@deletion_target && @deletion_target.id == user.id}
+                id="admin-delete-confirmation" class="account-deletion delete-confirmation" role="region" aria-label="删除账号二次确认">
+                <h3>二次确认：删除账号</h3>
+                <p>将立即删除 <strong><%= @deletion_target.email %></strong>，并退出其全部设备、清除 Tesla 授权和个人围栏。</p>
+                <p>车辆历史保留，仅管理员可见。此操作没有冷静期，无法撤销。</p>
+                <form phx-submit="confirm_delete" id="admin-delete-form" class="platform-form">
+                  <label class="label" for="admin-delete-email">输入待删除账号的完整邮箱</label>
+                  <input id="admin-delete-email" name="confirmation[email]" type="email" class="input" autocomplete="off" maxlength="254" required />
+                  <label class="label" for="admin-delete-password">管理员当前密码</label>
+                  <input id="admin-delete-password" name="confirmation[password]" type="password" class="input" autocomplete="current-password" maxlength="128" required />
+                  <div :if={@deletion_requires_code} class="field">
+                    <label class="label" for="admin-delete-code">管理员动态码或恢复码</label>
+                    <input id="admin-delete-code" name="confirmation[code]" type="text" class="input" autocomplete="one-time-code" maxlength="64" required />
+                  </div>
+                  <label class="checkbox">
+                    <input name="confirmation[acknowledge]" type="checkbox" value="true" required />
+                    我已了解此操作无法撤销及车辆历史的保留方式
+                  </label>
+                  <div class="table-buttons">
+                    <button type="button" class="button" phx-click="cancel_delete">取消</button>
+                    <button type="submit" class="button is-danger" phx-disable-with="正在删除…">确认删除账号</button>
+                  </div>
+                </form>
               </div>
             </td>
           </tr>

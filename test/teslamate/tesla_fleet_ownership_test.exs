@@ -8,6 +8,7 @@ defmodule TeslaMate.TeslaFleetOwnershipTest do
 
   setup do
     start_supervised!(TeslaMate.Vault)
+    TeslaMate.AccountFixtures.system_admin()
     previous_config = Application.get_env(:teslamate, :tesla_fleet_config)
     previous_http = Application.get_env(:teslamate, :tesla_fleet_http)
 

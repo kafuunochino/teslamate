@@ -184,11 +184,14 @@ defmodule TeslaMate.Accounts.Security do
     end)
   end
 
+  def authorize_account_deletion(user, token, password, code),
+    do: authorize_password_change(user, token, password, code)
+
   def create_challenge(%User{} = user) do
     transaction(fn ->
       current = lock_user(user)
 
-      if current.auth_version != user.auth_version or not enabled?(current) do
+      if current.auth_version != user.auth_version or Accounts.deletion_due?(current) or not enabled?(current) do
         {:error, :invalid_challenge}
       else
         token = random_token()
@@ -214,7 +217,8 @@ defmodule TeslaMate.Accounts.Security do
         where:
           c.token_hash == ^hash(token) and c.expires_at > ^now() and
             c.attempts < ^@attempt_limit and u.status == :active and
-            c.auth_version == u.auth_version,
+            c.auth_version == u.auth_version and
+            (is_nil(u.deletion_scheduled_at) or u.deletion_scheduled_at > ^now()),
         select: u
     )
   end
@@ -233,7 +237,7 @@ defmodule TeslaMate.Accounts.Security do
           a = lock_authenticator(current)
 
           cond do
-            is_nil(challenge) or challenge.auth_version != current.auth_version or
+            Accounts.deletion_due?(current) or is_nil(challenge) or challenge.auth_version != current.auth_version or
               DateTime.compare(challenge.expires_at, now()) != :gt or
                 challenge.attempts >= @attempt_limit ->
               {:error, :invalid_challenge}
@@ -248,7 +252,7 @@ defmodule TeslaMate.Accounts.Security do
               case consume_factor(a, code) do
                 {:ok, _} ->
                   Repo.delete!(challenge)
-                  {:ok, session} = Accounts.create_session(current, metadata)
+                  {:ok, session} = Accounts.create_login_session(current, metadata)
                   {:ok, current, session}
 
                 error ->

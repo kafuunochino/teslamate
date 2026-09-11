@@ -34,7 +34,8 @@ defmodule TeslaMate.Release do
         Ecto.Migrator.with_repo(repo, fn _repo ->
           case Accounts.bootstrap_admin(attrs) do
             {:ok, user} -> {:ok, %{id: user.id, email: user.email}}
-            {:error, changeset} -> {:error, inspect(changeset.errors)}
+            {:error, %Ecto.Changeset{} = changeset} -> {:error, inspect(changeset.errors)}
+            {:error, reason} -> {:error, Accounts.Lifecycle.error_message(reason)}
           end
         end)
 

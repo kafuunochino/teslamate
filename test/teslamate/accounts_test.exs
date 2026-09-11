@@ -138,35 +138,21 @@ defmodule TeslaMate.AccountsTest do
   end
 
   test "the final active administrator cannot be disabled", %{admin: admin} do
-    assert {:error, :last_active_admin} =
+    assert {:error, :system_admin_protected} =
              Accounts.update_user_access(admin, admin, %{status: :disabled, role: :admin})
 
     assert Accounts.get_user!(admin.id).status == :active
   end
 
-  test "an already-mounted stale administrator struct cannot retain privileges", %{
-    admin: stale_admin,
+  test "a forged administrator struct cannot retain privileges", %{
     member: member,
+    other_member: target,
     car: car
   } do
-    {:ok, second_admin} =
-      Accounts.bootstrap_admin(%{
-        email: unique_email("second-admin"),
-        name: "第二管理员",
-        password: @valid_password,
-        password_confirmation: @valid_password
-      })
-
-    assert {:ok, demoted} =
-             Accounts.update_user_access(second_admin, stale_admin, %{
-               status: :active,
-               role: :member
-             })
-
-    assert demoted.role == :member
+    stale_admin = %{member | role: :admin, is_system_admin: true}
     assert Accounts.list_users(stale_admin) == []
     assert Accounts.list_accessible_cars(stale_admin) == []
-    assert {:error, :forbidden} = Accounts.grant_car(stale_admin, member, car.id)
+    assert {:error, :forbidden} = Accounts.grant_car(stale_admin, target, car.id)
     assert {:error, :forbidden} = Accounts.create_vehicle_claim(stale_admin, car.id)
   end
 

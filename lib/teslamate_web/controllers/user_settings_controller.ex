@@ -6,6 +6,25 @@ defmodule TeslaMateWeb.UserSettingsController do
 
   def edit(conn, _params), do: render_settings(conn)
 
+  def request_deletion(conn, %{"confirmation" => params}) when is_map(params) do
+    case Accounts.Lifecycle.request_deletion(conn.assigns.current_user, session_token(conn), params) do
+      {:ok, user} ->
+        deadline = TeslaMateWeb.PlatformComponents.date_time(user.deletion_scheduled_at)
+        conn
+        |> configure_session(renew: true)
+        |> clear_session()
+        |> put_flash(:info, "注销申请已提交，将于 #{deadline} 后自动删除账号。七天内完整登录可取消注销。")
+        |> redirect(to: "/sign_in")
+
+      {:error, reason} ->
+        conn
+        |> put_flash(:error, Accounts.Lifecycle.error_message(reason))
+        |> redirect(to: "/account#account-deletion")
+    end
+  end
+
+  def request_deletion(conn, _), do: bad_request(conn)
+
   def update_profile(conn, %{"user" => params}) when is_map(params) do
     case Accounts.update_profile(conn.assigns.current_user, params) do
       {:ok, _} ->
@@ -145,7 +164,8 @@ defmodule TeslaMateWeb.UserSettingsController do
       password_changeset: Accounts.User.password_changeset(user, %{}),
       security: Security.status(user, session_token(conn)),
       sessions: Accounts.list_sessions(user, session_token(conn)),
-      recovery_codes: []
+      recovery_codes: [],
+      system_admin: Accounts.system_admin?(user)
     ]
 
     conn

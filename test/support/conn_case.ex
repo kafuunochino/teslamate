@@ -59,18 +59,10 @@ defmodule TeslaMateWeb.ConnCase do
   defp maybe_log_in_platform_user(conn, %{auth: false}), do: {conn, nil}
 
   defp maybe_log_in_platform_user(conn, tags) do
-    suffix = System.unique_integer([:positive, :monotonic])
-    now = DateTime.utc_now() |> DateTime.truncate(:microsecond)
-
     user =
-      TeslaMate.Repo.insert!(%TeslaMate.Accounts.User{
-        email: "test-admin-#{suffix}@example.com",
-        name: "Test Admin",
-        password_hash: "test-only-not-a-valid-password-hash",
-        password_changed_at: now,
-        role: tags[:platform_role] || :admin,
-        status: :active
-      })
+      if tags[:platform_role] == :member,
+        do: TeslaMate.AccountFixtures.member(),
+        else: TeslaMate.AccountFixtures.system_admin()
 
     {:ok, token} = TeslaMate.Accounts.create_session(user)
 

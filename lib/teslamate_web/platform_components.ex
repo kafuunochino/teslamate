@@ -209,13 +209,16 @@ defmodule TeslaMateWeb.PlatformComponents do
   def audit_action_label("user_logged_in"), do: "用户登录"
   def audit_action_label("administrator_bootstrapped"), do: "创建或重置管理员"
   def audit_action_label("password_changed"), do: "修改密码"
-  def audit_action_label("user_access_updated"), do: "更新用户角色或状态"
+  def audit_action_label("user_access_updated"), do: "更新账号状态"
   def audit_action_label("vehicle_access_granted"), do: "授予车辆权限"
   def audit_action_label("vehicle_access_revoked"), do: "撤销车辆权限"
   def audit_action_label("vehicle_access_relinquished"), do: "用户解除车辆绑定"
   def audit_action_label("vehicle_claim_created"), do: "创建车辆认领码"
   def audit_action_label("vehicle_claim_redeemed"), do: "使用车辆认领码"
   def audit_action_label("vehicle_claim_revoked"), do: "撤销车辆认领码"
+  def audit_action_label("account_deletion_requested"), do: "申请账号注销"
+  def audit_action_label("account_deletion_cancelled"), do: "登录取消账号注销"
+  def audit_action_label("account_deleted"), do: "删除账号并保留车辆历史"
   def audit_action_label(action), do: action
 
   def location_label(record) do

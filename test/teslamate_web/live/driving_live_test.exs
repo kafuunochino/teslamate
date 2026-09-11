@@ -95,11 +95,13 @@ defmodule TeslaMateWeb.DrivingLiveTest do
     assert has_element?(view, "#drive-altitude strong", "950")
   end
 
-  test "refresh removes telemetry after access is revoked", %{conn: conn, current_user: user} do
+  @tag platform_role: :member
+  test "refresh removes telemetry after access is revoked", %{conn: conn, current_user: user, car: car} do
+    {:ok, _} = TeslaMate.AccountFixtures.grant(user, car)
     {:ok, view, _html} = live(conn, "/driving")
     assert has_element?(view, "#drive-altitude")
 
-    user |> Ecto.Changeset.change(role: :member) |> Repo.update!()
+    :ok = TeslaMate.AccountFixtures.revoke(user, car)
     view |> element("#drive-refresh-now") |> render_click()
 
     refute has_element?(view, "#drive-altitude")

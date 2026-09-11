@@ -15,7 +15,7 @@ defmodule TeslaMate.OwnershipTest do
           name: prefix,
           password_hash: "test-only",
           password_changed_at: now,
-          role: :admin
+          role: :member
         })
       end
 
@@ -25,7 +25,7 @@ defmodule TeslaMate.OwnershipTest do
       Enum.map(users, fn user ->
         id = System.unique_integer([:positive])
         {:ok, car} = Log.create_car(%{eid: id, vid: id, vin: "VIN#{id}"})
-        {:ok, _} = Accounts.grant_car(user, user, car.id)
+        {:ok, _} = Accounts.grant_car(first, user, car.id)
         car
       end)
 
@@ -70,9 +70,9 @@ defmodule TeslaMate.OwnershipTest do
     second: second,
     car1: car
   } do
-    assert {:error, :vehicle_already_bound} = Accounts.grant_car(second, second, car.id)
+    assert {:error, :vehicle_already_bound} = Accounts.grant_car(first, second, car.id)
     assert Repo.get_by!(Accounts.UserCar, car_id: car.id).user_id == first.id
-    member = second |> Ecto.Changeset.change(role: :member) |> Repo.update!()
+    member = second
     refute Accounts.can_access_car?(member, car.id)
     assert Fleet.home(member, car.id).car.id != car.id
     {:ok, drive} = Log.start_drive(car)
@@ -130,8 +130,8 @@ defmodule TeslaMate.OwnershipTest do
     c = charge(car)
     g1 = fence(first, "Previous Home")
     assert Repo.get!(ChargingProcess, c.id).geofence_id == g1.id
-    assert :ok = Accounts.revoke_car(second, first, car.id)
-    assert {:ok, _} = Accounts.grant_car(second, second, car.id)
+    assert :ok = Accounts.revoke_car(first, first, car.id)
+    assert {:ok, _} = Accounts.grant_car(first, second, car.id)
     assert Repo.get!(ChargingProcess, c.id).geofence_id == nil
   end
 
@@ -147,14 +147,14 @@ defmodule TeslaMate.OwnershipTest do
       list: fn -> [summary] end,
       summary: fn _ -> summary end do
       assert Fleet.home(first, car.id).live.geofence.id == own.id
-      assert :ok = Accounts.revoke_car(second, first, car.id)
-      assert {:ok, _} = Accounts.grant_car(second, second, car.id)
+      assert :ok = Accounts.revoke_car(first, first, car.id)
+      assert {:ok, _} = Accounts.grant_car(first, second, car.id)
       assert Fleet.home(second, car.id).live.geofence == nil
       assert Fleet.driving(second, car.id).live.geofence == nil
     end
   end
 
-  test "a disabled account cannot read or mutate its fences with a stale struct", %{first: first} do
+  test "a disabled account cannot read or mutate its fences with a stale struct", %{second: first} do
     g = fence(first, "Home")
     Repo.update_all(from(u in User, where: u.id == ^first.id), set: [status: :disabled])
     assert Locations.list_geofences(first) == []

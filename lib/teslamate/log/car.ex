@@ -9,6 +9,7 @@ defmodule TeslaMate.Log.Car do
 
   schema "cars" do
     field :fleet_api, :boolean, default: false
+    field :account_archived_at, :utc_datetime_usec
     field :name, :string
     field :efficiency, :float
     field :model, :string

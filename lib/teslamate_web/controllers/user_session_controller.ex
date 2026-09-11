@@ -61,7 +61,7 @@ defmodule TeslaMateWeb.UserSessionController do
         ip = conn.private[:client_ip] || "unknown"
         LoginRateLimit.record_success(ip, user.email)
         LoginAudit.record(%{ip: ip, email: user.email, outcome: :success, reason: "platform-2fa"})
-        conn |> UserAuth.put_authenticated_session(session) |> redirect(to: "/")
+        UserAuth.finish_login(conn, user, session)
 
       {:error, :invalid_challenge} ->
         conn

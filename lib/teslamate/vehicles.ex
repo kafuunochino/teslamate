@@ -16,6 +16,7 @@ defmodule TeslaMate.Vehicles do
 
   def list do
     Supervisor.which_children(@name)
+    |> Enum.filter(fn {_, pid, _, _} -> is_pid(pid) end)
     |> Task.async_stream(fn {_, pid, _, _} -> Vehicle.summary(pid) end,
       ordered: false,
       max_concurrency: 10,
@@ -28,9 +29,9 @@ defmodule TeslaMate.Vehicles do
   end
 
   def ensure_started(%Car{} = car) do
-    car = TeslaMate.Repo.preload(car, :settings)
+    car = TeslaMate.Repo.get!(Car, car.id) |> TeslaMate.Repo.preload(:settings)
 
-    if car.settings.enabled do
+    if car.settings.enabled and is_nil(car.account_archived_at) do
       case Supervisor.start_child(@name, {Vehicle, car: car}) do
         {:ok, _} -> :ok
         {:error, {:already_started, _}} -> :ok
@@ -40,6 +41,18 @@ defmodule TeslaMate.Vehicles do
     else
       :ok
     end
+  end
+
+  def stop_archived(id) do
+    with %Car{account_archived_at: at} when not is_nil(at) <- TeslaMate.Repo.get(Car, id),
+         pid when is_pid(pid) <- Process.whereis(@name) do
+      child = :"#{Vehicle}_#{id}"
+      Supervisor.terminate_child(pid, child)
+      Supervisor.delete_child(pid, child)
+    end
+    :ok
+  catch
+    :exit, _ -> :ok
   end
 
   def kill do
@@ -69,7 +82,9 @@ defmodule TeslaMate.Vehicles do
       |> Keyword.get_lazy(:vehicles, &list_vehicles!/0)
       |> Enum.map(&{Keyword.get(opts, :vehicle, Vehicle), car: create_or_update!(&1)})
       |> Enum.uniq_by(fn {_mod, car: %Car{id: id}} -> id end)
-      |> Enum.filter(fn {_mod, car: %Car{settings: settings}} -> settings.enabled end)
+      |> Enum.filter(fn {_mod, car: %Car{settings: settings, account_archived_at: at}} ->
+        settings.enabled and is_nil(at)
+      end)
 
     Supervisor.init(children,
       strategy: :one_for_one,

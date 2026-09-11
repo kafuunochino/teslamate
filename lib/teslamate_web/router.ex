@@ -90,6 +90,7 @@ defmodule TeslaMateWeb.Router do
 
     delete "/sign_out", UserSessionController, :delete
     get "/account", UserSettingsController, :edit
+    post "/account/deletion", UserSettingsController, :request_deletion
     put "/account/profile", UserSettingsController, :update_profile
     put "/account/password", UserSettingsController, :update_password
     post "/account/2fa/setup", UserSettingsController, :begin_two_factor

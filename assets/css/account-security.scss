@@ -1,5 +1,6 @@
 .account-security,
-.account-devices {
+.account-devices,
+.account-deletion {
   margin-top: 1.5rem;
   min-width: 0;
 
@@ -93,4 +94,45 @@
   form {
     flex-shrink: 0;
   }
+}
+
+.account-deletion {
+  overflow-wrap: anywhere;
+
+  > p {
+    margin-bottom: 1rem;
+  }
+
+  summary.button {
+    display: inline-flex;
+    white-space: normal;
+    height: auto;
+  }
+
+  .checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.6;
+
+    input {
+      margin-top: 0.3rem;
+      flex-shrink: 0;
+    }
+  }
+
+  .button {
+    white-space: normal;
+    height: auto;
+    min-height: 2.5rem;
+  }
+}
+
+.delete-confirmation {
+  min-width: min(26rem, 100%);
+  max-width: 36rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid var(--platform-control-border);
+  border-radius: 12px;
 }
