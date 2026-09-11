@@ -55,7 +55,9 @@ defmodule TeslaMate.OwnershipTest do
     {:ok, charge} =
       Log.start_charging_process(
         car,
-        %{date: DateTime.utc_now(), latitude: 26.647, longitude: 106.63}, lookup_address: false)
+        %{date: DateTime.utc_now(), latitude: 26.647, longitude: 106.63},
+        lookup_address: false
+      )
 
     {:ok, charge} =
       Log.update_charging_process(charge, %{charge_energy_added: 10, duration_min: 30})
