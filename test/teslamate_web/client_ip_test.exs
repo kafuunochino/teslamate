@@ -35,9 +35,12 @@ defmodule TeslaMateWeb.ClientIPTest do
   test "login, audit, cookie session and device page agree on the real client IP", %{
     current_user: user
   } do
+    login_form = get(proxied_conn(), "/sign_in")
+    assert get_session(login_form, :client_ip) == "198.51.100.10"
+
     conn = post(proxied_conn(), "/sign_in", %{user: %{email: user.email, password: @password}})
     assert redirected_to(conn) == "/"
-    assert get_session(conn, :client_ip) == "198.51.100.10"
+    assert conn.private.client_ip == "198.51.100.10"
     assert login_session(conn).ip_address == "198.51.100.10"
     assert [%{ip: "198.51.100.10", outcome: :success}] = LoginAudit.recent()
 
