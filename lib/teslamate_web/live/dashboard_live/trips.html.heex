@@ -88,7 +88,9 @@
                 </td>
                 <td data-label="净耗电量（估算）">
                   <%= energy(trip_energy.energy_kwh, 2) %>
-                  <small class="energy-source"><%= TeslaMate.TripEnergy.source_label(trip_energy.source) %></small>
+                  <small class="energy-source">
+                    <%= TeslaMate.TripEnergy.source_label(trip_energy.source) %>
+                  </small>
                 </td>
                 <td data-label="时长"><%= duration(drive.duration_min) %></td>
                 <td data-label="最高速度">

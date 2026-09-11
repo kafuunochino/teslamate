@@ -10,8 +10,13 @@ defmodule TeslaMate.TripEnergy do
     case official do
       %{energy_kwh: kwh, source: :fleet_battery} = sample when is_number(kwh) ->
         distance = number(drive.distance)
-        Map.put(sample, :consumption_wh_km,
-          if(is_number(distance) and distance > 0, do: kwh * 1000 / distance))
+
+        Map.put(
+          sample,
+          :consumption_wh_km,
+          if(is_number(distance) and distance > 0, do: kwh * 1000 / distance)
+        )
+
       _ ->
         calculate(drive, efficiency, range)
     end
@@ -24,6 +29,7 @@ defmodule TeslaMate.TripEnergy do
 
   def source_note(:fleet_battery),
     do: "使用本程起止的官方电池剩余能量；边界相差不超过 30 秒、时间覆盖至少 90%。结果包含能量回收，也可能受电池管理系统校准和温度影响。"
+
   def source_note(_),
     do: "本程缺少完整的官方电池起止采样，按续航变化与车辆能耗系数估算。负值可能来自回收或续航校准；数据不足显示“—”。"
 

@@ -91,19 +91,32 @@ defmodule TeslaMate.Fleet do
 
     result =
       cond do
-        is_nil(drive) -> nil
-        not is_nil(drive.end_date) -> drive_energy([drive], car)[drive.id]
+        is_nil(drive) ->
+          nil
+
+        not is_nil(drive.end_date) ->
+          drive_energy([drive], car)[drive.id]
+
         stats.first && stats.last ->
-          interval = %{id: drive.id, car_id: car.id, start_date: stats.first.date,
-            end_date: stats.last.date, distance: metrics.distance}
+          interval = %{
+            id: drive.id,
+            car_id: car.id,
+            start_date: stats.first.date,
+            end_date: stats.last.date,
+            distance: metrics.distance
+          }
+
           official = TeslaMate.TeslaFleet.Energy.drive_energy([interval])[drive.id]
           if official, do: TeslaMate.TripEnergy.calculate(interval, nil, nil, official)
-        true -> nil
+
+        true ->
+          nil
       end
 
     if result do
       Map.merge(metrics, %{
-        net_energy: result.energy_kwh, consumption: result.consumption_wh_km,
+        net_energy: result.energy_kwh,
+        consumption: result.consumption_wh_km,
         energy_source: result.source
       })
     else
@@ -399,7 +412,11 @@ defmodule TeslaMate.Fleet do
   defp drive_energy(drives, car) do
     range = TeslaMate.Settings.get_global_settings!().preferred_range
     official = TeslaMate.TeslaFleet.Energy.drive_energy(drives)
-    Map.new(drives, &{&1.id, TeslaMate.TripEnergy.calculate(&1, car.efficiency, range, official[&1.id])})
+
+    Map.new(
+      drives,
+      &{&1.id, TeslaMate.TripEnergy.calculate(&1, car.efficiency, range, official[&1.id])}
+    )
   end
 
   ## Query helpers
@@ -499,10 +516,13 @@ defmodule TeslaMate.Fleet do
   defp summarize_charges(sessions) do
     priced = Enum.reject(sessions, &is_nil(&1.cost))
     loss = Enum.filter(sessions, &is_number(&1.energy.loss_kwh))
+
     %{
-      count: length(sessions), energy_added: sum_decimal(sessions, :charge_energy_added),
+      count: length(sessions),
+      energy_added: sum_decimal(sessions, :charge_energy_added),
       energy_used: sum_decimal(sessions, :charge_energy_used),
-      cost: sum_decimal(sessions, :cost), cost_count: length(priced),
+      cost: sum_decimal(sessions, :cost),
+      cost_count: length(priced),
       priced_energy_added: sum_decimal(priced, :charge_energy_added),
       duration_min: sum_field(sessions, :duration_min),
       average_end_level: average_field(sessions, :end_battery_level),
@@ -516,12 +536,14 @@ defmodule TeslaMate.Fleet do
 
   defp sum_decimal(rows, key) do
     Enum.reduce(rows, Decimal.new(0), fn row, total ->
-      value = case Map.get(row, key) do
-        %Decimal{} = decimal -> decimal
-        number when is_float(number) -> Decimal.from_float(number)
-        number when is_integer(number) -> Decimal.new(number)
-        _ -> Decimal.new(0)
-      end
+      value =
+        case Map.get(row, key) do
+          %Decimal{} = decimal -> decimal
+          number when is_float(number) -> Decimal.from_float(number)
+          number when is_integer(number) -> Decimal.new(number)
+          _ -> Decimal.new(0)
+        end
+
       Decimal.add(total, value)
     end)
   end
@@ -536,6 +558,7 @@ defmodule TeslaMate.Fleet do
       |> Repo.all()
 
     ids = Enum.map(sessions, & &1.id)
+
     types =
       Charge
       |> where([c], c.charging_process_id in ^ids)
@@ -549,8 +572,12 @@ defmodule TeslaMate.Fleet do
 
     Enum.map(sessions, fn session ->
       result = energy[session.id]
-      Map.merge(session, %{energy: result, charge_energy_added: result.energy_added,
-        charge_energy_used: result.energy_used})
+
+      Map.merge(session, %{
+        energy: result,
+        charge_energy_added: result.energy_added,
+        charge_energy_used: result.energy_used
+      })
     end)
   end
 
@@ -597,7 +624,11 @@ defmodule TeslaMate.Fleet do
     sessions
     |> Enum.group_by(&beijing_day(&1.start_date))
     |> Enum.map(fn {period, rows} ->
-      %{period: period, value: sum_field(rows, :charge_energy_added), cost: sum_decimal(rows, :cost)}
+      %{
+        period: period,
+        value: sum_decimal(rows, :charge_energy_added),
+        cost: sum_decimal(rows, :cost)
+      }
     end)
     |> Enum.sort_by(& &1.period, Date)
   end
@@ -606,9 +637,12 @@ defmodule TeslaMate.Fleet do
 
   defp capacity_history(car_id, days) do
     official = TeslaMate.TeslaFleet.Energy.capacity_history(car_id, since(days))
+
     if official.rows == [] do
-      %{source: :range_estimate,
-        rows: Enum.map(battery_history(car_id, days), &%{period: &1.period, value: &1.full_range})}
+      %{
+        source: :range_estimate,
+        rows: Enum.map(battery_history(car_id, days), &%{period: &1.period, value: &1.full_range})
+      }
     else
       official
     end
@@ -675,9 +709,14 @@ defmodule TeslaMate.Fleet do
     |> Enum.group_by(&{&1.geofence_id, &1.address_id})
     |> Enum.map(fn {_key, rows} ->
       first = hd(rows)
-      %{label: address_label(first.geofence || first.address), count: length(rows),
-        energy: sum_field(rows, :charge_energy_added), cost: sum_decimal(rows, :cost),
-        cost_count: Enum.count(rows, &(not is_nil(&1.cost)))}
+
+      %{
+        label: address_label(first.geofence || first.address),
+        count: length(rows),
+        energy: sum_decimal(rows, :charge_energy_added),
+        cost: sum_decimal(rows, :cost),
+        cost_count: Enum.count(rows, &(not is_nil(&1.cost)))
+      }
     end)
     |> Enum.sort_by(&{-&1.count, &1.label})
     |> Enum.take(limit)
@@ -727,8 +766,13 @@ defmodule TeslaMate.Fleet do
     |> then(fn stats ->
       distance = number(stats.distance)
       duration = number(stats.duration_min)
-      drives = Repo.all(from d in Drive,
-        where: d.car_id == ^car.id and d.start_date >= ^since(days))
+
+      drives =
+        Repo.all(
+          from d in Drive,
+            where: d.car_id == ^car.id and d.start_date >= ^since(days)
+        )
+
       results = drive_energy(drives, car)
       known = Enum.filter(drives, &is_number(results[&1.id].energy_kwh))
       measured_distance = sum_field(known, :distance)
@@ -740,13 +784,16 @@ defmodule TeslaMate.Fleet do
       |> Map.put(:official_count, Enum.count(known, &(results[&1.id].source == :fleet_battery)))
       |> Map.put(:energy_count, length(known))
       |> Map.put(:energy_kwh, if(known != [], do: energy))
-      |> Map.put(:consumption_wh_km,
-        if(measured_distance > 0, do: energy / measured_distance * 1000))
+      |> Map.put(
+        :consumption_wh_km,
+        if(measured_distance > 0, do: energy / measured_distance * 1000)
+      )
     end)
   end
 
   defp analysis_charge_metrics(car_id, days) do
     energy = charge_stats(car_id, days).energy_added
+
     ChargingProcess
     |> where([c], c.car_id == ^car_id and c.start_date >= ^since(days))
     |> select([c], %{

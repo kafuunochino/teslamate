@@ -81,9 +81,13 @@
     </section>
 
     <section class="metrics-grid">
-      <.metric_card title="交流充电输入与入电池差额"
-        value={energy(@report.stats.loss_kwh, 2)} icon="lightning-bolt-circle" tone="amber"
-        hint={"仅统计 #{@report.stats.loss_count} 次两侧时间对齐的官方采样；包含充电转换与辅助耗电"} />
+      <.metric_card
+        title="交流充电输入与入电池差额"
+        value={energy(@report.stats.loss_kwh, 2)}
+        icon="lightning-bolt-circle"
+        tone="amber"
+        hint={"仅统计 #{@report.stats.loss_count} 次两侧时间对齐的官方采样；包含充电转换与辅助耗电"}
+      />
     </section>
     <p class="trip-energy-note">
       能量优先采用本次会话的官方遥测。两侧完整采样不足、计数器重置或时间不一致时不计算损耗；原有会话数据作为补充并注明来源。
@@ -128,15 +132,27 @@
                   </td>
                   <td data-label="充入">
                     <%= energy(session.charge_energy_added, 2) %>
-                    <small class="energy-source"><%= if session.energy.battery_source == :fleet_battery, do: "官方电池侧遥测", else: "车辆会话记录" %></small>
+                    <small class="energy-source">
+                      <%= if session.energy.battery_source == :fleet_battery,
+                        do: "官方电池侧遥测",
+                        else: "车辆会话记录" %>
+                    </small>
                   </td>
                   <td data-label="充电侧输入">
                     <%= energy(session.charge_energy_used, 2) %>
-                    <small class="energy-source"><%= if session.energy.input_source == :fleet_ac, do: "官方交流输入遥测", else: "原有功率积分估算" %></small>
+                    <small class="energy-source">
+                      <%= if session.energy.input_source == :fleet_ac,
+                        do: "官方交流输入遥测",
+                        else: "原有功率积分估算" %>
+                    </small>
                   </td>
                   <td data-label="输入差额 / 比例">
-                    <%= energy(session.energy.loss_kwh, 2) %> / <%= percentage(session.energy.loss_percent) %>
-                    <small :if={is_nil(session.energy.loss_kwh)} class="energy-source">缺少可比的交流两侧数据</small>
+                    <%= energy(session.energy.loss_kwh, 2) %> / <%= percentage(
+                      session.energy.loss_percent
+                    ) %>
+                    <small :if={is_nil(session.energy.loss_kwh)} class="energy-source">
+                      缺少可比的交流两侧数据
+                    </small>
                   </td>
                   <td data-label="时长"><%= duration(session.duration_min) %></td>
                   <td data-label="费用">

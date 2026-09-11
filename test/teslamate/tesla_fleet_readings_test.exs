@@ -143,12 +143,22 @@ defmodule TeslaMate.TeslaFleet.ReadingsTest do
     assert :ignored = Readings.ingest(@vin, "PackVoltage", payload(350, now))
   end
 
-  test "ingestion writes durable energy history atomically without storing unknown vehicles", %{car: car, now: now} do
+  test "ingestion writes durable energy history atomically without storing unknown vehicles", %{
+    car: car,
+    now: now
+  } do
     assert :ignored = Readings.ingest("UNKNOWN", "EnergyRemaining", payload(50, now))
     assert :ok = Readings.ingest(@vin, "EnergyRemaining", payload(50, now))
     assert :ok = Readings.ingest(@vin, "EnergyRemaining", payload(50, now))
-    assert :ok = Readings.ingest(@vin, "EnergyRemaining", payload("<invalid>", DateTime.add(now, 1)))
-    assert Repo.query!("SELECT value FROM fleet_energy_samples WHERE car_id=$1 ORDER BY measured_at", [car.id]).rows == [[50.0], [nil]]
+
+    assert :ok =
+             Readings.ingest(@vin, "EnergyRemaining", payload("<invalid>", DateTime.add(now, 1)))
+
+    assert Repo.query!(
+             "SELECT value FROM fleet_energy_samples WHERE car_id=$1 ORDER BY measured_at",
+             [car.id]
+           ).rows == [[50.0], [nil]]
+
     assert Readings.merge_readings(%{}, car.id).energy_remaining.value == nil
   end
 

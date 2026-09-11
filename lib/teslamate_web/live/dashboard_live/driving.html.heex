@@ -218,10 +218,14 @@
         <span>功率采样覆盖 <b><%= percentage(metrics.coverage) %></b></span>
       </div>
       <p id="drive-energy-source" class="drive-method">
-        <%= TeslaMate.TripEnergy.source_label(metrics.energy_source) %>。
-        <%= if metrics.energy_source == :fleet_battery, do: TeslaMate.TripEnergy.source_note(:fleet_battery),
-          else: "已结束行程与行程轨迹使用相同口径；行驶中缺少电池起止采样时使用功率积分，超过 30 秒的缺失时段不外推。" %>
-        回收电量单独按原有功率采样估算，不能作为官方电池净耗电的拆分明细。
+        <%= TeslaMate.TripEnergy.source_label(metrics.energy_source) %>。 <%= if metrics.energy_source ==
+                                                                                  :fleet_battery,
+                                                                                do:
+                                                                                  TeslaMate.TripEnergy.source_note(
+                                                                                    :fleet_battery
+                                                                                  ),
+                                                                                else:
+                                                                                  "已结束行程与行程轨迹使用相同口径；行驶中缺少电池起止采样时使用功率积分，超过 30 秒的缺失时段不外推。" %> 回收电量单独按原有功率采样估算，不能作为官方电池净耗电的拆分明细。
       </p>
     </section>
 
@@ -266,12 +270,26 @@
           </.link>
         </div>
         <dl class="drive-support-grid">
-          <div><dt>左前胎压</dt><dd><%= pressure(Map.get(@report.pressures, :fl)) %></dd></div>
-          <div><dt>右前胎压</dt><dd><%= pressure(Map.get(@report.pressures, :fr)) %></dd></div>
-          <div><dt>左后胎压</dt><dd><%= pressure(Map.get(@report.pressures, :rl)) %></dd></div>
-          <div><dt>右后胎压</dt><dd><%= pressure(Map.get(@report.pressures, :rr)) %></dd></div>
+          <div>
+            <dt>左前胎压</dt>
+            <dd><%= pressure(Map.get(@report.pressures, :fl)) %></dd>
+          </div>
+          <div>
+            <dt>右前胎压</dt>
+            <dd><%= pressure(Map.get(@report.pressures, :fr)) %></dd>
+          </div>
+          <div>
+            <dt>左后胎压</dt>
+            <dd><%= pressure(Map.get(@report.pressures, :rl)) %></dd>
+          </div>
+          <div>
+            <dt>右后胎压</dt>
+            <dd><%= pressure(Map.get(@report.pressures, :rr)) %></dd>
+          </div>
         </dl>
-        <p class="drive-method">最近胎压采样：<%= date_time(Map.get(@report.pressures, :measured_at)) %></p>
+        <p class="drive-method">
+          最近胎压采样：<%= date_time(Map.get(@report.pressures, :measured_at)) %>
+        </p>
         <div class="drive-shortcuts">
           <.link navigate={Routes.dashboard_path(@socket, :trips, car: @report.car.id)}>
             <i class="mdi mdi-map-marker-path"></i> 行程轨迹

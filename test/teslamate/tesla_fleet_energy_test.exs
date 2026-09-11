@@ -7,16 +7,26 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     id = System.unique_integer([:positive])
     {:ok, car} = Log.create_car(%{eid: id, vid: id, vin: "ENERGYHISTORY#{id}"})
     start = DateTime.add(DateTime.utc_now(), -7200)
-    interval = %{id: id, car_id: car.id, start_date: start, end_date: DateTime.add(start, 600),
-      distance: 20.0, charge_energy_added: Decimal.new("9"), charge_energy_used: Decimal.new("12"),
-      fast_charger: false}
+
+    interval = %{
+      id: id,
+      car_id: car.id,
+      start_date: start,
+      end_date: DateTime.add(start, 600),
+      distance: 20.0,
+      charge_energy_added: Decimal.new("9"),
+      charge_energy_used: Decimal.new("12"),
+      fast_charger: false
+    }
+
     %{car: car, interval: interval}
   end
 
   defp sample(interval, field, offset, value),
     do: Energy.record(interval.car_id, field, value, DateTime.add(interval.start_date, offset))
 
-  test "official energy is timestamped, net of recovery and independent of a range coefficient", %{interval: i} do
+  test "official energy is timestamped, net of recovery and independent of a range coefficient",
+       %{interval: i} do
     sample(i, "EnergyRemaining", 0, 55)
     sample(i, "EnergyRemaining", 600, 52.75)
     result = Energy.drive_energy([i])[i.id]
@@ -33,31 +43,50 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     sample(i, "EnergyRemaining", 0, 50)
     sample(i, "EnergyRemaining", 600, 51)
     assert Energy.drive_energy([i])[i.id].energy_kwh == -1
-    later = %{i | id: i.id + 1, start_date: DateTime.add(i.start_date, 1200), end_date: DateTime.add(i.start_date, 1800)}
+
+    later = %{
+      i
+      | id: i.id + 1,
+        start_date: DateTime.add(i.start_date, 1200),
+        end_date: DateTime.add(i.start_date, 1800)
+    }
+
     sample(later, "EnergyRemaining", 0, 51)
     sample(later, "EnergyRemaining", 600, 51)
     assert Energy.drive_energy([later])[later.id].energy_kwh == 0
   end
 
-  test "incomplete, invalid and poorly aligned boundaries do not fabricate a complete trip", %{interval: i} do
+  test "incomplete, invalid and poorly aligned boundaries do not fabricate a complete trip", %{
+    interval: i
+  } do
     sample(i, "EnergyRemaining", -5, 55)
     sample(i, "EnergyRemaining", 31, 54.8)
     sample(i, "EnergyRemaining", 600, 52)
     assert Energy.drive_energy([i]) == %{}
     sample(i, "EnergyRemaining", 0, nil)
     assert Energy.drive_energy([i]) == %{}
-    short = %{i | start_date: DateTime.add(i.start_date, 30), end_date: DateTime.add(i.start_date, 60)}
+
+    short = %{
+      i
+      | start_date: DateTime.add(i.start_date, 30),
+        end_date: DateTime.add(i.start_date, 60)
+    }
+
     sample(i, "EnergyRemaining", 50, 54.7)
     assert Energy.drive_energy([short]) == %{}
     assert Energy.drive_energy([%{i | end_date: nil}]) == %{}
   end
 
-  test "duplicates are idempotent and out-of-order history keeps its original timestamp", %{interval: i} do
+  test "duplicates are idempotent and out-of-order history keeps its original timestamp", %{
+    interval: i
+  } do
     sample(i, "EnergyRemaining", 600, 52)
     sample(i, "EnergyRemaining", 0, 55)
     sample(i, "EnergyRemaining", 0, 999)
     assert Energy.drive_energy([i])[i.id].energy_kwh == 3
-    assert Repo.query!("SELECT count(*) FROM fleet_energy_samples WHERE car_id=$1", [i.car_id]).rows == [[2]]
+
+    assert Repo.query!("SELECT count(*) FROM fleet_energy_samples WHERE car_id=$1", [i.car_id]).rows ==
+             [[2]]
   end
 
   test "vehicle IDs isolate identical time ranges", %{interval: i} do
@@ -66,11 +95,14 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     assert Energy.drive_energy([%{i | car_id: i.car_id + 10_000}]) == %{}
   end
 
-  test "AC losses use aligned input and battery counters while keeping user costs separate", %{interval: i} do
+  test "AC losses use aligned input and battery counters while keeping user costs separate", %{
+    interval: i
+  } do
     for {field, last} <- [{"ACChargingEnergyIn", 11.0}, {"DCChargingEnergyIn", 10.0}] do
       sample(i, field, 0, 0)
       sample(i, field, 600, last)
     end
+
     result = Energy.charging_energy([i])[i.id]
     assert result.energy_added == 10
     assert result.energy_used == 11
@@ -80,11 +112,14 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     assert result.input_source == :fleet_ac
   end
 
-  test "DC uses the same battery-side field and never an AC counter for input or losses", %{interval: i} do
+  test "DC uses the same battery-side field and never an AC counter for input or losses", %{
+    interval: i
+  } do
     for {field, last} <- [{"ACChargingEnergyIn", 11.0}, {"DCChargingEnergyIn", 10.0}] do
       sample(i, field, 0, 0)
       sample(i, field, 600, last)
     end
+
     result = Energy.charging_energy([%{i | fast_charger: true}])[i.id]
     assert result.energy_added == 10
     assert result.energy_used == 12
@@ -92,7 +127,9 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     assert result.loss_kwh == nil
   end
 
-  test "counter reset, invalid readings and an old session counter force legacy fallback", %{interval: i} do
+  test "counter reset, invalid readings and an old session counter force legacy fallback", %{
+    interval: i
+  } do
     sample(i, "DCChargingEnergyIn", 0, 0)
     sample(i, "DCChargingEnergyIn", 200, 5)
     sample(i, "DCChargingEnergyIn", 300, 0)
@@ -116,7 +153,9 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     assert result.loss_kwh == nil
   end
 
-  test "capacity normalization uses a shared sample and preserves measurement bases", %{interval: i} do
+  test "capacity normalization uses a shared sample and preserves measurement bases", %{
+    interval: i
+  } do
     sample(i, "EnergyRemaining", 0, 48)
     sample(i, "Soc", 0, 80)
     sample(i, "EnergyRemaining", 60, 50)

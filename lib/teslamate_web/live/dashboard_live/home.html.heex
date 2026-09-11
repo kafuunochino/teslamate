@@ -138,8 +138,6 @@
       </section>
     </div>
 
-    <.bar_chart title="近 14 天每日行驶里程" rows={@report.daily_distance} unit=" km" />
-
     <div class="content-grid">
       <section class="data-card">
         <div class="data-card__header">
@@ -166,7 +164,9 @@
                 <%= date_time(drive.start_date) %> · <%= duration(drive.duration_min) %>
               </small>
               <small>
-                <%= TeslaMate.TripEnergy.source_label(@report.recent_drive_energy[drive.id].source) %>：<%= consumption(@report.recent_drive_energy[drive.id].consumption_wh_km) %> · <%= energy(
+                <%= TeslaMate.TripEnergy.source_label(
+                  @report.recent_drive_energy[drive.id].source
+                ) %>：<%= consumption(@report.recent_drive_energy[drive.id].consumption_wh_km) %> · <%= energy(
                   @report.recent_drive_energy[drive.id].energy_kwh,
                   2
                 ) %>

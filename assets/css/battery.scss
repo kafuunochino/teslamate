@@ -117,5 +117,9 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
-.battery-extra .battery-panels { min-width: 0; }
-.battery-details-toggle { overflow-wrap: anywhere; }
+.battery-extra .battery-panels {
+  min-width: 0;
+}
+.battery-details-toggle {
+  overflow-wrap: anywhere;
+}

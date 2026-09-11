@@ -15,8 +15,12 @@ defmodule TeslaMateWeb.BatteryComponents do
   @impl true
   def update(assigns, socket) do
     {normal, advanced} = split_groups(groups(assigns.mode, assigns.data), assigns.data)
-    {:ok, socket |> assign(assigns) |> assign(normal: normal, advanced: advanced)
-      |> assign_new(:expanded, fn -> false end)}
+
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign(normal: normal, advanced: advanced)
+     |> assign_new(:expanded, fn -> false end)}
   end
 
   @impl true
@@ -30,9 +34,15 @@ defmodule TeslaMateWeb.BatteryComponents do
     <div class="battery-panels" id={"#{@mode}-readings"}>
       <.reading_group :for={group <- @normal} group={group} mode={@mode} data={@data} />
       <section :if={@advanced != []} class="battery-extra">
-        <button id={"#{@mode}-advanced-toggle"} type="button" class="battery-details-toggle"
-          phx-click="toggle_details" phx-target={@myself}
-          aria-expanded={to_string(@expanded)} aria-controls={"#{@mode}-advanced"}>
+        <button
+          id={"#{@mode}-advanced-toggle"}
+          type="button"
+          class="battery-details-toggle"
+          phx-click="toggle_details"
+          phx-target={@myself}
+          aria-expanded={to_string(@expanded)}
+          aria-controls={"#{@mode}-advanced"}
+        >
           <i class={"mdi mdi-chevron-#{if @expanded, do: "up", else: "down"}"} aria-hidden="true"></i>
           高级数据与未上报项目
         </button>
@@ -58,8 +68,13 @@ defmodule TeslaMateWeb.BatteryComponents do
         </div>
       </div>
       <dl class="battery-readings">
-        <.reading :for={{key, label, format} <- @group.fields} id={"#{@mode}-#{key}"}
-          label={label} format={format} reading={BatteryData.get(@data, key)} />
+        <.reading
+          :for={{key, label, format} <- @group.fields}
+          id={"#{@mode}-#{key}"}
+          label={label}
+          format={format}
+          reading={BatteryData.get(@data, key)}
+        />
       </dl>
     </section>
     """
@@ -87,7 +102,6 @@ defmodule TeslaMateWeb.BatteryComponents do
     """
   end
 
-
   # Each signal has one owning page. Valid ordinary readings stay visible;
   # diagnostics and unavailable optional signals remain in the expandable area.
   defp split_groups(groups, data) do
@@ -95,27 +109,52 @@ defmodule TeslaMateWeb.BatteryComponents do
       if group.advanced do
         {normal, advanced ++ [group]}
       else
-        {available, missing} = Enum.split_with(group.fields, fn {key, _, _} ->
-          group.required or match?(%{value: value} when not is_nil(value), data[key])
-        end)
+        {available, missing} =
+          Enum.split_with(group.fields, fn {key, _, _} ->
+            group.required or match?(%{value: value} when not is_nil(value), data[key])
+          end)
+
         normal = if available == [], do: normal, else: normal ++ [%{group | fields: available}]
-        advanced = if missing == [], do: advanced,
-          else: advanced ++ [%{group | id: group.id <> "-unavailable",
-            title: group.title <> " · 待上报", fields: missing}]
+
+        advanced =
+          if missing == [],
+            do: advanced,
+            else:
+              advanced ++
+                [
+                  %{
+                    group
+                    | id: group.id <> "-unavailable",
+                      title: group.title <> " · 待上报",
+                      fields: missing
+                  }
+                ]
+
         {normal, advanced}
       end
     end)
   end
 
   defp group(id, title, icon, hint, fields, opts \\ []) do
-    %{id: id, title: title, icon: icon, hint: hint, fields: fields,
-      advanced: Keyword.get(opts, :advanced, false), required: Keyword.get(opts, :required, false)}
+    %{
+      id: id,
+      title: title,
+      icon: icon,
+      hint: hint,
+      fields: fields,
+      advanced: Keyword.get(opts, :advanced, false),
+      required: Keyword.get(opts, :required, false)
+    }
   end
 
   defp groups("battery", _data) do
     [
-      group("state", "电量与续航", "battery-high",
-        "电量差不代表电池衰减；估算满电续航只使用同次采样且电量不低于 20%。", [
+      group(
+        "state",
+        "电量与续航",
+        "battery-high",
+        "电量差不代表电池衰减；估算满电续航只使用同次采样且电量不低于 20%。",
+        [
           {:battery_level, "显示电量", :percent},
           {:usable_battery_level, "可用电量", :percent},
           {:unavailable_level, "显示与可用电量差", :points},
@@ -124,22 +163,24 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:ideal_battery_range_km, "理想续航", :distance},
           {:full_rated_range_km, "估算满电额定续航", :distance}
         ], required: true),
-      group("pack", "电池包状态", "car-battery",
-        "车辆直接上报的电池侧读数，最近记录保留原始采集时间。", [
-          {:energy_remaining, "电池剩余能量", :energy},
-          {:pack_voltage, "电池包电压", {:unit, " V", 1}},
-          {:pack_current, "电池包电流", {:unit, " A", 1}},
-          {:nominal_full_pack_energy, "标称满电能量", :energy},
-          {:battery_heater_on, "电池加热器", :on_off}
-        ]),
-      group("temperature", "电池模组温度", "thermometer",
-        "温差仅使用同次采样的最高、最低模组温度。", [
-          {:module_temp_max, "最高模组温度", {:unit, " °C", 1}},
-          {:module_temp_min, "最低模组温度", {:unit, " °C", 1}},
-          {:module_temp_delta, "模组温差", {:unit, " °C", 1}}
-        ]),
-      group("diagnostics", "电池诊断数据", "battery-sync",
-        "电芯组极值与编号不是全部电芯明细；未知值不作为零参与计算。", [
+      group("pack", "电池包状态", "car-battery", "车辆直接上报的电池侧读数，最近记录保留原始采集时间。", [
+        {:energy_remaining, "电池剩余能量", :energy},
+        {:pack_voltage, "电池包电压", {:unit, " V", 1}},
+        {:pack_current, "电池包电流", {:unit, " A", 1}},
+        {:nominal_full_pack_energy, "标称满电能量", :energy},
+        {:battery_heater_on, "电池加热器", :on_off}
+      ]),
+      group("temperature", "电池模组温度", "thermometer", "温差仅使用同次采样的最高、最低模组温度。", [
+        {:module_temp_max, "最高模组温度", {:unit, " °C", 1}},
+        {:module_temp_min, "最低模组温度", {:unit, " °C", 1}},
+        {:module_temp_delta, "模组温差", {:unit, " °C", 1}}
+      ]),
+      group(
+        "diagnostics",
+        "电池诊断数据",
+        "battery-sync",
+        "电芯组极值与编号不是全部电芯明细；未知值不作为零参与计算。",
+        [
           {:brick_voltage_max, "最高电芯组电压", {:unit, " V", 3}},
           {:brick_voltage_min, "最低电芯组电压", {:unit, " V", 3}},
           {:brick_voltage_delta_mv, "电芯组最大压差", {:unit, " mV", 1}},
@@ -162,45 +203,58 @@ defmodule TeslaMateWeb.BatteryComponents do
     setpoints =
       if match?(%{value: a} when is_number(a), data[:hvac_left_temp_setting]) and
            match?(%{value: b} when is_number(b), data[:hvac_right_temp_setting]) do
-        [{:hvac_left_temp_setting, "左前目标温度", {:unit, " °C", 1}},
-         {:hvac_right_temp_setting, "右前目标温度", {:unit, " °C", 1}}]
+        [
+          {:hvac_left_temp_setting, "左前目标温度", {:unit, " °C", 1}},
+          {:hvac_right_temp_setting, "右前目标温度", {:unit, " °C", 1}}
+        ]
       else
-        [{:driver_temp_setting, "驾驶位目标温度", {:unit, " °C", 1}},
-         {:passenger_temp_setting, "副驾驶位目标温度", {:unit, " °C", 1}}]
+        [
+          {:driver_temp_setting, "驾驶位目标温度", {:unit, " °C", 1}},
+          {:passenger_temp_setting, "副驾驶位目标温度", {:unit, " °C", 1}}
+        ]
       end
 
     [
-      group("navigation", "导航到达预估", "navigation",
-        "读取车辆当前导航；未开启导航时显示在待上报项目中。", [
-          {:active_route_energy_at_arrival, "预计到达电量", :percent},
-          {:active_route_destination, "当前导航目的地", :text}
-        ]),
-      group("drive-temperature", "驱动系统温度", "engine",
-        "电机定子与逆变器温度，单位为摄氏度。车辆未提供的读数可在高级数据中查看。", [
-          {:front_motor_temp, "前电机定子温度", {:unit, " °C", 1}},
-          {:rear_motor_temp, "后电机定子温度", {:unit, " °C", 1}},
-          {:front_inverter_temp, "前逆变器出口温度", {:unit, " °C", 1}},
-          {:rear_inverter_temp, "后逆变器出口温度", {:unit, " °C", 1}},
-          {:front_heatsink_temp, "前逆变器散热器温度", {:unit, " °C", 1}},
-          {:rear_heatsink_temp, "后逆变器散热器温度", {:unit, " °C", 1}},
-          {:rear_left_motor_temp, "左后电机定子温度", {:unit, " °C", 1}},
-          {:rear_right_motor_temp, "右后电机定子温度", {:unit, " °C", 1}},
-          {:rear_left_inverter_temp, "左后逆变器出口温度", {:unit, " °C", 1}},
-          {:rear_right_inverter_temp, "右后逆变器出口温度", {:unit, " °C", 1}},
-          {:rear_left_heatsink_temp, "左后逆变器散热器温度", {:unit, " °C", 1}},
-          {:rear_right_heatsink_temp, "右后逆变器散热器温度", {:unit, " °C", 1}}
-        ]),
-      group("climate", "座舱与空调", "air-conditioner",
-        "实际温度与目标温度分开标明。遥测按车辆左 / 右侧命名，不假定方向盘位置。", [
+      group("navigation", "导航到达预估", "navigation", "读取车辆当前导航；未开启导航时显示在待上报项目中。", [
+        {:active_route_energy_at_arrival, "预计到达电量", :percent},
+        {:active_route_destination, "当前导航目的地", :text}
+      ]),
+      group("drive-temperature", "驱动系统温度", "engine", "电机定子与逆变器温度，单位为摄氏度。车辆未提供的读数可在高级数据中查看。", [
+        {:front_motor_temp, "前电机定子温度", {:unit, " °C", 1}},
+        {:rear_motor_temp, "后电机定子温度", {:unit, " °C", 1}},
+        {:front_inverter_temp, "前逆变器出口温度", {:unit, " °C", 1}},
+        {:rear_inverter_temp, "后逆变器出口温度", {:unit, " °C", 1}},
+        {:front_heatsink_temp, "前逆变器散热器温度", {:unit, " °C", 1}},
+        {:rear_heatsink_temp, "后逆变器散热器温度", {:unit, " °C", 1}},
+        {:rear_left_motor_temp, "左后电机定子温度", {:unit, " °C", 1}},
+        {:rear_right_motor_temp, "右后电机定子温度", {:unit, " °C", 1}},
+        {:rear_left_inverter_temp, "左后逆变器出口温度", {:unit, " °C", 1}},
+        {:rear_right_inverter_temp, "右后逆变器出口温度", {:unit, " °C", 1}},
+        {:rear_left_heatsink_temp, "左后逆变器散热器温度", {:unit, " °C", 1}},
+        {:rear_right_heatsink_temp, "右后逆变器散热器温度", {:unit, " °C", 1}}
+      ]),
+      group(
+        "climate",
+        "座舱与空调",
+        "air-conditioner",
+        "实际温度与目标温度分开标明。遥测按车辆左 / 右侧命名，不假定方向盘位置。",
+        [
           {:inside_temp, "车内实际温度", {:unit, " °C", 1}},
           {:outside_temp, "车外温度", {:unit, " °C", 1}},
           {:cabin_temp_delta, "车内 − 车外温差", :signed_celsius}
-        ] ++ setpoints ++ [
-          {:is_climate_on, "空调状态", :on_off},
-          {:is_preconditioning, "车辆预热 / 预冷", :on_off}
-        ]),
-      group("climate-diagnostics", "座舱高级状态", "information-outline",
-        "只展示车辆返回的状态，目标设置以车内或 Tesla App 为准。", [
+        ] ++
+          setpoints ++
+          [
+            {:is_climate_on, "空调状态", :on_off},
+            {:is_preconditioning, "车辆预热 / 预冷", :on_off}
+          ]
+      ),
+      group(
+        "climate-diagnostics",
+        "座舱高级状态",
+        "information-outline",
+        "只展示车辆返回的状态，目标设置以车内或 Tesla App 为准。",
+        [
           {:smart_preconditioning, "智能预处理", :on_off}
         ], advanced: true)
     ]
@@ -211,17 +265,26 @@ defmodule TeslaMateWeb.BatteryComponents do
       if preferred_reading?(data[:dc_charging_energy_in], data[:charge_energy_added]),
         do: {:dc_charging_energy_in, "本次电池侧充入能量（AC / DC）", :energy},
         else: {:charge_energy_added, "本次电池侧充入能量", :energy}
+
     [
-      group("session", "本次充电", "ev-station",
-        "充电器侧与电池侧分开显示，DCChargingEnergyIn 同时适用于交流和直流充电。", [
+      group(
+        "session",
+        "本次充电",
+        "ev-station",
+        "充电器侧与电池侧分开显示，DCChargingEnergyIn 同时适用于交流和直流充电。",
+        [
           {:charging_state, "充电状态", :state},
           {:charge_limit_soc, "充电上限", :percent},
           {:charger_power, "充电功率", {:unit, " kW", 1}},
           {:time_to_full_charge, "距充电目标", :hours},
           {:charge_rate_km_h, "续航补充速率", {:unit, " km/h", 1}}
         ], required: true),
-      group("electrical", "充电能量与电气参数", "lightning-bolt",
-        "这里的电压、电流为充电侧读数，并非电池包电压、电流。交流输入读数不用于直流充电。", [
+      group(
+        "electrical",
+        "充电能量与电气参数",
+        "lightning-bolt",
+        "这里的电压、电流为充电侧读数，并非电池包电压、电流。交流输入读数不用于直流充电。",
+        [
           battery_energy,
           {:ac_charging_energy_in, "本次交流输入能量", :energy},
           {:ac_charging_power, "交流输入功率", {:unit, " kW", 1}},
@@ -229,9 +292,14 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:charger_voltage, "充电侧电压", {:unit, " V", 0}},
           {:charger_actual_current, "充电侧电流", {:unit, " A", 0}},
           {:charger_phases, "充电相数", {:unit, " 相", 0}}
-        ]),
-      group("interface", "充电接口与计划", "power-plug",
-        "以下均为车辆返回的状态，设置仍以车内或 Tesla App 为准。", [
+        ]
+      ),
+      group(
+        "interface",
+        "充电接口与计划",
+        "power-plug",
+        "以下均为车辆返回的状态，设置仍以车内或 Tesla App 为准。",
+        [
           {:fast_charger_present, "快充连接", :yes_no},
           {:fast_charger_brand, "快充品牌", :text},
           {:fast_charger_type, "快充类型", :text},
@@ -250,8 +318,12 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:charge_range_added_rated_km, "本次增加额定续航", :distance},
           {:charge_range_added_ideal_km, "本次增加理想续航", :distance}
         ], advanced: true),
-      group("flags", "更多充电状态", "information-outline",
-        "部分车型或软件版本不提供这些字段，缺失值保持为“—”。", [
+      group(
+        "flags",
+        "更多充电状态",
+        "information-outline",
+        "部分车型或软件版本不提供这些字段，缺失值保持为“—”。",
+        [
           {:charge_enable_request, "充电启用请求", :yes_no},
           {:user_charge_enable_request, "用户充电请求", :yes_no},
           {:charge_to_max_range, "最大续航充电", :on_off},
@@ -267,6 +339,7 @@ defmodule TeslaMateWeb.BatteryComponents do
   defp preferred_reading?(%{value: value, measured_at: date}, other) when is_number(value) do
     is_nil(other) or is_nil(other.measured_at) or DateTime.compare(date, other.measured_at) != :lt
   end
+
   defp preferred_reading?(_, _), do: false
 
   defp display(nil, _format), do: "—"

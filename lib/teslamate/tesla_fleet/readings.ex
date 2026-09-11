@@ -91,19 +91,19 @@ defmodule TeslaMate.TeslaFleet.Readings do
       data = %{"value" => value, "invalid" => is_nil(value)}
 
       Repo.transaction(fn ->
-      Ecto.Adapters.SQL.query!(
-        Repo,
-        """
-        INSERT INTO public.fleet_readings (car_id, field, data, measured_at, received_at)
-        VALUES ($1, $2, $3::jsonb, $4, $5)
-        ON CONFLICT (car_id, field) DO UPDATE
-        SET data = EXCLUDED.data, measured_at = EXCLUDED.measured_at, received_at = EXCLUDED.received_at
-        WHERE fleet_readings.measured_at < EXCLUDED.measured_at
-        """,
-        [car_id, field, data, date, DateTime.utc_now()]
-      )
+        Ecto.Adapters.SQL.query!(
+          Repo,
+          """
+          INSERT INTO public.fleet_readings (car_id, field, data, measured_at, received_at)
+          VALUES ($1, $2, $3::jsonb, $4, $5)
+          ON CONFLICT (car_id, field) DO UPDATE
+          SET data = EXCLUDED.data, measured_at = EXCLUDED.measured_at, received_at = EXCLUDED.received_at
+          WHERE fleet_readings.measured_at < EXCLUDED.measured_at
+          """,
+          [car_id, field, data, date, DateTime.utc_now()]
+        )
 
-      TeslaMate.TeslaFleet.Energy.record(car_id, field, value, date)
+        TeslaMate.TeslaFleet.Energy.record(car_id, field, value, date)
       end)
 
       :ok

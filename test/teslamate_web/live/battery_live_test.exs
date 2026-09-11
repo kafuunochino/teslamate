@@ -101,15 +101,16 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     assert has_element?(view, "#driving-outside_temp dd", "0.0 °C")
     assert has_element?(view, "#driving-inside_temp small", "最近记录")
     assert has_element?(view, "#driving-cabin_temp_delta dd", "-2.5 °C")
+
     for page <- ["battery", "charging"] do
       {:ok, other, _} = live(conn, "/#{page}")
       refute has_element?(other, "##{page}-inside_temp")
       refute has_element?(other, "##{page}-driver_temp_setting")
       refute has_element?(other, "##{page}-rear_motor_temp")
     end
+
     ids = html |> Floki.parse_document!() |> Floki.find("[id]") |> Floki.attribute("id")
     assert length(ids) == length(Enum.uniq(ids))
-
   end
 
   test "temperature telemetry is rendered with timestamps and removed on invalid refresh", %{
@@ -265,17 +266,35 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     view |> element("#charging-advanced-toggle") |> render_click()
     refute has_element?(view, "#charging-advanced")
   end
-  test "advanced sections preserve their state and current readings stay outside", %{conn: conn, car: car} do
+
+  test "advanced sections preserve their state and current readings stay outside", %{
+    conn: conn,
+    car: car
+  } do
     now = DateTime.utc_now()
-    for {field, value} <- [{"ModuleTempMax", 35}, {"ModuleTempMin", 30},
-                           {"DiStatorTempR", 60}, {"PackVoltage", 350}] do
-      Repo.insert_all("fleet_readings", [%{car_id: car.id, field: field,
-        data: %{"value" => value, "invalid" => false}, measured_at: now, received_at: now}])
+
+    for {field, value} <- [
+          {"ModuleTempMax", 35},
+          {"ModuleTempMin", 30},
+          {"DiStatorTempR", 60},
+          {"PackVoltage", 350}
+        ] do
+      Repo.insert_all("fleet_readings", [
+        %{
+          car_id: car.id,
+          field: field,
+          data: %{"value" => value, "invalid" => false},
+          measured_at: now,
+          received_at: now
+        }
+      ])
     end
 
-    for {page, refresh, visible} <- [{"battery", "#battery-refresh-now", "module_temp_max"},
-                                    {"driving", "#drive-refresh-now", "rear_motor_temp"},
-                                    {"charging", "#battery-refresh-now", "charger_voltage"}] do
+    for {page, refresh, visible} <- [
+          {"battery", "#battery-refresh-now", "module_temp_max"},
+          {"driving", "#drive-refresh-now", "rear_motor_temp"},
+          {"charging", "#battery-refresh-now", "charger_voltage"}
+        ] do
       {:ok, view, _} = live(conn, "/#{page}")
       assert has_element?(view, "##{page}-#{visible}")
       refute has_element?(view, "##{page}-advanced")
@@ -289,11 +308,15 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     end
   end
 
-  test "charging totals, day chart and stations use the same official values without rewriting history", %{
-    current_user: user, car: car, charge: charge
-  } do
+  test "charging totals, day chart and stations use the same official values without rewriting history",
+       %{
+         current_user: user,
+         car: car,
+         charge: charge
+       } do
     alias TeslaMate.TeslaFleet.Energy
     import Ecto.Query
+
     from(c in Charge, where: c.charging_process_id == ^charge.id)
     |> Repo.update_all(set: [fast_charger_present: false])
 
@@ -309,10 +332,9 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     assert report.stats.loss_count == 1
     assert report.stats.official_count == 1
     assert hd(report.sessions).charge_energy_added == 19
-    assert hd(report.daily_energy).value == 19
-    assert hd(report.stations).energy == 19
+    assert Decimal.equal?(hd(report.daily_energy).value, 19)
+    assert Decimal.equal?(hd(report.stations).energy, 19)
     assert Decimal.equal?(TeslaMate.Fleet.home(user, car.id).charge_stats.energy_added, 19)
     assert Decimal.equal?(Repo.get!(ChargingProcess, charge.id).charge_energy_added, 20)
   end
-
 end

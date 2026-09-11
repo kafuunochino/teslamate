@@ -68,11 +68,12 @@
   </section>
 
   <p class="trip-energy-note">
-    <strong><%= TeslaMate.TripEnergy.source_label(trip_energy.source) %></strong> ·
-    <%= TeslaMate.TripEnergy.source_note(trip_energy.source) %>
+    <strong><%= TeslaMate.TripEnergy.source_label(trip_energy.source) %></strong>
+    · <%= TeslaMate.TripEnergy.source_note(trip_energy.source) %>
     <span :if={trip_energy.source == :fleet_battery}>
-      电池采样：<%= date_time(trip_energy.start_sample_at) %> → <%= date_time(trip_energy.end_sample_at) %>
-      · <%= energy(trip_energy.start_energy, 2) %> → <%= energy(trip_energy.end_energy, 2) %>
+      电池采样：<%= date_time(trip_energy.start_sample_at) %> → <%= date_time(
+        trip_energy.end_sample_at
+      ) %> · <%= energy(trip_energy.start_energy, 2) %> → <%= energy(trip_energy.end_energy, 2) %>
     </span>
   </p>
 
