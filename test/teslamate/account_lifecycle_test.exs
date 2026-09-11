@@ -321,7 +321,7 @@ defmodule TeslaMate.AccountLifecycleTest do
     assert Repo.get(Connection, other_connection.id).access == "other-access"
     assert Repo.aggregate(Connection, :count) == 1
     assert Repo.get(Log.Drive, drive.id)
-    assert Repo.get(Log.ChargingProcess, charge.id).cost == Decimal.new("42.5")
+    assert Decimal.equal?(Repo.get(Log.ChargingProcess, charge.id).cost, Decimal.new("42.5"))
     assert Repo.get(Log.Car, car.id).account_archived_at
     assert Accounts.can_access_car?(c.admin, car.id)
     refute Accounts.can_access_car?(c.other, car.id)

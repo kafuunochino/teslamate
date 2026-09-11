@@ -254,6 +254,7 @@ defmodule TeslaMate.Accounts.Security do
               case consume_factor(a, code) do
                 {:ok, _} ->
                   Repo.delete!(challenge)
+
                   case Accounts.create_login_session(current, metadata) do
                     {:ok, session} -> {:ok, current, session}
                     {:error, _} -> {:error, :invalid_challenge}
