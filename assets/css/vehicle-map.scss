@@ -93,9 +93,15 @@
   margin-bottom: 24px;
   align-items: flex-start;
 
-  > div { max-width: 780px; }
-  > .button { flex-shrink: 0; }
-  p:not(.page-kicker) { line-height: 1.8; }
+  > div {
+    max-width: 780px;
+  }
+  > .button {
+    flex-shrink: 0;
+  }
+  p:not(.page-kicker) {
+    line-height: 1.8;
+  }
 }
 
 .geofence-empty {
@@ -111,8 +117,12 @@
   display: flex;
   gap: 10px;
 
-  .input { min-width: 0; }
-  .button { flex-shrink: 0; }
+  .input {
+    min-width: 0;
+  }
+  .button {
+    flex-shrink: 0;
+  }
 }
 
 .geofence-search-results {

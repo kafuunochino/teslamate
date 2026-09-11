@@ -118,7 +118,9 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
   end
 
   describe "Edit" do
-    test "uses the shared map editor without rewriting stored coordinates on validation", %{conn: conn} do
+    test "uses the shared map editor without rewriting stored coordinates on validation", %{
+      conn: conn
+    } do
       fence = geofence_fixture(%{name: "Home", latitude: 26.647123, longitude: 106.630456})
       assert {:ok, view, html} = live(conn, "/geo-fences/#{fence.id}/edit")
       assert html =~ "编辑地理围栏"
@@ -134,8 +136,14 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
 
       html = render(view) |> Floki.parse_document!()
       assert html |> Floki.find("#geo_fence_radius") |> Floki.attribute("value") == ["150"]
-      assert html |> Floki.find("#geo_fence_latitude") |> Floki.attribute("value") == ["26.647123"]
-      assert html |> Floki.find("#geo_fence_longitude") |> Floki.attribute("value") == ["106.630456"]
+
+      assert html |> Floki.find("#geo_fence_latitude") |> Floki.attribute("value") == [
+               "26.647123"
+             ]
+
+      assert html |> Floki.find("#geo_fence_longitude") |> Floki.attribute("value") == [
+               "106.630456"
+             ]
     end
 
     test "validates changes when editing of a geo-fence", %{conn: conn} do

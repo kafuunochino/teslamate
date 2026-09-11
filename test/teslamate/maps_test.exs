@@ -99,7 +99,11 @@ defmodule TeslaMate.MapsTest do
     config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
 
     assert {:ok, url} =
-             AmapProxy.upstream_url(config, ["v3", "geocode", "geo"], "address=Guiyang&key=untrusted")
+             AmapProxy.upstream_url(
+               config,
+               ["v3", "geocode", "geo"],
+               "address=Guiyang&key=untrusted"
+             )
 
     uri = URI.parse(url)
     assert uri.host == "restapi.amap.com"

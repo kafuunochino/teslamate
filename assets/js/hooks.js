@@ -1,5 +1,8 @@
 import { createVehicleMapHook } from "./vehicle-map.mjs";
-import { createGeoFenceMapHook, createLeafletGeoFenceAdapter } from "./geofence-map.mjs";
+import {
+  createGeoFenceMapHook,
+  createLeafletGeoFenceAdapter,
+} from "./geofence-map.mjs";
 import { geocoders } from "leaflet-control-geocoder";
 import "@geoman-io/leaflet-geoman-free";
 import { initializeTheme } from "./theme.mjs";

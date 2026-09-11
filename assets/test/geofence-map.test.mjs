@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  fromGCJ02, parseGeoFence, createAMapGeoFenceAdapter,
-  createLeafletGeoFenceAdapter, createGeoFenceMapHook,
+  fromGCJ02,
+  parseGeoFence,
+  createAMapGeoFenceAdapter,
+  createLeafletGeoFenceAdapter,
+  createGeoFenceMapHook,
 } from "../js/geofence-map.mjs";
 import { toGCJ02 } from "../js/vehicle-map.mjs";
 
@@ -27,45 +30,93 @@ test("geofence edits round-trip mainland display coordinates and preserve overse
 
 test("invalid form values never become a circle at zero or an invalid radius", () => {
   const value = { latitude: "0", longitude: "0", radius: "20" };
-  assert.deepEqual(parseGeoFence(value), { latitude: 0, longitude: 0, radius: 20 });
+  assert.deepEqual(parseGeoFence(value), {
+    latitude: 0,
+    longitude: 0,
+    radius: 20,
+  });
   for (const patch of [
-    { latitude: "" }, { longitude: null }, { longitude: true },
-    { latitude: 91 }, { longitude: 181 }, { latitude: "wat" },
-    { radius: 0 }, { radius: 5000 }, { radius: 3.2 }, { radius: Infinity },
-  ]) assert.equal(parseGeoFence({ ...value, ...patch }), null);
+    { latitude: "" },
+    { longitude: null },
+    { longitude: true },
+    { latitude: 91 },
+    { longitude: 181 },
+    { latitude: "wat" },
+    { radius: 0 },
+    { radius: 5000 },
+    { radius: 3.2 },
+    { radius: Infinity },
+  ])
+    assert.equal(parseGeoFence({ ...value, ...patch }), null);
 });
 
 function amap() {
   const calls = { maps: [], circles: [], editors: [] };
   const point = ([lng, lat]) => ({ getLng: () => lng, getLat: () => lat });
   class Map {
-    constructor(canvas, options) { this.options = options; this.events = {}; calls.maps.push(this); }
-    on(name, callback) { this.events[name] = callback; }
+    constructor(canvas, options) {
+      this.options = options;
+      this.events = {};
+      calls.maps.push(this);
+    }
+    on(name, callback) {
+      this.events[name] = callback;
+    }
     add() {}
     setFitView() {}
-    resize() { this.resized = true; }
-    destroy() { this.destroyed = true; }
+    resize() {
+      this.resized = true;
+    }
+    destroy() {
+      this.destroyed = true;
+    }
   }
   class Circle {
-    constructor(options) { this.center = options.center; this.radius = options.radius; calls.circles.push(this); }
-    setCenter(value) { this.center = value; }
-    getCenter() { return point(this.center); }
-    setRadius(value) { this.radius = value; }
-    getRadius() { return this.radius; }
+    constructor(options) {
+      this.center = options.center;
+      this.radius = options.radius;
+      calls.circles.push(this);
+    }
+    setCenter(value) {
+      this.center = value;
+    }
+    getCenter() {
+      return point(this.center);
+    }
+    setRadius(value) {
+      this.radius = value;
+    }
+    getRadius() {
+      return this.radius;
+    }
   }
   class CircleEditor {
-    constructor() { this.events = {}; calls.editors.push(this); }
-    on(name, callback) { this.events[name] = callback; }
-    open() { this.opened = true; this.events.adjust?.(); }
-    close() { this.opened = false; }
+    constructor() {
+      this.events = {};
+      calls.editors.push(this);
+    }
+    on(name, callback) {
+      this.events[name] = callback;
+    }
+    open() {
+      this.opened = true;
+      this.events.adjust?.();
+    }
+    close() {
+      this.opened = false;
+    }
   }
   class Geocoder {
     getLocation(query, callback) {
       calls.query = query;
-      callback("complete", { geocodes: [{
-        formattedAddress: "测试地点",
-        location: point(toGCJ02({ latitude: 26.647, longitude: 106.63 })),
-      }] });
+      callback("complete", {
+        geocodes: [
+          {
+            formattedAddress: "测试地点",
+            location: point(toGCJ02({ latitude: 26.647, longitude: 106.63 })),
+          },
+        ],
+      });
     }
   }
   return { sdk: { Map, Circle, CircleEditor, Geocoder }, calls, point };
@@ -73,7 +124,11 @@ function amap() {
 
 test("AMap opens without mutating stored WGS84, keeps centers exact on resize and converts dragged centers", () => {
   const { sdk, calls, point } = amap();
-  const adapter = createAMapGeoFenceAdapter(sdk, {}, { ready() {}, failed() {} });
+  const adapter = createAMapGeoFenceAdapter(
+    sdk,
+    {},
+    { ready() {}, failed() {} },
+  );
   const source = { latitude: 26.647123, longitude: 106.630456, radius: 100 };
   const changes = [];
   adapter.onChange((value) => changes.push(value));
@@ -105,7 +160,11 @@ test("AMap opens without mutating stored WGS84, keeps centers exact on resize an
 
 test("AMap address results convert back to the same canonical coordinates as map edits", async () => {
   const { sdk, calls } = amap();
-  const adapter = createAMapGeoFenceAdapter(sdk, {}, { ready() {}, failed() {} });
+  const adapter = createAMapGeoFenceAdapter(
+    sdk,
+    {},
+    { ready() {}, failed() {} },
+  );
   const [result] = await adapter.search("贵阳市测试地址");
   assert.equal(calls.query, "贵阳市测试地址");
   assert.equal(result.label, "测试地点");
@@ -117,11 +176,18 @@ test("AMap address results convert back to the same canonical coordinates as map
 test("OpenStreetMap edits keep WGS84 and follow light/dark themes with cleanup", async () => {
   let map, circle;
   class Map {
-    constructor() { map = this; this.events = {}; }
-    on(name, fn) { this.events[name] = fn; }
+    constructor() {
+      map = this;
+      this.events = {};
+    }
+    on(name, fn) {
+      this.events[name] = fn;
+    }
     fitBounds() {}
     invalidateSize() {}
-    remove() { this.removed = true; }
+    remove() {
+      this.removed = true;
+    }
   }
   class TileLayer {
     on() {}
@@ -129,22 +195,45 @@ test("OpenStreetMap edits keep WGS84 and follow light/dark themes with cleanup",
   }
   class Circle {
     constructor(center, options) {
-      circle = this; this.center = center; this.radius = options.radius; this.events = {};
+      circle = this;
+      this.center = center;
+      this.radius = options.radius;
+      this.events = {};
       this.pm = { enable: () => {}, disable: () => {} };
     }
-    addTo() { return this; }
-    on(name, fn) { this.events[name] = fn; }
-    setLatLng(center) { this.center = center; }
-    getLatLng() { return { lat: this.center[0], lng: this.center[1] }; }
-    setRadius(radius) { this.radius = radius; }
-    getRadius() { return this.radius; }
-    getBounds() { return {}; }
+    addTo() {
+      return this;
+    }
+    on(name, fn) {
+      this.events[name] = fn;
+    }
+    setLatLng(center) {
+      this.center = center;
+    }
+    getLatLng() {
+      return { lat: this.center[0], lng: this.center[1] };
+    }
+    setRadius(radius) {
+      this.radius = radius;
+    }
+    getRadius() {
+      return this.radius;
+    }
+    getBounds() {
+      return {};
+    }
   }
   const themes = [];
-  const canvas = { classList: { toggle: (name, value) => themes.push([name, value]) } };
+  const canvas = {
+    classList: { toggle: (name, value) => themes.push([name, value]) },
+  };
   const adapter = createLeafletGeoFenceAdapter(
     { Map, TileLayer, Circle },
-    { geocode: async () => [{ name: "Paris", center: { lat: 48.85, lng: 2.35 } }] },
+    {
+      geocode: async () => [
+        { name: "Paris", center: { lat: 48.85, lng: 2.35 } },
+      ],
+    },
     canvas,
     { theme: "dark", ready() {}, failed() {} },
   );
@@ -159,9 +248,14 @@ test("OpenStreetMap edits keep WGS84 and follow light/dark themes with cleanup",
   assert.deepEqual(changes[0], { ...value, radius: 45 });
   map.events.click({ latlng: { lat: 27, lng: 107 } });
   assert.deepEqual(changes[1], { latitude: 27, longitude: 107, radius: 45 });
-  assert.deepEqual(await adapter.search("Paris"), [{ label: "Paris", latitude: 48.85, longitude: 2.35 }]);
+  assert.deepEqual(await adapter.search("Paris"), [
+    { label: "Paris", latitude: 48.85, longitude: 2.35 },
+  ]);
   adapter.setTheme("light");
-  assert.deepEqual(themes.map((entry) => entry[1]), [true, false]);
+  assert.deepEqual(
+    themes.map((entry) => entry[1]),
+    [true, false],
+  );
   adapter.destroy();
   assert.ok(map.removed);
 });
@@ -176,19 +270,32 @@ function environment() {
       this.value = "";
     }
     setAttribute() {}
-    append(...children) { this.children.push(...children); }
-    replaceChildren(...children) { this.children = children; }
+    append(...children) {
+      this.children.push(...children);
+    }
+    replaceChildren(...children) {
+      this.children = children;
+    }
   }
-  const fields = Object.fromEntries(["latitude", "longitude", "radius"].map((name) => [name, new Element()]));
+  const fields = Object.fromEntries(
+    ["latitude", "longitude", "radius"].map((name) => [name, new Element()]),
+  );
   Object.assign(fields.latitude, { value: "26.647123" });
   Object.assign(fields.longitude, { value: "106.630456" });
   Object.assign(fields.radius, { value: "20" });
-  const search = Object.fromEntries(["query", "search", "results", "search-status"].map((name) => [name, new Element()]));
-  const form = { querySelector(selector) {
-    for (const [name, field] of Object.entries(fields))
-      if (selector === '[name="geo_fence[' + name + ']"]') return field;
-    return search[selector.replace("[data-geofence-", "").replace("]", "")];
-  } };
+  const search = Object.fromEntries(
+    ["query", "search", "results", "search-status"].map((name) => [
+      name,
+      new Element(),
+    ]),
+  );
+  const form = {
+    querySelector(selector) {
+      for (const [name, field] of Object.entries(fields))
+        if (selector === '[name="geo_fence[' + name + ']"]') return field;
+      return search[selector.replace("[data-geofence-", "").replace("]", "")];
+    },
+  };
   const el = new Element();
   el.closest = () => form;
   const win = new EventTarget();
@@ -196,30 +303,50 @@ function environment() {
   win.setTimeout = () => 1;
   win.clearTimeout = () => {};
   win.location = { reload() {} };
-  const doc = { createElement: () => new Element(), documentElement: { dataset: { theme: "dark" } } };
+  const doc = {
+    createElement: () => new Element(),
+    documentElement: { dataset: { theme: "dark" } },
+  };
   return { win, doc, el, fields, search };
 }
 
 function adapterMock() {
   return {
     values: [],
-    render(value) { this.values.push(value); },
-    onChange(listener) { this.change = listener; },
+    render(value) {
+      this.values.push(value);
+    },
+    onChange(listener) {
+      this.change = listener;
+    },
     search: async () => [],
-    destroy() { this.destroyed = true; },
+    destroy() {
+      this.destroyed = true;
+    },
   };
 }
 
 test("saved AMap configuration selects the geofence adapter and latest form data after loading", async () => {
   const e = environment();
   const adapter = adapterMock();
-  let resolveSDK, configurations = 0, options;
-  const pending = new Promise((resolve) => { resolveSDK = resolve; });
+  let resolveSDK,
+    configurations = 0,
+    options;
+  const pending = new Promise((resolve) => {
+    resolveSDK = resolve;
+  });
   const hook = createGeoFenceMapHook(() => assert.fail("foreign fallback"), {
-    window: e.win, document: e.doc,
-    fetchConfig: async () => { configurations++; return { provider: "amap" }; },
+    window: e.win,
+    document: e.doc,
+    fetchConfig: async () => {
+      configurations++;
+      return { provider: "amap" };
+    },
     loadSDK: () => pending,
-    createAMap: (_sdk, _canvas, opts) => { options = opts; return adapter; },
+    createAMap: (_sdk, _canvas, opts) => {
+      options = opts;
+      return adapter;
+    },
   });
   hook.el = e.el;
   hook.mounted();
@@ -230,7 +357,9 @@ test("saved AMap configuration selects the geofence adapter and latest form data
   options.ready();
   assert.equal(configurations, 1);
   assert.equal(hook.canvas.dataset.mapProvider, "amap");
-  assert.deepEqual(adapter.values, [{ latitude: 26.647123, longitude: 106.630456, radius: 120 }]);
+  assert.deepEqual(adapter.values, [
+    { latitude: 26.647123, longitude: 106.630456, radius: 120 },
+  ]);
   assert.equal(hook.status.hidden, true);
   assert.equal(e.search.search.disabled, false);
   hook.destroyed();
@@ -240,7 +369,8 @@ test("circle edits send one form input event with both coordinates and radius wi
   const e = environment();
   const adapter = adapterMock();
   const hook = createGeoFenceMapHook(() => adapter, {
-    window: e.win, document: e.doc,
+    window: e.win,
+    document: e.doc,
     fetchConfig: async () => ({ provider: "openstreetmap" }),
   });
   hook.el = e.el;
@@ -264,9 +394,12 @@ test("circle edits send one form input event with both coordinates and radius wi
 test("search does not change the fence until a result is selected and preserves the radius", async () => {
   const e = environment();
   const adapter = adapterMock();
-  adapter.search = async () => [{ label: "Test location", latitude: 28, longitude: 108 }];
+  adapter.search = async () => [
+    { label: "Test location", latitude: 28, longitude: 108 },
+  ];
   const hook = createGeoFenceMapHook(() => adapter, {
-    window: e.win, document: e.doc,
+    window: e.win,
+    document: e.doc,
     fetchConfig: async () => ({ provider: "openstreetmap" }),
   });
   hook.el = e.el;
@@ -287,9 +420,12 @@ test("search does not change the fence until a result is selected and preserves 
 test("provider errors never silently switch the geofence to OpenStreetMap", async () => {
   const e = environment();
   const hook = createGeoFenceMapHook(() => assert.fail("foreign fallback"), {
-    window: e.win, document: e.doc,
+    window: e.win,
+    document: e.doc,
     fetchConfig: async () => ({ provider: "amap" }),
-    loadSDK: async () => { throw new Error("高德地图加载失败"); },
+    loadSDK: async () => {
+      throw new Error("高德地图加载失败");
+    },
   });
   hook.el = e.el;
   hook.mounted();
@@ -303,9 +439,12 @@ test("provider errors never silently switch the geofence to OpenStreetMap", asyn
 test("late SDK completion and address results are ignored after leaving the form", async () => {
   const e = environment();
   let resolve;
-  const pending = new Promise((r) => { resolve = r; });
+  const pending = new Promise((r) => {
+    resolve = r;
+  });
   const hook = createGeoFenceMapHook(() => assert.fail("late map"), {
-    window: e.win, document: e.doc,
+    window: e.win,
+    document: e.doc,
     fetchConfig: () => pending,
   });
   hook.el = e.el;
@@ -318,9 +457,13 @@ test("late SDK completion and address results are ignored after leaving the form
   const second = environment();
   const adapter = adapterMock();
   let complete;
-  adapter.search = () => new Promise((r) => { complete = r; });
+  adapter.search = () =>
+    new Promise((r) => {
+      complete = r;
+    });
   const searching = createGeoFenceMapHook(() => adapter, {
-    window: second.win, document: second.doc,
+    window: second.win,
+    document: second.doc,
     fetchConfig: async () => ({ provider: "openstreetmap" }),
   });
   searching.el = second.el;

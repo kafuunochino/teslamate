@@ -24,7 +24,8 @@ export function parseGeoFence(values) {
     if (
       !["number", "string"].includes(typeof value) ||
       String(value).trim() === ""
-    ) return null;
+    )
+      return null;
     result[name] = Number(value);
   }
   if (
@@ -34,7 +35,8 @@ export function parseGeoFence(values) {
     !Number.isInteger(result.radius) ||
     result.radius <= 0 ||
     result.radius >= 5000
-  ) return null;
+  )
+    return null;
   return result;
 }
 
@@ -57,7 +59,12 @@ export function createAMapGeoFenceAdapter(AMap, canvas, { ready, failed }) {
   if (AMap.Scale) map.addControl(new AMap.Scale());
   if (AMap.ToolBar) map.addControl(new AMap.ToolBar({ position: "LT" }));
   const geocoder = new AMap.Geocoder();
-  let circle, editor, current, listener, rendering = false, disposed = false;
+  let circle,
+    editor,
+    current,
+    listener,
+    rendering = false,
+    disposed = false;
 
   const render = (value, fit = true) => {
     rendering = true;
@@ -115,21 +122,27 @@ export function createAMapGeoFenceAdapter(AMap, canvas, { ready, failed }) {
 
   return {
     render,
-    onChange(callback) { listener = callback; },
+    onChange(callback) {
+      listener = callback;
+    },
     search(query) {
       return new Promise((resolve, reject) => {
         geocoder.getLocation(query, (status, result) => {
           if (status === "no_data") return resolve([]);
           if (status !== "complete")
             return reject(new Error("地点搜索失败，请检查地图配置或稍后重试"));
-          resolve((result.geocodes || []).slice(0, 5).map((item) => ({
-            label: item.formattedAddress,
-            ...fromGCJ02(pointFromAMap(item.location)),
-          })));
+          resolve(
+            (result.geocodes || []).slice(0, 5).map((item) => ({
+              label: item.formattedAddress,
+              ...fromGCJ02(pointFromAMap(item.location)),
+            })),
+          );
         });
       });
     },
-    resize() { map.resize(); },
+    resize() {
+      map.resize();
+    },
     destroy() {
       disposed = true;
       listener = null;
@@ -139,15 +152,33 @@ export function createAMapGeoFenceAdapter(AMap, canvas, { ready, failed }) {
   };
 }
 
-export function createLeafletGeoFenceAdapter(L, geocoder, canvas, { theme, ready, failed }) {
+export function createLeafletGeoFenceAdapter(
+  L,
+  geocoder,
+  canvas,
+  { theme, ready, failed },
+) {
   const map = new L.Map(canvas, { scrollWheelZoom: false });
-  const tiles = new L.TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "© OpenStreetMap",
+  const tiles = new L.TileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+    },
+  );
+  let loaded = false,
+    circle,
+    current,
+    listener,
+    rendering = false,
+    disposed = false;
+  tiles.on("tileload", () => {
+    loaded = true;
+    ready();
   });
-  let loaded = false, circle, current, listener, rendering = false, disposed = false;
-  tiles.on("tileload", () => { loaded = true; ready(); });
-  tiles.on("tileerror", () => { if (!loaded) failed(); });
+  tiles.on("tileerror", () => {
+    if (!loaded) failed();
+  });
   tiles.addTo(map);
   const setTheme = (value) =>
     canvas.classList.toggle("vehicle-map--osm-dark", value === "dark");
@@ -183,7 +214,12 @@ export function createLeafletGeoFenceAdapter(L, geocoder, canvas, { theme, ready
       circle.setRadius(value.radius);
     }
     circle.pm.enable({ preventMarkerRemoval: true });
-    if (fit) map.fitBounds(circle.getBounds(), { padding: [40, 40], maxZoom: 18, animate: false });
+    if (fit)
+      map.fitBounds(circle.getBounds(), {
+        padding: [40, 40],
+        maxZoom: 18,
+        animate: false,
+      });
     rendering = false;
   };
   map.on("click", ({ latlng }) => {
@@ -199,7 +235,9 @@ export function createLeafletGeoFenceAdapter(L, geocoder, canvas, { theme, ready
   });
   return {
     render,
-    onChange(callback) { listener = callback; },
+    onChange(callback) {
+      listener = callback;
+    },
     async search(query) {
       const results = await geocoder.geocode(query);
       return results.slice(0, 5).map((item) => ({
@@ -209,7 +247,9 @@ export function createLeafletGeoFenceAdapter(L, geocoder, canvas, { theme, ready
       }));
     },
     setTheme,
-    resize() { map.invalidateSize({ pan: false }); },
+    resize() {
+      map.invalidateSize({ pan: false });
+    },
     destroy() {
       disposed = true;
       listener = null;
@@ -249,13 +289,16 @@ export function createGeoFenceMapHook(createLeaflet, dependencies = {}) {
       this.form = this.el.closest("form");
       this.fields = Object.fromEntries(
         ["latitude", "longitude", "radius"].map((name) => [
-          name, this.form.querySelector('[name="geo_fence[' + name + ']"]'),
+          name,
+          this.form.querySelector('[name="geo_fence[' + name + ']"]'),
         ]),
       );
       this.searchInput = this.form.querySelector("[data-geofence-query]");
       this.searchButton = this.form.querySelector("[data-geofence-search]");
       this.results = this.form.querySelector("[data-geofence-results]");
-      this.searchStatus = this.form.querySelector("[data-geofence-search-status]");
+      this.searchStatus = this.form.querySelector(
+        "[data-geofence-search-status]",
+      );
       this.onRadius = () => this.updated();
       this.onSearch = () => this.search();
       this.onSearchKey = (event) => {
@@ -274,9 +317,14 @@ export function createGeoFenceMapHook(createLeaflet, dependencies = {}) {
     },
 
     geometry() {
-      return parseGeoFence(Object.fromEntries(
-        Object.entries(this.fields).map(([name, field]) => [name, field.value]),
-      ));
+      return parseGeoFence(
+        Object.fromEntries(
+          Object.entries(this.fields).map(([name, field]) => [
+            name,
+            field.value,
+          ]),
+        ),
+      );
     },
 
     updated() {
@@ -298,7 +346,9 @@ export function createGeoFenceMapHook(createLeaflet, dependencies = {}) {
         field.value = value[name];
       // One bubbling input event sends the entire form, including both hidden
       // coordinates, through LiveView validation before a later save.
-      this.fields.radius.dispatchEvent(new win.Event("input", { bubbles: true }));
+      this.fields.radius.dispatchEvent(
+        new win.Event("input", { bubbles: true }),
+      );
     },
 
     async search() {
@@ -316,9 +366,14 @@ export function createGeoFenceMapHook(createLeaflet, dependencies = {}) {
             15000,
           );
         });
-        const results = await Promise.race([this.adapter.search(query), timeout]);
+        const results = await Promise.race([
+          this.adapter.search(query),
+          timeout,
+        ]);
         if (this.disposed || sequence !== this.searchSequence) return;
-        const valid = results.filter((item) => parseGeoFence({ ...item, radius: 20 }));
+        const valid = results.filter((item) =>
+          parseGeoFence({ ...item, radius: 20 }),
+        );
         this.searchStatus.textContent = valid.length
           ? "请选择地点，再确认地图中的位置和范围。"
           : "没有找到地点，请补充城市和详细地址。";
@@ -337,13 +392,15 @@ export function createGeoFenceMapHook(createLeaflet, dependencies = {}) {
             this.adapter.render(value);
             this.writeGeometry(value);
             this.results.replaceChildren();
-            this.searchStatus.textContent = "已选中：" + item.label + "。保存后生效。";
+            this.searchStatus.textContent =
+              "已选中：" + item.label + "。保存后生效。";
           };
           this.results.append(button);
         }
       } catch (error) {
         if (!this.disposed && sequence === this.searchSequence)
-          this.searchStatus.textContent = error.message || "地点搜索失败，请稍后重试";
+          this.searchStatus.textContent =
+            error.message || "地点搜索失败，请稍后重试";
       } finally {
         win.clearTimeout(this.searchTimer);
         if (!this.disposed && sequence === this.searchSequence) {
