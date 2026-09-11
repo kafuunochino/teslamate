@@ -77,7 +77,7 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
     refute Accounts.get_user(target.id)
     assert Accounts.get_user(other.id)
     refute has_element?(view, "#admin-delete-form")
-    assert render(view) =~ "车辆历史已保留"
+    refute has_element?(view, "#user-row-#{target.id}")
   end
 
   test "primary account shows protected closure button and rejects forged requests", c do

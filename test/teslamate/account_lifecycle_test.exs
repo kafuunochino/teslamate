@@ -353,7 +353,9 @@ defmodule TeslaMate.AccountLifecycleTest do
           session_hash: :crypto.hash(:sha256, token),
           expires_at: DateTime.add(DateTime.utc_now(), 300)
         }
-      ], prefix: "private")
+      ],
+      prefix: "private"
+    )
   end
 
   defp eventually(fun, attempts \\ 100)
