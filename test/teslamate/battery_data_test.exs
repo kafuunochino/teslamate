@@ -1,0 +1,139 @@
+defmodule TeslaMate.BatteryDataTest do
+  use ExUnit.Case, async: true
+  alias TeslaMate.BatteryData
+  alias TeslaMate.Vehicles.Vehicle.Summary
+  alias TeslaApi.Vehicle
+  alias TeslaApi.Vehicle.State.{Charge, Climate, Drive}
+
+  @now ~U[2026-09-11 06:00:00Z]
+
+  defp summary(charge, climate \\ nil, drive \\ nil) do
+    vehicle = %Vehicle{charge_state: charge, climate_state: climate, drive_state: drive}
+
+    Summary.into(vehicle, %{
+      state: {:online, nil},
+      since: @now,
+      healthy?: true,
+      car: nil,
+      elevation: nil,
+      geofence: nil
+    })
+  end
+
+  test "decodes battery fields, preserves false and zero, and converts miles once" do
+    charge =
+      Charge.result(%{
+        "timestamp" => DateTime.to_unix(@now, :millisecond),
+        "battery_level" => 0,
+        "usable_battery_level" => 0,
+        "battery_heater_on" => false,
+        "charger_voltage" => 0,
+        "charge_rate" => 10,
+        "charge_miles_added_rated" => 20,
+        "charge_limit_soc_min" => 50,
+        "charge_limit_soc_max" => 100,
+        "fast_charger_present" => false
+      })
+
+    data = BatteryData.readings(summary(charge), [], @now)
+    assert data.battery_level.value == 0
+    assert data.usable_battery_level.value == 0
+    assert data.unavailable_level.value == 0
+    assert data.battery_heater_on.value == false
+    assert data.charger_voltage.value == 0
+    assert data.charge_rate_km_h.value == 16.09
+    assert data.charge_range_added_rated_km.value == 32.19
+    assert data.charge_limit_soc_max.value == 100
+    assert data.fast_charger_present.value == false
+    refute Map.has_key?(data, :pack_voltage)
+    refute Map.has_key?(data, :battery_temperature)
+  end
+
+  test "uses charge and climate timestamps independently of fresh streaming data" do
+    old = DateTime.add(@now, -300)
+
+    live =
+      summary(
+        %Charge{timestamp: DateTime.to_unix(old, :millisecond), battery_level: 50},
+        %Climate{timestamp: DateTime.to_unix(@now, :millisecond), battery_heater: false},
+        %Drive{timestamp: DateTime.to_unix(@now, :millisecond)}
+      )
+
+    data = BatteryData.readings(live, [], @now)
+    assert data.battery_level.measured_at == old
+    refute data.battery_level.fresh?
+    assert data.battery_heater.fresh?
+    refute BatteryData.readings(%{live | state: :asleep}, [], @now).battery_heater.fresh?
+    refute BatteryData.readings(%{live | healthy: false}, [], @now).battery_heater.fresh?
+  end
+
+  test "keeps stored data after restart without presenting it as live" do
+    old = DateTime.add(@now, -60)
+    stored = %{date: old, battery_level: 55, usable_battery_level: 53, battery_heater_on: false}
+    streaming = %{date: @now, battery_level: 54}
+    data = BatteryData.readings(nil, [stored, streaming], @now)
+    assert data.battery_level.value == 54
+    assert data.usable_battery_level.value == 53
+    assert data.usable_battery_level.measured_at == old
+    refute data.battery_heater_on.fresh?
+    refute Map.has_key?(data, :unavailable_level)
+  end
+
+  test "newer complete records win over older cached live values including false" do
+    old = DateTime.add(@now, -60)
+    live = summary(%Charge{timestamp: DateTime.to_unix(old, :millisecond), battery_heater_on: true})
+    data = BatteryData.readings(live, [%{date: @now, battery_heater_on: false}], @now)
+    assert data.battery_heater_on.value == false
+    assert data.battery_heater_on.source == :record
+    refute data.battery_heater_on.fresh?
+  end
+
+  test "derives only from matching samples and rejects invalid SOC combinations" do
+    live =
+      summary(%Charge{
+        timestamp: DateTime.to_unix(@now, :millisecond),
+        battery_level: 50,
+        usable_battery_level: 48,
+        battery_range: 100
+      })
+
+    data = BatteryData.readings(live, [], @now)
+    assert data.unavailable_level.value == 2
+    assert data.full_rated_range_km.value == 321.86
+
+    for {level, usable} <- [{-1, 0}, {101, 100}, {50, 51}] do
+      data = BatteryData.readings(nil, [%{date: @now, battery_level: level, usable_battery_level: usable}], @now)
+      refute Map.has_key?(data, :unavailable_level)
+    end
+
+    for level <- [0, 19] do
+      data = BatteryData.readings(nil, [%{date: @now, battery_level: level, rated_battery_range_km: 100}], @now)
+      refute Map.has_key?(data, :full_rated_range_km)
+    end
+  end
+
+  test "missing or unknown fields stay absent and missing timestamps never look live" do
+    live = summary(%Charge{battery_heater_on: :unknown, battery_level: nil, charger_power: 0})
+    data = BatteryData.readings(live, [], @now)
+    refute Map.has_key?(data, :battery_heater_on)
+    refute Map.has_key?(data, :battery_level)
+    refute data.charger_power.fresh?
+    assert BatteryData.readings(nil, [], @now) == %{}
+  end
+
+  test "scheduled times are epoch seconds and disabled or invalid timestamps stay absent" do
+    live = summary(%Charge{scheduled_charging_start_time: DateTime.to_unix(@now), managed_charging_start_time: 0})
+    data = BatteryData.readings(live, [], @now)
+    assert data.scheduled_charging_start_time.value == @now
+    refute Map.has_key?(data, :managed_charging_start_time)
+    data = BatteryData.readings(summary(%Charge{timestamp: 99_999_999_999_999_999, battery_level: 50}), [], @now)
+    refute data.battery_level.fresh?
+  end
+
+  test "arrival zero is valid only with active navigation" do
+    drive = %Drive{timestamp: DateTime.to_unix(@now, :millisecond), active_route_energy_at_arrival: 0, active_route_destination: "家"}
+    assert BatteryData.readings(summary(nil, nil, drive), [], @now).active_route_energy_at_arrival.value == 0
+    data = BatteryData.readings(summary(nil, nil, %{drive | active_route_destination: nil}), [], @now)
+    refute Map.has_key?(data, :active_route_energy_at_arrival)
+  end
+end

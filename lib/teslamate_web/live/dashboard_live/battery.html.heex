@@ -1,50 +1,32 @@
-<div class="platform-page">
+<div id="battery-dashboard" class="platform-page battery-dashboard" phx-hook="DrivingDashboard">
   <header class="page-heading">
     <div>
       <p class="page-kicker">健康与能效</p>
       <h1>电池</h1>
-      <p>续航估算、长期变化、充电累计和胎压集中查看。</p>
+      <p>电量、续航、加热与补能状态，以及长期变化。</p>
     </div>
-    <.vehicle_picker :if={@report.cars != []} cars={@report.cars} current_car={@report.car} />
+    <.vehicle_picker :if={@report && @report.cars != []} cars={@report.cars} current_car={@report.car} />
   </header>
 
-  <.no_vehicle :if={!@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
+  <.no_vehicle :if={@report && !@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
 
-  <%= if @report.car do %>
-    <% live = @report.live %>
-    <% position = @report.position %>
-    <% battery = (live && live.battery_level) || (position && position.battery_level) %>
-    <% rated_range =
-      (live && live.rated_battery_range_km) || (position && position.rated_battery_range_km) %>
-    <% estimated_range =
-      (live && live.est_battery_range_km) || (position && position.est_battery_range_km) %>
+  <div class="drive-disconnected" role="status">连接已中断，显示的是旧数据，正在尝试重连。</div>
+  <p :if={@battery_error} class="drive-notice" role="status">暂时无法读取数据，正在等待重新连接。</p>
+
+  <%= if @report && @report.car do %>
+    <div class="battery-toolbar">
+      <span>每 5 秒刷新已有采样 · 休眠时展示最近记录，不唤醒车辆</span>
+      <button type="button" id="battery-refresh-now" class="button" phx-click="refresh_battery">
+        <i class="mdi mdi-refresh" aria-hidden="true"></i> 刷新
+      </button>
+    </div>
+    <.battery_panel data={@report.battery_data} />
     <.range_picker days={@report.days} />
-
     <section class="metrics-grid">
       <.metric_card
-        title="当前电量"
-        value={if battery, do: "#{battery}%", else: "—"}
-        icon="battery-high"
-        tone="green"
-      />
-      <.metric_card
-        title="额定续航"
-        value={distance(rated_range)}
-        icon="map-marker-distance"
-        tone="blue"
-      />
-      <.metric_card
-        title="预计续航"
-        value={distance(estimated_range)}
-        icon="map-clock-outline"
-        tone="violet"
-      />
-      <.metric_card
-        title="估算损耗"
-        value={
-          if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"
-        }
-        hint="基于同电量归一化额定续航趋势，不等同于官方电池检测"
+        title="归一化续航损耗估算"
+        value={if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"}
+        hint="按所选时间范围比较；不是官方 SOH 或电池容量检测"
         icon="battery-heart-variant"
         tone="amber"
       />
@@ -57,7 +39,8 @@
       />
       <.metric_card
         title="电池类型"
-        value={if @report.car.settings.lfp_battery, do: "LFP", else: "非 LFP / 未标记"}
+        value={if @report.car.settings.lfp_battery, do: "LFP", else: "未标记为 LFP"}
+        hint="来自车辆设置，不通过电量或续航反推"
         icon="car-battery"
         tone="slate"
       />
@@ -105,7 +88,7 @@
           <div>
             <span>电网取电</span><strong><%= energy(@report.charge_stats.energy_used) %></strong>
           </div>
-          <div><span>累计费用</span><strong><%= money(@report.charge_stats.cost) %></strong></div>
+          <div><span>累计费用</span><strong><%= if @report.charge_stats.cost_count > 0, do: money(@report.charge_stats.cost), else: "未填写" %></strong></div>
           <div>
             <span>平均结束电量</span><strong><%= percentage(@report.charge_stats.average_end_level) %></strong>
           </div>

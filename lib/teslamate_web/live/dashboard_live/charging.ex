@@ -3,6 +3,8 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
 
   alias TeslaMate.{ChargeCosts, Fleet}
   alias TeslaMate.Log.ChargingProcess
+  alias TeslaMateWeb.BatteryRefresh
+  import TeslaMateWeb.BatteryComponents
 
   @impl true
   def mount(_params, _session, socket) do
@@ -13,7 +15,7 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
        editing_charge: nil,
        cost_changeset: nil,
        cost_notice: nil
-     )}
+     ) |> BatteryRefresh.attach(:charging)}
   end
 
   @impl true
@@ -25,8 +27,9 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
        report: report,
        editing_charge: nil,
        cost_changeset: nil,
-       cost_notice: nil
-     )}
+       cost_notice: nil,
+       battery_error: false
+     ) |> BatteryRefresh.schedule()}
   end
 
   @impl true

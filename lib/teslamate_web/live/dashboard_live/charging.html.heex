@@ -1,16 +1,30 @@
-<div class="platform-page">
+<div id="charging-dashboard" class="platform-page battery-dashboard" phx-hook="DrivingDashboard">
   <header class="page-heading">
     <div>
       <p class="page-kicker">补能与成本</p>
       <h1>充电</h1>
       <p>充电会话、能量、成本与常用站点统一管理。</p>
     </div>
-    <.vehicle_picker :if={@report.cars != []} cars={@report.cars} current_car={@report.car} />
+    <.vehicle_picker :if={@report && @report.cars != []} cars={@report.cars} current_car={@report.car} />
   </header>
 
-  <.no_vehicle :if={!@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
+  <.no_vehicle :if={@report && !@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
 
-  <%= if @report.car do %>
+  <div class="drive-disconnected" role="status">连接已中断，显示的是旧数据，正在尝试重连。</div>
+  <p :if={@battery_error} class="drive-notice" role="status">暂时无法读取数据，正在等待重新连接。</p>
+
+  <%= if @report && @report.car do %>
+    <div class="battery-toolbar">
+      <span>每 5 秒刷新已有采样 · 休眠时展示最近记录，不唤醒车辆</span>
+      <button type="button" id="battery-refresh-now" class="button" phx-click="refresh_battery">
+        <i class="mdi mdi-refresh" aria-hidden="true"></i> 刷新
+      </button>
+    </div>
+    <.battery_panel data={@report.battery_data} mode="charging" />
+    <details class="battery-extra">
+      <summary>更多车辆充电状态</summary>
+      <.battery_panel data={@report.battery_data} mode="charging-extra" />
+    </details>
     <.range_picker days={@report.days} />
 
     <p

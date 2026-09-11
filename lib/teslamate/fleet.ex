@@ -12,7 +12,7 @@ defmodule TeslaMate.Fleet do
   alias TeslaMate.Accounts
   alias TeslaMate.Accounts.User
   alias TeslaMate.Locations.{Address, GeoFence}
-  alias TeslaMate.Log.{Car, ChargingProcess, Drive, Position, State, Update}
+  alias TeslaMate.Log.{Car, Charge, ChargingProcess, Drive, Position, State, Update}
   alias TeslaMate.Repo
   alias TeslaMate.Vehicles
 
@@ -65,12 +65,15 @@ defmodule TeslaMate.Fleet do
         |> Repo.one()
 
       stats = driving_samples(drive, previous)
+      live = driving_summary(car.id)
+      position = latest_position(car.id)
 
       %{
         cars: cars,
         car: car,
-        live: driving_summary(car.id),
-        position: latest_position(car.id),
+        live: live,
+        position: position,
+        battery_data: battery_readings(car.id, live, position),
         state: current_state(car.id),
         drive: drive,
         driving_stats: stats,
@@ -195,13 +198,16 @@ defmodule TeslaMate.Fleet do
 
     if car do
       history = battery_history(car.id, days)
+      live = driving_summary(car.id)
+      position = latest_position(car.id)
 
       %{
         cars: cars,
         car: Repo.preload(car, :settings),
         days: days,
-        position: latest_position(car.id),
-        live: live_summary(car.id),
+        position: position,
+        live: live,
+        battery_data: battery_readings(car.id, live, position),
         history: history,
         degradation: degradation(history),
         charge_stats: charge_stats(car.id, days),
@@ -223,6 +229,7 @@ defmodule TeslaMate.Fleet do
         cars: cars,
         car: car,
         days: days,
+        battery_data: battery_readings(car.id, driving_summary(car.id), latest_position(car.id)),
         stats: charge_stats(car.id, days),
         sessions: recent_charges(car.id, 100, days),
         daily_energy: daily_charge_energy(car.id, days),
@@ -232,6 +239,59 @@ defmodule TeslaMate.Fleet do
       empty_report(cars)
       |> Map.merge(%{days: days, sessions: [], daily_energy: [], stations: []})
     end
+  end
+
+
+  # Live refreshes only read collector memory and indexed recent samples. The
+  # expensive historical aggregates are rebuilt at most once per minute.
+  def refresh_battery(%User{} = user, report, page, full?)
+      when page in [:battery, :charging] do
+    requested = report.car && report.car.id
+    {cars, car} = resolve_vehicle(user, requested)
+
+    if full? or is_nil(car) or is_nil(report.car) or car.id != report.car.id do
+      apply(__MODULE__, page, [user, car && car.id, report.days])
+    else
+      live = driving_summary(car.id)
+      position = latest_position(car.id)
+
+      Map.merge(report, %{
+        cars: cars,
+        live: live,
+        position: position,
+        battery_data: battery_readings(car.id, live, position)
+      })
+    end
+  end
+
+  defp battery_readings(car_id, live, position) do
+    # Streaming positions have SOC but omit most charge-state fields. Keep the
+    # last complete battery sample available after a collector/VPS restart.
+    battery_position =
+      Position
+      |> where([p], p.car_id == ^car_id and not is_nil(p.usable_battery_level))
+      |> order_by([p], desc: p.date, desc: p.id)
+      |> limit(1)
+      |> Repo.one()
+
+    process =
+      ChargingProcess
+      |> where([c], c.car_id == ^car_id)
+      |> order_by([c], desc: c.start_date, desc: c.id)
+      |> limit(1)
+      |> select([c], c.id)
+      |> Repo.one()
+
+    charge =
+      if process do
+        Charge
+        |> where([c], c.charging_process_id == ^process)
+        |> order_by([c], desc: c.date, desc: c.id)
+        |> limit(1)
+        |> Repo.one()
+      end
+
+    TeslaMate.BatteryData.readings(live, [charge, battery_position, position])
   end
 
   def analysis(%User{} = user, requested_car_id, requested_days \\ 90) do

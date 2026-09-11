@@ -3,6 +3,7 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
 
   require Logger
   alias TeslaMate.Fleet
+  import TeslaMateWeb.BatteryComponents
 
   @intervals [0, 1, 2, 5, 10, 30, 60]
 

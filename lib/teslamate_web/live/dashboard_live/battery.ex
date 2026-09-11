@@ -2,17 +2,18 @@ defmodule TeslaMateWeb.DashboardLive.Battery do
   use TeslaMateWeb, :live_view
 
   alias TeslaMate.Fleet
+  alias TeslaMateWeb.BatteryRefresh
+  import TeslaMateWeb.BatteryComponents
 
   @impl true
-  def mount(params, _session, socket) do
-    report = Fleet.battery(socket.assigns.current_user, params["car"], params["days"] || 90)
-    {:ok, assign(socket, page_title: "电池", report: report)}
+  def mount(_params, _session, socket) do
+    {:ok, socket |> assign(page_title: "电池", report: nil) |> BatteryRefresh.attach(:battery)}
   end
 
   @impl true
   def handle_params(params, _uri, socket) do
     report = Fleet.battery(socket.assigns.current_user, params["car"], params["days"] || 90)
-    {:noreply, assign(socket, report: report)}
+    {:noreply, socket |> assign(report: report, battery_error: false) |> BatteryRefresh.schedule()}
   end
 
   @impl true
