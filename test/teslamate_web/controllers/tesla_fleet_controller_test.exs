@@ -205,4 +205,26 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
     refute html =~ "private-fleet-token"
     refute html =~ "private-refresh"
   end
+
+  test "an unpaired vehicle with a synced empty configuration is not reported as enabled" do
+    result = %{
+      "configuration" => %{"config" => nil, "key_paired" => false, "synced" => true},
+      "status" => %{
+        "unpaired_vins" => [@vin],
+        "key_paired_vins" => [],
+        "vehicle_info" => %{
+          @vin => %{"firmware_version" => "2026.8.300", "fleet_telemetry_version" => "1.2.0"}
+        }
+      }
+    }
+
+    assert TeslaMateWeb.TeslaFleetView.result_message(result) =~ "尚未确认数据钥匙"
+
+    assert [%{firmware: "2026.8.300", paired?: false}] =
+             TeslaMateWeb.TeslaFleetView.vehicle_status(result)
+
+    assert TeslaMateWeb.TeslaFleetView.result_message(%{
+             "configuration" => %{"config" => nil, "key_paired" => true, "synced" => true}
+           }) =~ "尚未启用"
+  end
 end

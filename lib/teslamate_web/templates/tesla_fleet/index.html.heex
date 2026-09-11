@@ -98,6 +98,12 @@
     </div>
     <div class="p-4">
       <p><%= result_message(@result) %></p>
+      <div :for={vehicle <- vehicle_status(@result)} class="mt-3">
+        <p>车辆软件：<%= vehicle.firmware %> · 遥测版本：<%= vehicle.telemetry %></p>
+        <p>
+          数据钥匙：<%= if vehicle.paired?, do: "已配对", else: "未配对" %> · 车辆钥匙数量：<%= vehicle.keys || "未知" %>
+        </p>
+      </div>
       <p class="mt-2">完成配对后可重新启用遥测，然后检查同步状态。车辆休眠时需等待下次上线。</p>
       <a class="button is-link is-light mt-3" href="/battery">查看电池数据</a>
     </div>
