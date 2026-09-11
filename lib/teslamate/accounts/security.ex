@@ -266,7 +266,12 @@ defmodule TeslaMate.Accounts.Security do
   defp consume_factor(a, code) do
     case matching_step(a.secret, code, a.last_used_step) do
       step when is_integer(step) ->
-        {:ok, save_authenticator(a, %{last_used_step: step, failed_attempts: 0, attempt_window_at: now()})}
+        {:ok,
+         save_authenticator(a, %{
+           last_used_step: step,
+           failed_attempts: 0,
+           attempt_window_at: now()
+         })}
 
       nil ->
         value = if is_binary(code), do: recovery_hash(code), else: <<>>
@@ -355,7 +360,9 @@ defmodule TeslaMate.Accounts.Security do
   defp random_token, do: :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
   defp hash(value), do: :crypto.hash(:sha256, value)
   defp now, do: DateTime.utc_now() |> DateTime.truncate(:microsecond)
-  defp save_authenticator(record, attrs), do: record |> Ecto.Changeset.change(attrs) |> Repo.update!()
+
+  defp save_authenticator(record, attrs),
+    do: record |> Ecto.Changeset.change(attrs) |> Repo.update!()
 
   defp transaction(fun) do
     case Repo.transaction(fun) do

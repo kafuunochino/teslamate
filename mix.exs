@@ -67,7 +67,7 @@ defmodule TeslaMate.MixProject do
       {:phoenix_live_view, "~> 0.20.17"},
       {:phoenix_pubsub, "~> 2.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:postgrex, ">= 0.0.0"},
+      {:postgrex, "~> 0.22.4"},
       {:ranch, "~> 2.2"},
       {:srtm, "~> 0.8.0"},
       {:tesla, "~> 1.14"},

@@ -1,6 +1,7 @@
 defmodule TeslaMate.OwnershipTest do
   use TeslaMate.DataCase, async: false
   alias TeslaMate.{Accounts, Fleet, Locations, Log, Repo}
+  import Mock
   alias TeslaMate.Accounts.User
   alias TeslaMate.Log.ChargingProcess
 
@@ -52,9 +53,9 @@ defmodule TeslaMate.OwnershipTest do
 
   defp charge(car) do
     {:ok, charge} =
-      Log.start_charging_process(car, %{date: DateTime.utc_now(), latitude: 26.647, longitude: 106.63},
-        lookup_address: false
-      )
+      Log.start_charging_process(
+        car,
+        %{date: DateTime.utc_now(), latitude: 26.647, longitude: 106.63}, lookup_address: false)
 
     {:ok, charge} =
       Log.update_charging_process(charge, %{charge_energy_added: 10, duration_min: 30})
@@ -130,6 +131,25 @@ defmodule TeslaMate.OwnershipTest do
     assert :ok = Accounts.revoke_car(second, first, car.id)
     assert {:ok, _} = Accounts.grant_car(second, second, car.id)
     assert Repo.get!(ChargingProcess, c.id).geofence_id == nil
+  end
+
+  test "cached live summaries hide private fence names after an ownership change", %{
+    first: first,
+    second: second,
+    car1: car
+  } do
+    own = fence(first, "Private Cached Home")
+    summary = %TeslaMate.Vehicles.Vehicle.Summary{car: car, geofence: own}
+
+    with_mock TeslaMate.Vehicles, [:passthrough],
+      list: fn -> [summary] end,
+      summary: fn _ -> summary end do
+      assert Fleet.home(first, car.id).live.geofence.id == own.id
+      assert :ok = Accounts.revoke_car(second, first, car.id)
+      assert {:ok, _} = Accounts.grant_car(second, second, car.id)
+      assert Fleet.home(second, car.id).live.geofence == nil
+      assert Fleet.driving(second, car.id).live.geofence == nil
+    end
   end
 
   test "a disabled account cannot read or mutate its fences with a stale struct", %{first: first} do

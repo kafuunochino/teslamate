@@ -255,8 +255,12 @@ defmodule TeslaMate.Locations do
   defp safe_id(_), do: -1
 
   def latest_owned_position(user) do
-    ids = from b in UserCar, join: u in User, on: u.id == b.user_id,
-        where: b.user_id == ^user.id and u.status == :active, select: b.car_id
+    ids =
+      from b in UserCar,
+        join: u in User,
+        on: u.id == b.user_id,
+        where: b.user_id == ^user.id and u.status == :active,
+        select: b.car_id
 
     Repo.one(
       from p in TeslaMate.Log.Position,

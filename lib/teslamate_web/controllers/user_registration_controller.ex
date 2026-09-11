@@ -65,5 +65,6 @@ defmodule TeslaMateWeb.UserRegistrationController do
 
     "registration:" <> normalized
   end
+
   defp registration_key(_), do: "registration:invalid"
 end

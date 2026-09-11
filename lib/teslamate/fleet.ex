@@ -885,7 +885,9 @@ defmodule TeslaMate.Fleet do
   defp maybe_recommend(items, false, _message), do: items
 
   defp live_summary(car_id) do
-    Vehicles.list() |> Enum.find(fn summary -> summary.car.id == car_id end) |> sanitize_live_location(car_id)
+    Vehicles.list()
+    |> Enum.find(fn summary -> summary.car.id == car_id end)
+    |> sanitize_live_location(car_id)
   rescue
     _ -> nil
   catch
@@ -893,9 +895,14 @@ defmodule TeslaMate.Fleet do
   end
 
   defp sanitize_live_location(%{geofence: %GeoFence{user_id: owner}} = summary, car_id) do
-    current_owner = Repo.one(from b in Accounts.UserCar, where: b.car_id == ^car_id, select: b.user_id)
-    if owner != nil and owner == current_owner, do: summary, else: Map.put(summary, :geofence, nil)
+    current_owner =
+      Repo.one(from b in Accounts.UserCar, where: b.car_id == ^car_id, select: b.user_id)
+
+    if owner != nil and owner == current_owner,
+      do: summary,
+      else: Map.put(summary, :geofence, nil)
   end
+
   defp sanitize_live_location(summary, _car_id), do: summary
 
   defp empty_report(cars), do: %{cars: cars, car: nil, live: nil, position: nil}
