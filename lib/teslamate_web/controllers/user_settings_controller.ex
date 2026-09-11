@@ -47,7 +47,7 @@ defmodule TeslaMateWeb.UserSettingsController do
            params["password"]
          ) do
       {:ok, _} ->
-        conn |> put_flash(:success, "请在验证器中添加密钥，并输入动态码确认启用") |> redirect(to: "/account#security")
+        conn |> put_flash(:success, "请用验证器扫描二维码，并输入动态码确认启用") |> redirect(to: "/account#security")
 
       {:error, reason} ->
         failed(conn, reason)

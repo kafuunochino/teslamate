@@ -57,6 +57,7 @@ defmodule TeslaMate.MixProject do
       {:mock, "~> 0.3", only: :test},
       {:nimble_csv, "~> 1.3"},
       {:nimble_totp, "~> 1.0"},
+      {:eqrcode, "~> 0.2.1"},
       {:phoenix, "~> 1.7.0"},
       {:phoenix_bakery, "~> 1.0", runtime: false},
       {:phoenix_view, "~> 2.0"},

@@ -29,6 +29,17 @@
     margin-top: 1rem;
   }
 
+  .security-qr-code {
+    display: block;
+    width: 16rem;
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+    background: #fff;
+    color-scheme: only light;
+    image-rendering: pixelated;
+  }
+
   .security-recovery ul {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));

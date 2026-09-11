@@ -154,9 +154,40 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     html = html_response(response, 200)
     assert html =~ "两步验证（2FA）"
     assert html =~ "在线设备与登录会话"
+    refute html =~ ~s(id="totp-qr-code")
     refute html =~ "never-render-this-secret"
     refute html =~ "never-render-code"
     assert get_resp_header(response, "cache-control") == ["no-store"]
+  end
+
+  test "enrollment QR is hidden before password verification, in other sessions and after expiry", %{
+    conn: conn,
+    current_user: user
+  } do
+    refute get(conn, "/account").resp_body =~ ~s(id="totp-qr-code")
+    post(conn, "/account/2fa/setup", %{security: %{password: "incorrect-password"}})
+    refute get(conn, "/account").resp_body =~ ~s(id="totp-qr-code")
+
+    post(conn, "/account/2fa/setup", %{security: %{password: @password}})
+    assert get(conn, "/account").resp_body =~ ~s(id="totp-qr-code")
+    key = Security.status(user, get_session(conn, :user_session_token)).setup_key
+
+    for account <- [user, member()] do
+      {:ok, token} = Accounts.create_session(account)
+      other = build_conn() |> Plug.Test.init_test_session(%{user_session_token: token})
+      html = get(other, "/account").resp_body
+      refute html =~ ~s(id="totp-qr-code")
+      refute html =~ key
+    end
+
+    user.id
+    |> then(&Repo.get!(Authenticator, &1))
+    |> Ecto.Changeset.change(pending_expires_at: DateTime.add(DateTime.utc_now(), -1))
+    |> Repo.update!()
+
+    html = get(conn, "/account").resp_body
+    refute html =~ ~s(id="totp-qr-code")
+    refute html =~ key
   end
 
   test "enrollment endpoints retain password confirmation and show recovery codes only once", %{
@@ -167,10 +198,20 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     user = conn.assigns.current_user
     token = get_session(conn, :user_session_token)
     key = Security.status(user, token).setup_key
+    enrollment = get(conn, "/account")
+    document = enrollment |> html_response(200) |> Floki.parse_document!()
+    [image] = Floki.attribute(document, "#totp-qr-code", "src")
+    assert "data:image/png;base64," <> png = image
+    assert <<137, 80, 78, 71, 13, 10, 26, 10, _::binary>> = Base.decode64!(png)
+    assert get_resp_header(enrollment, "cache-control") == ["no-store"]
+    assert get_resp_header(enrollment, "referrer-policy") == ["no-referrer"]
+
     code = key |> Base.decode32!(padding: false) |> NimbleTOTP.verification_code()
     enabled = post(conn, "/account/2fa/confirm", %{security: %{code: code}})
     html = html_response(enabled, 200)
     assert html =~ "请立即保存恢复码"
+    refute html =~ ~s(id="totp-qr-code")
+    refute html =~ key
     assert Security.enabled?(user)
     assert get_session(enabled, :user_session_token) != token
     page = enabled |> recycle() |> get("/account")

@@ -158,10 +158,23 @@
     <% else %>
       <%= if @security.setup_key do %>
         <div class="security-enrollment">
-          <h3>在验证器中手动添加账号</h3>
-          <p>账号名称：TeslaMate · <%= @conn.assigns.current_user.email %></p>
-          <p>类型选择「基于时间」，使用 6 位动态码，每 30 秒更新。</p>
-          <p>设置密钥：<code class="security-setup-key"><%= @security.setup_key %></code></p>
+          <h3>扫描二维码绑定验证器</h3>
+          <p>打开手机上的验证器，选择添加账号并扫描下方二维码，再输入生成的 6 位动态码。</p>
+          <img
+            id="totp-qr-code"
+            class="security-qr-code"
+            src={authenticator_qr_data_uri(@conn.assigns.current_user.email, @security.setup_key)}
+            alt="使用验证器扫描此二维码，添加 TeslaMate 两步验证"
+            width="256"
+            height="256"
+          />
+          <p>账号名称：TeslaMate CN · <%= @conn.assigns.current_user.email %></p>
+          <details class="security-details">
+            <summary>无法扫码？手动添加密钥</summary>
+            <p>在同一部手机上设置时，也可以复制下方密钥到验证器。</p>
+            <p>类型选择「基于时间」，使用 6 位动态码，每 30 秒更新。</p>
+            <p>设置密钥：<code class="security-setup-key"><%= @security.setup_key %></code></p>
+          </details>
           <.form for={%{}} action="/account/2fa/confirm" method="post" class="platform-form">
             <label class="label" for="enable-code">验证器当前显示的 6 位动态码</label>
             <input
@@ -190,7 +203,8 @@
             autocomplete="current-password"
             required
           />
-          <button class="button is-primary" type="submit">设置验证器</button>
+          <p class="help">验证当前密码后显示绑定二维码。</p>
+          <button class="button is-primary" type="submit">设置验证器（扫码）</button>
         </.form>
       <% end %>
     <% end %>
