@@ -151,7 +151,7 @@ defmodule TeslaMateWeb.Plugs.ClientIPTest do
   test "malformed and empty forwarding headers retain the normalized socket address" do
     System.put_env("TESLAMATE_TRUSTED_PROXIES", "172.18.0.1")
 
-    for value <- ["", " ", "invalid", "198.51.100.10,"] do
+    for value <- ["", " ", "invalid", "198.51.100.10,", <<255>>] do
       conn = request("::ffff:172.18.0.1", [{"x-forwarded-for", value}])
       assert ClientIP.resolve(conn) == "172.18.0.1"
     end
@@ -173,6 +173,7 @@ defmodule TeslaMateWeb.Plugs.ClientIPTest do
 
     for headers <- [
           [{"x-real-ip", "invalid"}],
+          [{"x-real-ip", <<255>>}],
           [{"x-real-ip", "198.51.100.10, 203.0.113.20"}],
           [{"x-real-ip", "198.51.100.10"}, {"x-real-ip", "203.0.113.20"}]
         ] do

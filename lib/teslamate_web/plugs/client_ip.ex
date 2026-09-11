@@ -64,7 +64,7 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
     case get_req_header(conn, "x-forwarded-for") do
       [] ->
         case get_req_header(conn, "x-real-ip") do
-          [value] -> parse_ip(String.trim(value)) || peer
+          [value] -> parse_ip(value) || peer
           _ -> peer
         end
 
@@ -74,7 +74,7 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
         |> Enum.reverse()
         |> Enum.reduce_while(peer, fn value, current ->
           if trusted_proxy?(current, proxies) do
-            case parse_ip(String.trim(value)) do
+            case parse_ip(value) do
               nil -> {:halt, current}
               address -> {:cont, address}
             end
@@ -131,8 +131,10 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
   end
 
   defp parse_ip(ip) do
-    case :inet.parse_strict_address(String.to_charlist(ip)) do
-      {:ok, parsed} -> parsed
+    with true <- String.valid?(ip),
+         {:ok, parsed} <- :inet.parse_strict_address(ip |> String.trim() |> String.to_charlist()) do
+      parsed
+    else
       _ -> nil
     end
   end
