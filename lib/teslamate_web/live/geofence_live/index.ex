@@ -28,8 +28,12 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     case Locations.delete_geofence(socket.assigns.current_user, id) do
-      {:ok, _} -> {:noreply, assign(socket, :geofences, Locations.list_geofences(socket.assigns.current_user))}
-      {:error, _} -> {:noreply, put_flash(socket, :error, "围栏不存在或无权操作")}
+      {:ok, _} ->
+        {:noreply,
+         assign(socket, :geofences, Locations.list_geofences(socket.assigns.current_user))}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "围栏不存在或无权操作")}
     end
   end
 end

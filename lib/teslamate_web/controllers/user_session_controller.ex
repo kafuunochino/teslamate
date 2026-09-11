@@ -55,22 +55,32 @@ defmodule TeslaMateWeb.UserSessionController do
 
   def verify_code(conn, %{"verification" => %{"code" => code}}) when is_binary(code) do
     token = get_session(conn, :login_challenge)
+
     case Security.complete_challenge(token, String.trim(code), UserAuth.session_metadata(conn)) do
       {:ok, user, session} ->
         ip = conn.private[:client_ip] || "unknown"
         LoginRateLimit.record_success(ip, user.email)
         LoginAudit.record(%{ip: ip, email: user.email, outcome: :success, reason: "platform-2fa"})
         conn |> UserAuth.put_authenticated_session(session) |> redirect(to: "/")
+
       {:error, :invalid_challenge} ->
-        conn |> delete_session(:login_challenge)
-          |> put_flash(:error, "验证会话已过期或尝试次数已用完，请重新登录") |> redirect(to: "/sign_in")
+        conn
+        |> delete_session(:login_challenge)
+        |> put_flash(:error, "验证会话已过期或尝试次数已用完，请重新登录")
+        |> redirect(to: "/sign_in")
+
       {:error, reason} ->
         status = if reason == :rate_limited, do: :too_many_requests, else: :unprocessable_entity
-        message = if reason == :rate_limited, do: "尝试次数过多，请 10 分钟后重试",
-          else: "验证码无效或已使用，请输入最新动态码或未使用的恢复码"
+
+        message =
+          if reason == :rate_limited,
+            do: "尝试次数过多，请 10 分钟后重试",
+            else: "验证码无效或已使用，请输入最新动态码或未使用的恢复码"
+
         conn |> put_status(status) |> render("verify.html", page_title: "两步验证", error: message)
     end
   end
+
   def verify_code(conn, _params), do: conn |> put_status(:unprocessable_entity) |> verify(%{})
 
   def delete(conn, _params), do: UserAuth.log_out_user(conn)
@@ -82,6 +92,7 @@ defmodule TeslaMateWeb.UserSessionController do
           LoginRateLimit.record_success(ip, email)
           LoginAudit.record(%{ip: ip, email: email, outcome: :success, reason: "platform-login"})
         end
+
         UserAuth.log_in_user(conn, user)
 
       {:error, :invalid_credentials} ->

@@ -10,9 +10,13 @@ defmodule TeslaMateWeb.UserAuth do
   def fetch_current_user(conn, _opts) do
     token = get_session(conn, @session_key)
     user = Accounts.get_user_by_session_token(token)
-    conn = conn |> Plug.Conn.assign(:current_user_session_token, token)
+
+    conn =
+      conn
+      |> Plug.Conn.assign(:current_user_session_token, token)
       |> Plug.Conn.assign(:current_user, user)
       |> put_resp_header("cache-control", "no-store")
+
     if user do
       Accounts.touch_session(token)
       put_session(conn, :live_socket_id, Accounts.live_socket_id(token))
@@ -25,24 +29,32 @@ defmodule TeslaMateWeb.UserAuth do
       when not is_nil(user) do
     conn |> redirect(to: Routes.dashboard_path(conn, :home)) |> halt()
   end
+
   def redirect_if_authenticated(conn, _opts), do: conn
 
   def require_authenticated_user(%Plug.Conn{assigns: %{current_user: nil}} = conn, _opts) do
-    conn |> put_flash(:error, "请先登录后继续")
-      |> redirect(to: Routes.user_session_path(conn, :new)) |> halt()
+    conn
+    |> put_flash(:error, "请先登录后继续")
+    |> redirect(to: Routes.user_session_path(conn, :new))
+    |> halt()
   end
+
   def require_authenticated_user(conn, _opts), do: conn
 
   def require_admin(%Plug.Conn{assigns: %{current_user: user}} = conn, _opts) do
     if Accounts.authorized_admin?(user) do
       conn
     else
-      conn |> put_status(:not_found) |> put_view(TeslaMateWeb.ErrorView) |> render("404.html") |> halt()
+      conn
+      |> put_status(:not_found)
+      |> put_view(TeslaMateWeb.ErrorView)
+      |> render("404.html")
+      |> halt()
     end
   end
 
   def session_metadata(conn) do
-    ip = conn.private[:client_ip] || (conn.remote_ip |> :inet.ntoa() |> to_string())
+    ip = conn.private[:client_ip] || conn.remote_ip |> :inet.ntoa() |> to_string()
     %{user_agent: get_req_header(conn, "user-agent") |> List.first(), ip_address: ip}
   end
 
@@ -50,9 +62,14 @@ defmodule TeslaMateWeb.UserAuth do
     if Accounts.Security.enabled?(user) do
       case Accounts.Security.create_challenge(user) do
         {:ok, challenge} ->
-          conn |> configure_session(renew: true) |> clear_session()
-            |> put_session(:login_challenge, challenge) |> redirect(to: "/sign_in/verify")
-        _ -> conn |> redirect(to: "/sign_in")
+          conn
+          |> configure_session(renew: true)
+          |> clear_session()
+          |> put_session(:login_challenge, challenge)
+          |> redirect(to: "/sign_in/verify")
+
+        _ ->
+          conn |> redirect(to: "/sign_in")
       end
     else
       case Accounts.create_session(user, session_metadata(conn)) do
@@ -64,9 +81,12 @@ defmodule TeslaMateWeb.UserAuth do
 
   def put_authenticated_session(conn, token) do
     Plug.CSRFProtection.delete_csrf_token()
-    conn |> configure_session(renew: true) |> clear_session()
-      |> put_session(@session_key, token)
-      |> put_session(:live_socket_id, Accounts.live_socket_id(token))
+
+    conn
+    |> configure_session(renew: true)
+    |> clear_session()
+    |> put_session(@session_key, token)
+    |> put_session(:live_socket_id, Accounts.live_socket_id(token))
   end
 
   def log_out_user(conn) do
@@ -80,8 +100,11 @@ defmodule TeslaMateWeb.UserAuth do
   def on_mount(requirement, _params, session, socket)
       when requirement in [:ensure_authenticated, :ensure_admin] do
     socket = mount_user(socket, session)
+
     if permitted?(socket.assigns.current_user, requirement) do
-      if Phoenix.LiveView.connected?(socket), do: Process.send_after(self(), :check_account_session, 60_000)
+      if Phoenix.LiveView.connected?(socket),
+        do: Process.send_after(self(), :check_account_session, 60_000)
+
       {:cont, attach_rechecks(socket, requirement)}
     else
       {:halt, reject_socket(socket)}
@@ -90,8 +113,10 @@ defmodule TeslaMateWeb.UserAuth do
 
   defp mount_user(socket, session) do
     token = Map.get(session, Atom.to_string(@session_key))
-    socket |> assign(:current_user, Accounts.get_user_by_session_token(token))
-      |> assign(:current_user_session_token, token)
+
+    socket
+    |> assign(:current_user, Accounts.get_user_by_session_token(token))
+    |> assign(:current_user_session_token, token)
   end
 
   defp attach_rechecks(socket, requirement) do
@@ -107,7 +132,9 @@ defmodule TeslaMateWeb.UserAuth do
         {:cont, socket} when message == :check_account_session ->
           Process.send_after(self(), :check_account_session, 60_000)
           {:halt, socket}
-        result -> result
+
+        result ->
+          result
       end
     end)
   end
@@ -115,6 +142,7 @@ defmodule TeslaMateWeb.UserAuth do
   defp recheck(socket, requirement) do
     token = socket.assigns.current_user_session_token
     user = Accounts.get_user_by_session_token(token)
+
     if permitted?(user, requirement) do
       Accounts.touch_session(token)
       {:cont, assign(socket, :current_user, user)}
@@ -126,8 +154,10 @@ defmodule TeslaMateWeb.UserAuth do
   defp permitted?(nil, _), do: false
   defp permitted?(user, :ensure_admin), do: Accounts.authorized_admin?(user)
   defp permitted?(_user, :ensure_authenticated), do: true
+
   defp reject_socket(socket) do
-    socket |> Phoenix.LiveView.put_flash(:error, "登录或权限已失效，请重新登录")
-      |> Phoenix.LiveView.redirect(to: "/sign_in")
+    socket
+    |> Phoenix.LiveView.put_flash(:error, "登录或权限已失效，请重新登录")
+    |> Phoenix.LiveView.redirect(to: "/sign_in")
   end
 end

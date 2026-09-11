@@ -8,24 +8,41 @@ defmodule TeslaMate.AccountSecurityTest do
     start_supervised!(TeslaMate.Vault)
     user = user("owner")
     other = user("other")
-    {:ok, token} = Accounts.create_session(user, %{user_agent: "Android Chrome/100", ip_address: "127.0.0.1"})
+
+    {:ok, token} =
+      Accounts.create_session(user, %{user_agent: "Android Chrome/100", ip_address: "127.0.0.1"})
+
     %{user: user, other: other, token: token}
   end
 
   defp user(prefix) do
-    {:ok, user} = Accounts.register_user(%{email: "#{prefix}-#{System.unique_integer([:positive])}@example.com",
-      name: "Security Test", password: @password, password_confirmation: @password})
+    {:ok, user} =
+      Accounts.register_user(%{
+        email: "#{prefix}-#{System.unique_integer([:positive])}@example.com",
+        name: "Security Test",
+        password: @password,
+        password_confirmation: @password
+      })
+
     user
   end
 
   defp factor(user) do
     secret = NimbleTOTP.secret()
-    Repo.insert!(%Authenticator{user_id: user.id, secret: secret, enabled_at: DateTime.utc_now(),
-      recovery_hashes: [:crypto.hash(:sha256, "recovery-code")]})
+
+    Repo.insert!(%Authenticator{
+      user_id: user.id,
+      secret: secret,
+      enabled_at: DateTime.utc_now(),
+      recovery_hashes: [:crypto.hash(:sha256, "recovery-code")]
+    })
+
     secret
   end
 
-  test "registration defaults closed and only a current administrator can change it", %{user: user} do
+  test "registration defaults closed and only a current administrator can change it", %{
+    user: user
+  } do
     refute Accounts.sign_up_allowed?()
     assert {:error, :forbidden} = Accounts.set_registration(user, true)
     assert {:error, :registration_closed} = Accounts.register_public_user(%{})
@@ -39,9 +56,18 @@ defmodule TeslaMate.AccountSecurityTest do
   test "public signup cannot choose role, status or session version", %{user: user} do
     admin = user |> Ecto.Changeset.change(role: :admin) |> Repo.update!()
     assert {:ok, true} = Accounts.set_registration(admin, true)
-    assert {:ok, registered} = Accounts.register_public_user(%{
-      email: "public@example.com", name: "New User", password: @password, password_confirmation: @password,
-      role: "admin", status: "disabled", auth_version: 99})
+
+    assert {:ok, registered} =
+             Accounts.register_public_user(%{
+               email: "public@example.com",
+               name: "New User",
+               password: @password,
+               password_confirmation: @password,
+               role: "admin",
+               status: "disabled",
+               auth_version: 99
+             })
+
     assert registered.role == :member
     assert registered.status == :active
     assert registered.auth_version == 1
@@ -50,7 +76,11 @@ defmodule TeslaMate.AccountSecurityTest do
     assert {:ok, _} = Accounts.authenticate_user(registered.email, @password)
   end
 
-  test "session list excludes other users and never returns token material", %{user: user, other: other, token: token} do
+  test "session list excludes other users and never returns token material", %{
+    user: user,
+    other: other,
+    token: token
+  } do
     {:ok, other_token} = Accounts.create_session(other)
     [device] = Accounts.list_sessions(user, token)
     assert device.current?
@@ -72,7 +102,10 @@ defmodule TeslaMate.AccountSecurityTest do
     assert length(Accounts.list_sessions(user, token)) == 1
   end
 
-  test "enrollment needs password, current session and proof from the authenticator", %{user: user, token: token} do
+  test "enrollment needs password, current session and proof from the authenticator", %{
+    user: user,
+    token: token
+  } do
     assert {:error, :invalid_verification} = Security.begin_enrollment(user, token, "wrong")
     assert {:ok, key} = Security.begin_enrollment(user, token, @password)
     {:ok, second} = Accounts.create_session(user)
@@ -90,15 +123,21 @@ defmodule TeslaMate.AccountSecurityTest do
     a = Repo.get!(Authenticator, user.id)
     assert a.pending_secret == nil
     assert Enum.all?(codes, fn c -> :crypto.hash(:sha256, c) in a.recovery_hashes end)
-    [[encrypted]] = Repo.query!("SELECT secret FROM private.authenticators WHERE user_id = $1", [user.id]).rows
+
+    [[encrypted]] =
+      Repo.query!("SELECT secret FROM private.authenticators WHERE user_id = $1", [user.id]).rows
+
     refute encrypted == Base.decode32!(key, padding: false)
     assert Security.status(user, renewed).setup_key == nil
   end
 
   test "expired enrollment does not enable 2FA", %{user: user, token: token} do
     {:ok, key} = Security.begin_enrollment(user, token, @password)
+
     Repo.update_all(from(a in Authenticator, where: a.user_id == ^user.id),
-      set: [pending_expires_at: DateTime.add(DateTime.utc_now(), -1)])
+      set: [pending_expires_at: DateTime.add(DateTime.utc_now(), -1)]
+    )
+
     code = key |> Base.decode32!(padding: false) |> NimbleTOTP.verification_code()
     assert {:error, :setup_expired} = Security.enable(user, token, code)
     refute Security.enabled?(user)
@@ -128,13 +167,21 @@ defmodule TeslaMate.AccountSecurityTest do
   test "five bad attempts exhaust a challenge and throttle the account", %{user: user} do
     factor(user)
     {:ok, challenge} = Security.create_challenge(user)
-    for _ <- 1..5, do: assert({:error, :invalid_verification} = Security.complete_challenge(challenge, "wrong"))
+
+    for _ <- 1..5,
+        do:
+          assert(
+            {:error, :invalid_verification} = Security.complete_challenge(challenge, "wrong")
+          )
+
     assert {:error, :invalid_challenge} = Security.complete_challenge(challenge, "recovery-code")
     {:ok, fresh} = Security.create_challenge(user)
     assert {:error, :rate_limited} = Security.complete_challenge(fresh, "recovery-code")
   end
 
-  test "password and role changes invalidate pending challenges and stale user structs", %{user: user} do
+  test "password and role changes invalidate pending challenges and stale user structs", %{
+    user: user
+  } do
     factor(user)
     {:ok, challenge} = Security.create_challenge(user)
     attrs = %{password: @password <> "new", password_confirmation: @password <> "new"}
@@ -151,9 +198,15 @@ defmodule TeslaMate.AccountSecurityTest do
     assert {:error, :invalid_challenge} = Security.complete_challenge(challenge, "recovery-code")
   end
 
-  test "disabling requires both factors and invalidates old sessions and recovery codes", %{user: user, token: token} do
+  test "disabling requires both factors and invalidates old sessions and recovery codes", %{
+    user: user,
+    token: token
+  } do
     factor(user)
-    assert {:error, :invalid_verification} = Security.disable(user, token, "wrong", "recovery-code")
+
+    assert {:error, :invalid_verification} =
+             Security.disable(user, token, "wrong", "recovery-code")
+
     assert Security.enabled?(user)
     assert {:ok, [], new_token} = Security.disable(user, token, @password, "recovery-code")
     refute Security.enabled?(user)
@@ -163,10 +216,16 @@ defmodule TeslaMate.AccountSecurityTest do
     assert Accounts.get_user_by_session_token(new_token)
   end
 
-  test "regenerating recovery codes invalidates old codes and other devices", %{user: user, token: token} do
+  test "regenerating recovery codes invalidates old codes and other devices", %{
+    user: user,
+    token: token
+  } do
     factor(user)
     {:ok, other_token} = Accounts.create_session(user)
-    assert {:ok, codes, new_token} = Security.regenerate_recovery_codes(user, token, @password, "recovery-code")
+
+    assert {:ok, codes, new_token} =
+             Security.regenerate_recovery_codes(user, token, @password, "recovery-code")
+
     assert length(codes) == 10
     refute "recovery-code" in codes
     refute Accounts.get_user_by_session_token(other_token)

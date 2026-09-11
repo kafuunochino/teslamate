@@ -70,7 +70,15 @@
         </div>
         <div :if={@security.enabled?} class="field">
           <label class="label" for="password-security-code">动态码或恢复码</label>
-          <input id="password-security-code" name="user[code]" type="text" class="input" autocomplete="one-time-code" maxlength="64" required />
+          <input
+            id="password-security-code"
+            name="user[code]"
+            type="text"
+            class="input"
+            autocomplete="one-time-code"
+            maxlength="64"
+            required
+          />
         </div>
         <p class="help">修改成功后会撤销所有已有登录会话。</p>
         <%= submit("修改密码", class: "button is-primary") %>
@@ -78,13 +86,20 @@
     </section>
   </div>
   <section id="security" class="data-card settings-card account-security">
-    <div class="data-card__header"><div><h2><i class="mdi mdi-shield-key-outline"></i> 两步验证（2FA）</h2><p>登录时在密码之外验证动态码，支持标准 TOTP 验证器。</p></div></div>
+    <div class="data-card__header">
+      <div>
+        <h2><i class="mdi mdi-shield-key-outline"></i> 两步验证（2FA）</h2>
+        <p>登录时在密码之外验证动态码，支持标准 TOTP 验证器。</p>
+      </div>
+    </div>
     <p><strong>当前状态：</strong><%= if @security.enabled?, do: "已启用", else: "未启用" %></p>
 
     <div :if={@recovery_codes != []} class="security-recovery" role="status">
       <h3>请立即保存恢复码</h3>
       <p>每枚只能使用一次，刷新或离开后不再显示。验证器不可用时，可用恢复码完成登录。请保存在安全的离线位置。</p>
-      <ul><li :for={code <- @recovery_codes}><code><%= code %></code></li></ul>
+      <ul>
+        <li :for={code <- @recovery_codes}><code><%= code %></code></li>
+      </ul>
     </div>
 
     <%= if @security.enabled? do %>
@@ -95,18 +110,48 @@
           <h3>重新生成恢复码</h3>
           <p class="help">立即废止旧恢复码，并登出其他设备。</p>
           <label class="label" for="recovery-password">当前密码</label>
-          <input id="recovery-password" name="security[password]" type="password" class="input" autocomplete="current-password" required />
+          <input
+            id="recovery-password"
+            name="security[password]"
+            type="password"
+            class="input"
+            autocomplete="current-password"
+            required
+          />
           <label class="label" for="recovery-code">动态码或现有恢复码</label>
-          <input id="recovery-code" name="security[code]" type="text" class="input" autocomplete="one-time-code" maxlength="64" required />
+          <input
+            id="recovery-code"
+            name="security[code]"
+            type="text"
+            class="input"
+            autocomplete="one-time-code"
+            maxlength="64"
+            required
+          />
           <button class="button is-primary" type="submit">重新生成恢复码</button>
         </.form>
         <.form for={%{}} action="/account/2fa" method="delete" class="platform-form">
           <h3>关闭两步验证</h3>
           <p class="help">关闭后登录只需密码，其他设备会登出，现有恢复码失效。</p>
           <label class="label" for="disable-password">当前密码</label>
-          <input id="disable-password" name="security[password]" type="password" class="input" autocomplete="current-password" required />
+          <input
+            id="disable-password"
+            name="security[password]"
+            type="password"
+            class="input"
+            autocomplete="current-password"
+            required
+          />
           <label class="label" for="disable-code">动态码或恢复码</label>
-          <input id="disable-code" name="security[code]" type="text" class="input" autocomplete="one-time-code" maxlength="64" required />
+          <input
+            id="disable-code"
+            name="security[code]"
+            type="text"
+            class="input"
+            autocomplete="one-time-code"
+            maxlength="64"
+            required
+          />
           <button class="button is-danger is-light" type="submit">验证并关闭</button>
         </.form>
       </details>
@@ -119,7 +164,17 @@
           <p>设置密钥：<code class="security-setup-key"><%= @security.setup_key %></code></p>
           <.form for={%{}} action="/account/2fa/confirm" method="post" class="platform-form">
             <label class="label" for="enable-code">验证器当前显示的 6 位动态码</label>
-            <input id="enable-code" name="security[code]" class="input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
+            <input
+              id="enable-code"
+              name="security[code]"
+              class="input"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              maxlength="6"
+              autocomplete="one-time-code"
+              required
+            />
             <button class="button is-primary" type="submit">验证并启用两步验证</button>
           </.form>
           <p class="help">此步骤 10 分钟内有效。启用后会显示恢复码，并登出其他设备。</p>
@@ -127,7 +182,14 @@
       <% else %>
         <.form for={%{}} action="/account/2fa/setup" method="post" class="platform-form">
           <label class="label" for="setup-password">验证当前密码</label>
-          <input id="setup-password" name="security[password]" type="password" class="input" autocomplete="current-password" required />
+          <input
+            id="setup-password"
+            name="security[password]"
+            type="password"
+            class="input"
+            autocomplete="current-password"
+            required
+          />
           <button class="button is-primary" type="submit">设置验证器</button>
         </.form>
       <% end %>
@@ -135,17 +197,27 @@
   </section>
 
   <section id="devices" class="data-card settings-card account-devices">
-    <div class="data-card__header"><div><h2><i class="mdi mdi-devices"></i> 在线设备与登录会话</h2><p>显示仍可使用的登录会话。最近活动时间不代表设备此刻在线；同一浏览器的多个标签页属于同一会话。</p></div></div>
+    <div class="data-card__header">
+      <div>
+        <h2><i class="mdi mdi-devices"></i> 在线设备与登录会话</h2>
+        <p>显示仍可使用的登录会话。最近活动时间不代表设备此刻在线；同一浏览器的多个标签页属于同一会话。</p>
+      </div>
+    </div>
     <div class="session-list">
       <article :for={session <- @sessions} class="session-device">
         <div class="session-device__info">
-          <h3><i class="mdi mdi-monitor-cellphone"></i> <%= device_label(session.user_agent) %> <span :if={session.current?} class="tag is-info is-light">当前设备</span></h3>
+          <h3>
+            <i class="mdi mdi-monitor-cellphone"></i> <%= device_label(session.user_agent) %>
+            <span :if={session.current?} class="tag is-info is-light">当前设备</span>
+          </h3>
           <p>登录时间：<%= date_time(session.inserted_at) %></p>
           <p>最近活动：<%= date_time(session.last_seen_at) %></p>
           <p>IP：<%= session.ip_address || "旧会话未记录" %></p>
         </div>
         <.form for={%{}} action={"/account/devices/" <> to_string(session.id)} method="delete">
-          <button class="button is-danger is-light" type="submit"><%= if session.current?, do: "登出当前设备", else: "强制登出" %></button>
+          <button class="button is-danger is-light" type="submit">
+            <%= if session.current?, do: "登出当前设备", else: "强制登出" %>
+          </button>
         </.form>
       </article>
     </div>

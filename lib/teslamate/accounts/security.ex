@@ -13,10 +13,15 @@ defmodule TeslaMate.Accounts.Security do
 
   def status(user, token) do
     case Repo.get(Authenticator, user.id) do
-      nil -> %{enabled?: false, recovery_count: 0, setup_key: nil}
+      nil ->
+        %{enabled?: false, recovery_count: 0, setup_key: nil}
+
       a ->
-        %{enabled?: not is_nil(a.enabled_at), recovery_count: length(a.recovery_hashes),
-          setup_key: if(pending?(a, token), do: Base.encode32(a.pending_secret, padding: false))}
+        %{
+          enabled?: not is_nil(a.enabled_at),
+          recovery_count: length(a.recovery_hashes),
+          setup_key: if(pending?(a, token), do: Base.encode32(a.pending_secret, padding: false))
+        }
     end
   end
 
@@ -24,15 +29,30 @@ defmodule TeslaMate.Accounts.Security do
     transaction(fn ->
       current = lock_user(user)
       a = lock_authenticator(current)
+
       cond do
-        not current_session?(current, token) -> {:error, :forbidden}
-        a.enabled_at != nil -> {:error, :already_enabled}
-        not available?(a) -> {:error, :rate_limited}
-        not verify_password(current, password) -> fail(a)
+        not current_session?(current, token) ->
+          {:error, :forbidden}
+
+        a.enabled_at != nil ->
+          {:error, :already_enabled}
+
+        not available?(a) ->
+          {:error, :rate_limited}
+
+        not verify_password(current, password) ->
+          fail(a)
+
         true ->
-          a = update(a, %{pending_secret: NimbleTOTP.secret(),
-            pending_session_hash: hash(token), pending_expires_at: DateTime.add(now(), @window),
-            failed_attempts: 0, attempt_window_at: now()})
+          a =
+            update(a, %{
+              pending_secret: NimbleTOTP.secret(),
+              pending_session_hash: hash(token),
+              pending_expires_at: DateTime.add(now(), @window),
+              failed_attempts: 0,
+              attempt_window_at: now()
+            })
+
           {:ok, Base.encode32(a.pending_secret, padding: false)}
       end
     end)
@@ -42,19 +62,37 @@ defmodule TeslaMate.Accounts.Security do
     transaction(fn ->
       current = lock_user(user)
       a = lock_authenticator(current)
+
       cond do
-        not current_session?(current, token) -> {:error, :forbidden}
-        a.enabled_at != nil or not pending?(a, token) -> {:error, :setup_expired}
-        not available?(a) -> {:error, :rate_limited}
+        not current_session?(current, token) ->
+          {:error, :forbidden}
+
+        a.enabled_at != nil or not pending?(a, token) ->
+          {:error, :setup_expired}
+
+        not available?(a) ->
+          {:error, :rate_limited}
+
         true ->
           case matching_step(a.pending_secret, code, nil) do
-            nil -> fail(a)
+            nil ->
+              fail(a)
+
             step ->
               codes = recovery_codes()
-              update(a, %{secret: a.pending_secret, enabled_at: now(), last_used_step: step,
+
+              update(a, %{
+                secret: a.pending_secret,
+                enabled_at: now(),
+                last_used_step: step,
                 recovery_hashes: Enum.map(codes, &recovery_hash/1),
-                pending_secret: nil, pending_session_hash: nil, pending_expires_at: nil,
-                failed_attempts: 0, attempt_window_at: now()})
+                pending_secret: nil,
+                pending_session_hash: nil,
+                pending_expires_at: nil,
+                failed_attempts: 0,
+                attempt_window_at: now()
+              })
+
               {:ok, token} = rotate_sessions(current, metadata)
               {:ok, codes, token}
           end
@@ -74,26 +112,46 @@ defmodule TeslaMate.Accounts.Security do
     transaction(fn ->
       current = lock_user(user)
       a = lock_authenticator(current)
+
       cond do
-        not current_session?(current, token) -> {:error, :forbidden}
-        a.enabled_at == nil -> {:error, :not_enabled}
-        not available?(a) -> {:error, :rate_limited}
-        not verify_password(current, password) -> fail(a)
+        not current_session?(current, token) ->
+          {:error, :forbidden}
+
+        a.enabled_at == nil ->
+          {:error, :not_enabled}
+
+        not available?(a) ->
+          {:error, :rate_limited}
+
+        not verify_password(current, password) ->
+          fail(a)
+
         true ->
           case consume_factor(a, code) do
             {:ok, a} ->
               codes = if action == :recovery, do: recovery_codes(), else: []
+
               changes =
                 if action == :disable do
-                  %{secret: nil, enabled_at: nil, last_used_step: nil, recovery_hashes: [],
-                    pending_secret: nil, pending_session_hash: nil, pending_expires_at: nil}
+                  %{
+                    secret: nil,
+                    enabled_at: nil,
+                    last_used_step: nil,
+                    recovery_hashes: [],
+                    pending_secret: nil,
+                    pending_session_hash: nil,
+                    pending_expires_at: nil
+                  }
                 else
                   %{recovery_hashes: Enum.map(codes, &recovery_hash/1)}
                 end
+
               update(a, changes)
               {:ok, new_token} = rotate_sessions(current, metadata)
               {:ok, codes, new_token}
-            error -> error
+
+            error ->
+              error
           end
       end
     end)
@@ -103,11 +161,20 @@ defmodule TeslaMate.Accounts.Security do
     transaction(fn ->
       current = lock_user(user)
       a = lock_authenticator(current)
+
       cond do
-        not current_session?(current, token) -> {:error, :forbidden}
-        not available?(a) -> {:error, :rate_limited}
-        not verify_password(current, password) -> fail(a)
-        is_nil(a.enabled_at) -> :ok
+        not current_session?(current, token) ->
+          {:error, :forbidden}
+
+        not available?(a) ->
+          {:error, :rate_limited}
+
+        not verify_password(current, password) ->
+          fail(a)
+
+        is_nil(a.enabled_at) ->
+          :ok
+
         true ->
           case consume_factor(a, code) do
             {:ok, _} -> :ok
@@ -120,48 +187,75 @@ defmodule TeslaMate.Accounts.Security do
   def create_challenge(%User{} = user) do
     transaction(fn ->
       current = lock_user(user)
+
       if current.auth_version != user.auth_version or not enabled?(current) do
         {:error, :invalid_challenge}
       else
         token = random_token()
         Repo.delete_all(from c in LoginChallenge, where: c.expires_at <= ^now())
-        Repo.insert!(%LoginChallenge{token_hash: hash(token), user_id: current.id,
-          auth_version: current.auth_version, expires_at: DateTime.add(now(), 300)})
+
+        Repo.insert!(%LoginChallenge{
+          token_hash: hash(token),
+          user_id: current.id,
+          auth_version: current.auth_version,
+          expires_at: DateTime.add(now(), 300)
+        })
+
         {:ok, token}
       end
     end)
   end
 
   def challenge_user(token) when is_binary(token) and byte_size(token) <= 128 do
-    Repo.one(from c in LoginChallenge, join: u in User, on: u.id == c.user_id,
-      where: c.token_hash == ^hash(token) and c.expires_at > ^now() and
-        c.attempts < ^@attempt_limit and u.status == :active and c.auth_version == u.auth_version,
-      select: u)
+    Repo.one(
+      from c in LoginChallenge,
+        join: u in User,
+        on: u.id == c.user_id,
+        where:
+          c.token_hash == ^hash(token) and c.expires_at > ^now() and
+            c.attempts < ^@attempt_limit and u.status == :active and
+            c.auth_version == u.auth_version,
+        select: u
+    )
   end
+
   def challenge_user(_), do: nil
 
   def complete_challenge(token, code, metadata \\ %{}) do
     case challenge_user(token) do
-      nil -> {:error, :invalid_challenge}
+      nil ->
+        {:error, :invalid_challenge}
+
       user ->
         transaction(fn ->
           current = lock_user(user)
           challenge = Repo.get(LoginChallenge, hash(token))
           a = lock_authenticator(current)
+
           cond do
             is_nil(challenge) or challenge.auth_version != current.auth_version or
-                DateTime.compare(challenge.expires_at, now()) != :gt or
-                challenge.attempts >= @attempt_limit -> {:error, :invalid_challenge}
-            is_nil(a.enabled_at) -> {:error, :invalid_challenge}
-            not available?(a) -> {:error, :rate_limited}
+              DateTime.compare(challenge.expires_at, now()) != :gt or
+                challenge.attempts >= @attempt_limit ->
+              {:error, :invalid_challenge}
+
+            is_nil(a.enabled_at) ->
+              {:error, :invalid_challenge}
+
+            not available?(a) ->
+              {:error, :rate_limited}
+
             true ->
               case consume_factor(a, code) do
                 {:ok, _} ->
                   Repo.delete!(challenge)
                   {:ok, session} = Accounts.create_session(current, metadata)
                   {:ok, current, session}
+
                 error ->
-                  challenge |> Ecto.Changeset.change(attempts: challenge.attempts + 1) |> Repo.update!()
+                  challenge
+                  |> Ecto.Changeset.change(attempts: challenge.attempts + 1)
+                  |> Repo.update!()
+
                   error
               end
           end
@@ -173,12 +267,18 @@ defmodule TeslaMate.Accounts.Security do
     case matching_step(a.secret, code, a.last_used_step) do
       step when is_integer(step) ->
         {:ok, update(a, %{last_used_step: step, failed_attempts: 0, attempt_window_at: now()})}
+
       nil ->
         value = if is_binary(code), do: recovery_hash(code), else: <<>>
         used = Enum.find(a.recovery_hashes, &Plug.Crypto.secure_compare(&1, value))
+
         if used do
-          {:ok, update(a, %{recovery_hashes: List.delete(a.recovery_hashes, used),
-            failed_attempts: 0, attempt_window_at: now()})}
+          {:ok,
+           update(a, %{
+             recovery_hashes: List.delete(a.recovery_hashes, used),
+             failed_attempts: 0,
+             attempt_window_at: now()
+           })}
         else
           fail(a)
         end
@@ -188,11 +288,14 @@ defmodule TeslaMate.Accounts.Security do
   defp matching_step(secret, code, last) when is_binary(secret) and is_binary(code) do
     if Regex.match?(~r/^[0-9]{6}$/, code) do
       step = div(System.system_time(:second), 30)
+
       Enum.find([step, step - 1], fn candidate ->
-        (is_nil(last) or candidate > last) and NimbleTOTP.valid?(secret, code, time: candidate * 30)
+        (is_nil(last) or candidate > last) and
+          NimbleTOTP.valid?(secret, code, time: candidate * 30)
       end)
     end
   end
+
   defp matching_step(_, _, _), do: nil
 
   defp available?(a), do: expired_window?(a) or a.failed_attempts < @attempt_limit
@@ -200,9 +303,11 @@ defmodule TeslaMate.Accounts.Security do
   defp expired_window?(a), do: DateTime.diff(now(), a.attempt_window_at) >= @window
 
   defp fail(a) do
-    changes = if expired_window?(a),
-      do: %{failed_attempts: 1, attempt_window_at: now()},
-      else: %{failed_attempts: a.failed_attempts + 1}
+    changes =
+      if expired_window?(a),
+        do: %{failed_attempts: 1, attempt_window_at: now()},
+        else: %{failed_attempts: a.failed_attempts + 1}
+
     update(a, changes)
     {:error, :invalid_verification}
   end
@@ -240,13 +345,18 @@ defmodule TeslaMate.Accounts.Security do
 
   defp verify_password(user, password) when is_binary(password),
     do: Password.verify(password, user.password_hash)
+
   defp verify_password(_, _), do: false
-  defp recovery_codes, do: for(_ <- 1..10, do: :crypto.strong_rand_bytes(10) |> Base.encode16(case: :lower))
+
+  defp recovery_codes,
+    do: for(_ <- 1..10, do: :crypto.strong_rand_bytes(10) |> Base.encode16(case: :lower))
+
   defp recovery_hash(code), do: code |> String.trim() |> String.downcase() |> hash()
   defp random_token, do: :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
   defp hash(value), do: :crypto.hash(:sha256, value)
   defp now, do: DateTime.utc_now() |> DateTime.truncate(:microsecond)
   defp update(record, attrs), do: record |> Ecto.Changeset.change(attrs) |> Repo.update!()
+
   defp transaction(fun) do
     case Repo.transaction(fun) do
       {:ok, result} -> result

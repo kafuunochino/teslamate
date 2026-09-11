@@ -194,6 +194,7 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
     {:ok, car} = TeslaMate.Log.create_car(%{eid: id, vid: id, vin: @vin, model: "3"})
 
     assert {:ok, _} = Accounts.grant_car(user, user, car.id)
+
     Repo.insert!(%Connection{
       id: 1,
       authorized_by_id: user.id,

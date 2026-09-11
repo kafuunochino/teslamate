@@ -20,7 +20,9 @@ defmodule TeslaMate.Repo.Migrations.AccountSecurityAndOwnership do
     end
 
     create table(:authenticators, prefix: "private", primary_key: false) do
-      add :user_id, references(:users, prefix: "private", on_delete: :delete_all), primary_key: true
+      add :user_id, references(:users, prefix: "private", on_delete: :delete_all),
+        primary_key: true
+
       add :secret, :binary
       add :enabled_at, :utc_datetime_usec
       add :last_used_step, :bigint
@@ -60,6 +62,7 @@ defmodule TeslaMate.Repo.Migrations.AccountSecurityAndOwnership do
     end
 
     create index(:geofences, [:user_id])
+
     execute("""
     UPDATE public.geofences
     SET user_id = (SELECT id FROM private.users WHERE role = 'admin' AND status = 'active' ORDER BY id LIMIT 1)
@@ -69,14 +72,25 @@ defmodule TeslaMate.Repo.Migrations.AccountSecurityAndOwnership do
     # Preserve the existing encrypted connection and associate it with its
     # authorizing account. IDs remain stable and new rows use a sequence.
     execute("CREATE SEQUENCE private.fleet_connections_id_seq")
-    execute("ALTER TABLE private.fleet_connections ALTER COLUMN id SET DEFAULT nextval('private.fleet_connections_id_seq')")
-    execute("ALTER SEQUENCE private.fleet_connections_id_seq OWNED BY private.fleet_connections.id")
-    execute("SELECT setval('private.fleet_connections_id_seq', GREATEST(COALESCE((SELECT MAX(id) FROM private.fleet_connections), 0), 1), EXISTS(SELECT 1 FROM private.fleet_connections))")
+
+    execute(
+      "ALTER TABLE private.fleet_connections ALTER COLUMN id SET DEFAULT nextval('private.fleet_connections_id_seq')"
+    )
+
+    execute(
+      "ALTER SEQUENCE private.fleet_connections_id_seq OWNED BY private.fleet_connections.id"
+    )
+
+    execute(
+      "SELECT setval('private.fleet_connections_id_seq', GREATEST(COALESCE((SELECT MAX(id) FROM private.fleet_connections), 0), 1), EXISTS(SELECT 1 FROM private.fleet_connections))"
+    )
+
     execute("""
     UPDATE private.fleet_connections
     SET authorized_by_id = (SELECT id FROM private.users WHERE role = 'admin' AND status = 'active' ORDER BY id LIMIT 1)
     WHERE authorized_by_id IS NULL
     """)
+
     create unique_index(:fleet_connections, [:authorized_by_id], prefix: "private")
   end
 

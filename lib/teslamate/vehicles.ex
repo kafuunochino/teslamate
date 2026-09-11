@@ -29,6 +29,7 @@ defmodule TeslaMate.Vehicles do
 
   def ensure_started(%Car{} = car) do
     car = TeslaMate.Repo.preload(car, :settings)
+
     if car.settings.enabled do
       case Supervisor.start_child(@name, {Vehicle, car: car}) do
         {:ok, _} -> :ok
@@ -114,8 +115,11 @@ defmodule TeslaMate.Vehicles do
   end
 
   defp fleet_vehicles do
-    Log.list_cars() |> Enum.filter(& &1.fleet_api)
-    |> Enum.map(fn car -> %TeslaApi.Vehicle{id: car.eid, vehicle_id: car.vid, vin: car.vin, display_name: car.name} end)
+    Log.list_cars()
+    |> Enum.filter(& &1.fleet_api)
+    |> Enum.map(fn car ->
+      %TeslaApi.Vehicle{id: car.eid, vehicle_id: car.vid, vin: car.vin, display_name: car.name}
+    end)
   end
 
   defp fallback_vehicles do

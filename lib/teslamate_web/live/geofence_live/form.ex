@@ -63,19 +63,24 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
     else
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, changeset: changeset, show_errors: true)}
-      {:error, :forbidden} -> {:noreply, redirect(socket, to: "/geo-fences")}
+
+      {:error, :forbidden} ->
+        {:noreply, redirect(socket, to: "/geo-fences")}
     end
   end
 
   def handle_event("calc-costs", %{"result" => result}, socket) do
     case save(socket) do
-      {:error, :forbidden} -> {:noreply, redirect(socket, to: "/geo-fences")}
+      {:error, :forbidden} ->
+        {:noreply, redirect(socket, to: "/geo-fences")}
+
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, changeset: changeset, show_modal: false, show_errors: true)}
 
       {:ok, socket} ->
         if result == "yes" do
-          :ok = Locations.calculate_charge_costs(socket.assigns.current_user, socket.assigns.geofence)
+          :ok =
+            Locations.calculate_charge_costs(socket.assigns.current_user, socket.assigns.geofence)
         end
 
         {:noreply, socket}

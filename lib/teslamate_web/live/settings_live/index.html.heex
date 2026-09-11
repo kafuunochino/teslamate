@@ -8,7 +8,11 @@
 </nav>
 
 <header class="page-heading">
-  <div><p class="page-kicker">系统管理</p><h1>系统设置</h1><p>管理全站地图与采集配置。个人车辆授权请使用「Tesla 连接」。</p></div>
+  <div>
+    <p class="page-kicker">系统管理</p>
+    <h1>系统设置</h1>
+    <p>管理全站地图与采集配置。个人车辆授权请使用「Tesla 连接」。</p>
+  </div>
   <a class="button is-light" href="/admin/tesla-account">兼容采集器连接</a>
 </header>
 
@@ -180,7 +184,10 @@
           <div class="field-body">
             <div class="field">
               <div class="control">
-                <%= checkbox(f, :use_streaming_api, class: "switch is-rounded is-success", disabled: @car_settings[@car].original.car.fleet_api) %>
+                <%= checkbox(f, :use_streaming_api,
+                  class: "switch is-rounded is-success",
+                  disabled: @car_settings[@car].original.car.fleet_api
+                ) %>
                 <%= label(f, :use_streaming_api, nil) %>
               </div>
             </div>

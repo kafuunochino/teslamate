@@ -6,7 +6,16 @@
   <.form for={%{}} action="/sign_in/verify" method="post" class="platform-form">
     <div class="field">
       <label class="label" for="verification-code">动态码或恢复码</label>
-      <input id="verification-code" name="verification[code]" class="input" type="text" autocomplete="one-time-code" maxlength="64" required autofocus />
+      <input
+        id="verification-code"
+        name="verification[code]"
+        class="input"
+        type="text"
+        autocomplete="one-time-code"
+        maxlength="64"
+        required
+        autofocus
+      />
     </div>
     <button class="button is-primary is-fullwidth" type="submit">验证并登录</button>
   </.form>

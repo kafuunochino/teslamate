@@ -6,20 +6,35 @@ defmodule TeslaMateWeb.AccountSecurityTest do
 
   setup %{current_user: user} do
     start_supervised!(TeslaMate.Vault)
-    user = user |> Ecto.Changeset.change(password_hash: Accounts.Password.hash(@password)) |> Repo.update!()
+
+    user =
+      user
+      |> Ecto.Changeset.change(password_hash: Accounts.Password.hash(@password))
+      |> Repo.update!()
+
     %{current_user: user}
   end
 
   defp member do
-    {:ok, member} = Accounts.register_user(%{email: "member-#{System.unique_integer([:positive])}@example.com",
-      name: "Other User", password: @password, password_confirmation: @password})
+    {:ok, member} =
+      Accounts.register_user(%{
+        email: "member-#{System.unique_integer([:positive])}@example.com",
+        name: "Other User",
+        password: @password,
+        password_confirmation: @password
+      })
+
     member
   end
 
   test "admin registration switch persists and gates both GET and POST", %{conn: conn} do
     assert get(build_conn(), "/register").status == 404
     {:ok, view, _} = live(conn, "/admin/users")
-    view |> form("form[phx-submit=registration_policy]", registration: %{enabled: "true"}) |> render_submit()
+
+    view
+    |> form("form[phx-submit=registration_policy]", registration: %{enabled: "true"})
+    |> render_submit()
+
     assert Accounts.sign_up_allowed?()
     assert get(build_conn(), "/register").status == 200
     assert get(build_conn(), "/sign_in").resp_body =~ "/register"
@@ -30,14 +45,25 @@ defmodule TeslaMateWeb.AccountSecurityTest do
   end
 
   @tag platform_role: :member
-  test "member menu exposes own Tesla and fences but system management stays inaccessible", %{conn: conn} do
+  test "member menu exposes own Tesla and fences but system management stays inaccessible", %{
+    conn: conn
+  } do
     html = conn |> get("/account") |> html_response(200)
     assert html =~ ~s(href="/tesla-account")
     assert html =~ ~s(href="/geo-fences")
     refute html =~ "系统管理"
-    for route <- ["/admin/users", "/admin/settings", "/settings", "/admin/tesla-account", "/admin/import", "/admin/collector"] do
+
+    for route <- [
+          "/admin/users",
+          "/admin/settings",
+          "/settings",
+          "/admin/tesla-account",
+          "/admin/import",
+          "/admin/collector"
+        ] do
       assert get(conn, route).status == 404
     end
+
     assert get(conn, "/tesla-account").status == 200
     assert {:ok, _, _} = live(conn, "/geo-fences")
   end
@@ -50,14 +76,22 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     refute get_session(conn, :user_session_token)
     assert get_session(conn, :login_challenge)
     assert redirected_to(conn |> recycle() |> get("/account")) == "/sign_in"
-    result = conn |> recycle() |> post("/sign_in/verify", %{verification: %{code: NimbleTOTP.verification_code(secret)}})
+
+    result =
+      conn
+      |> recycle()
+      |> post("/sign_in/verify", %{verification: %{code: NimbleTOTP.verification_code(secret)}})
+
     assert redirected_to(result) == "/"
     assert get_session(result, :user_session_token)
     refute get_session(result, :login_challenge)
     assert get_session(result, :live_socket_id)
   end
 
-  test "device identifiers cannot revoke another account and revoked token fails every route", %{conn: conn, current_user: user} do
+  test "device identifiers cannot revoke another account and revoked token fails every route", %{
+    conn: conn,
+    current_user: user
+  } do
     other = member()
     {:ok, token} = Accounts.create_session(other)
     row = Repo.get_by!(UserSession, token_hash: :crypto.hash(:sha256, token))
@@ -69,10 +103,15 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     stolen = build_conn() |> Plug.Test.init_test_session(%{user_session_token: own})
     assert redirected_to(get(stolen, "/account")) == "/sign_in"
     assert get(stolen, "/maps/config").status == 401
-    assert post(stolen, "/tesla-account/configure", %{vin: "LRW3E7EK9MC123456", interval: "10"}).status == 302
+
+    assert post(stolen, "/tesla-account/configure", %{vin: "LRW3E7EK9MC123456", interval: "10"}).status ==
+             302
   end
 
-  test "revoked LiveViews cannot keep processing page events or updates", %{conn: conn, current_user: user} do
+  test "revoked LiveViews cannot keep processing page events or updates", %{
+    conn: conn,
+    current_user: user
+  } do
     {:ok, view, _} = live(conn, "/geo-fences")
     [device] = Accounts.list_sessions(user, get_session(conn, :user_session_token))
     assert :ok = Accounts.revoke_session(user, device.id)
@@ -81,9 +120,17 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     assert_redirect(view, "/sign_in")
   end
 
-  test "account security page never renders persisted secrets or recovery hashes", %{conn: conn, current_user: user} do
-    Repo.insert!(%Authenticator{user_id: user.id, secret: "never-render-this-secret",
-      enabled_at: DateTime.utc_now(), recovery_hashes: [:crypto.hash(:sha256, "never-render-code")]})
+  test "account security page never renders persisted secrets or recovery hashes", %{
+    conn: conn,
+    current_user: user
+  } do
+    Repo.insert!(%Authenticator{
+      user_id: user.id,
+      secret: "never-render-this-secret",
+      enabled_at: DateTime.utc_now(),
+      recovery_hashes: [:crypto.hash(:sha256, "never-render-code")]
+    })
+
     response = get(conn, "/account")
     html = html_response(response, 200)
     assert html =~ "两步验证（2FA）"
@@ -93,7 +140,9 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     assert get_resp_header(response, "cache-control") == ["no-store"]
   end
 
-  test "enrollment endpoints retain password confirmation and show recovery codes only once", %{conn: conn} do
+  test "enrollment endpoints retain password confirmation and show recovery codes only once", %{
+    conn: conn
+  } do
     begin = post(conn, "/account/2fa/setup", %{security: %{password: @password}})
     assert redirected_to(begin) == "/account#security"
     user = conn.assigns.current_user

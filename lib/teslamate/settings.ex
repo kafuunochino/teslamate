@@ -65,8 +65,11 @@ defmodule TeslaMate.Settings do
   end
 
   defp collector_changeset(%CarSettings{car: %Car{fleet_api: true}} = settings, attrs) do
-    settings |> CarSettings.changeset(attrs) |> Ecto.Changeset.put_change(:use_streaming_api, false)
+    settings
+    |> CarSettings.changeset(attrs)
+    |> Ecto.Changeset.put_change(:use_streaming_api, false)
   end
+
   defp collector_changeset(settings, attrs), do: CarSettings.changeset(settings, attrs)
 
   def topic(%Car{id: id}), do: inspect(CarSettings) <> to_string(id)

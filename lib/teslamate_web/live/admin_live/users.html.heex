@@ -8,10 +8,23 @@
   </header>
 
   <section class="data-card admin-action-card">
-    <div class="data-card__header"><div><h2>开放注册</h2><p>关闭时隐藏登录页的注册入口，并拒绝新的注册请求。已有账号仍可登录。</p></div></div>
+    <div class="data-card__header">
+      <div>
+        <h2>开放注册</h2>
+        <p>关闭时隐藏登录页的注册入口，并拒绝新的注册请求。已有账号仍可登录。</p>
+      </div>
+    </div>
     <form phx-submit="registration_policy" class="platform-form">
       <input type="hidden" name="registration[enabled]" value="false" />
-      <label class="checkbox"><input id="allow-registration" type="checkbox" name="registration[enabled]" value="true" checked={@allow_registration} /> 允许新用户注册</label>
+      <label class="checkbox">
+        <input
+          id="allow-registration"
+          type="checkbox"
+          name="registration[enabled]"
+          value="true"
+          checked={@allow_registration}
+        /> 允许新用户注册
+      </label>
       <p class="help">新注册账号为普通用户，绑定自己的车辆后才能查看车辆数据。</p>
       <button type="submit" class="button is-primary">保存注册设置</button>
     </form>

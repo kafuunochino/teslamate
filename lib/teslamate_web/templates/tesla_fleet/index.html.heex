@@ -68,12 +68,7 @@
           <p class="mb-3">
             最近接收：<%= date_time(TeslaMate.TeslaFleet.Readings.last_received(car.id)) %>
           </p>
-          <.form
-            for={%{}}
-            action="/tesla-account/configure"
-            method="post"
-            class="mb-3"
-          >
+          <.form for={%{}} action="/tesla-account/configure" method="post" class="mb-3">
             <input type="hidden" name="vin" value={car.vin} />
             <label class="label" for={"fleet-interval-#{car.id}"}>遥测采集间隔</label>
             <div class="select mb-3">

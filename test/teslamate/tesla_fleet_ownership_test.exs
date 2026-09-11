@@ -10,32 +10,57 @@ defmodule TeslaMate.TeslaFleetOwnershipTest do
     start_supervised!(TeslaMate.Vault)
     previous_config = Application.get_env(:teslamate, :tesla_fleet_config)
     previous_http = Application.get_env(:teslamate, :tesla_fleet_http)
+
     Application.put_env(:teslamate, :tesla_fleet_config, %{
-      "client_id" => "test", "client_secret" => "test-secret", "region" => "cn",
-      "origin" => "https://dashboard.example.com"})
-    [first, second] = for n <- [1, 2] do
-      Repo.insert!(%User{email: "fleet#{n}-#{System.unique_integer([:positive])}@example.com",
-        name: "Member #{n}", password_hash: "test-only", password_changed_at: DateTime.utc_now()})
-    end
+      "client_id" => "test",
+      "client_secret" => "test-secret",
+      "region" => "cn",
+      "origin" => "https://dashboard.example.com"
+    })
+
+    [first, second] =
+      for n <- [1, 2] do
+        Repo.insert!(%User{
+          email: "fleet#{n}-#{System.unique_integer([:positive])}@example.com",
+          name: "Member #{n}",
+          password_hash: "test-only",
+          password_changed_at: DateTime.utc_now()
+        })
+      end
+
     on_exit(fn ->
-      if previous_config, do: Application.put_env(:teslamate, :tesla_fleet_config, previous_config),
+      if previous_config,
+        do: Application.put_env(:teslamate, :tesla_fleet_config, previous_config),
         else: Application.delete_env(:teslamate, :tesla_fleet_config)
-      if previous_http, do: Application.put_env(:teslamate, :tesla_fleet_http, previous_http),
+
+      if previous_http,
+        do: Application.put_env(:teslamate, :tesla_fleet_http, previous_http),
         else: Application.delete_env(:teslamate, :tesla_fleet_http)
     end)
+
     %{first: first, second: second}
   end
 
   defp response(vin, id, token) do
     Application.put_env(:teslamate, :tesla_fleet_http, fn
       :post, "https://auth.tesla.cn/oauth2/v3/token", _, _ ->
-        {:ok, %{"access_token" => token, "refresh_token" => token <> "-refresh", "expires_in" => 3600}}
+        {:ok,
+         %{"access_token" => token, "refresh_token" => token <> "-refresh", "expires_in" => 3600}}
+
       :get, "https://fleet-api.prd.cn.vn.cloud.tesla.cn/api/1/vehicles", _, _ ->
-        {:ok, %{"response" => [%{"vin" => vin, "id" => id, "vehicle_id" => id + 1, "display_name" => "Own car"}]}}
+        {:ok,
+         %{
+           "response" => [
+             %{"vin" => vin, "id" => id, "vehicle_id" => id + 1, "display_name" => "Own car"}
+           ]
+         }}
     end)
   end
 
-  test "two users get isolated encrypted tokens and exclusive vehicles", %{first: first, second: second} do
+  test "two users get isolated encrypted tokens and exclusive vehicles", %{
+    first: first,
+    second: second
+  } do
     response(@vin1, 100, "first-access")
     assert {:ok, _} = TeslaFleet.connect("code1", first)
     response(@vin2, 200, "second-access")
@@ -50,7 +75,10 @@ defmodule TeslaMate.TeslaFleetOwnershipTest do
     assert {:error, :unknown_vehicle} = TeslaFleet.known_vehicle(first, @vin2)
   end
 
-  test "OAuth cannot overwrite a different user's ownership or tokens", %{first: first, second: second} do
+  test "OAuth cannot overwrite a different user's ownership or tokens", %{
+    first: first,
+    second: second
+  } do
     response(@vin1, 100, "first-access")
     assert {:ok, _} = TeslaFleet.connect("code1", first)
     response(@vin1, 100, "second-access")
@@ -60,23 +88,42 @@ defmodule TeslaMate.TeslaFleetOwnershipTest do
     assert Repo.one!(UserCar).user_id == first.id
   end
 
-  test "forged VIN cannot reach Tesla using another user's authorization", %{first: first, second: second} do
+  test "forged VIN cannot reach Tesla using another user's authorization", %{
+    first: first,
+    second: second
+  } do
     response(@vin1, 100, "first-access")
     assert {:ok, _} = TeslaFleet.connect("code1", first)
-    Application.put_env(:teslamate, :tesla_fleet_http, fn _, _, _, _ -> flunk("unauthorized network request") end)
+
+    Application.put_env(:teslamate, :tesla_fleet_http, fn _, _, _, _ ->
+      flunk("unauthorized network request")
+    end)
+
     assert {:error, :not_connected} = TeslaFleet.check_vehicle(second, @vin1)
     assert {:error, :not_connected} = TeslaFleet.configure_vehicle(second, @vin1, 10)
     assert {:error, :unknown_vehicle} = TeslaFleet.check_vehicle(first, @vin2)
   end
 
-  test "revocation during OAuth exchange cannot resurrect the session or save tokens", %{first: first} do
+  test "revocation during OAuth exchange cannot resurrect the session or save tokens", %{
+    first: first
+  } do
     {:ok, token} = Accounts.create_session(first)
+
     Application.put_env(:teslamate, :tesla_fleet_http, fn
       :post, _, _, _ ->
         Accounts.delete_session(token)
-        {:ok, %{"access_token" => "race-access", "refresh_token" => "race-refresh", "expires_in" => 3600}}
-      :get, _, _, _ -> {:ok, %{"response" => []}}
+
+        {:ok,
+         %{
+           "access_token" => "race-access",
+           "refresh_token" => "race-refresh",
+           "expires_in" => 3600
+         }}
+
+      :get, _, _, _ ->
+        {:ok, %{"response" => []}}
     end)
+
     assert {:error, :invalid_state} = TeslaFleet.connect("code", first, token)
     assert TeslaFleet.connection(first) == nil
   end
@@ -87,11 +134,17 @@ defmodule TeslaMate.TeslaFleetOwnershipTest do
     assert :ok = TeslaFleet.known_vehicle(@vin1)
     Repo.delete_all(from b in UserCar, where: b.user_id == ^first.id)
     assert {:error, :unknown_vehicle} = TeslaFleet.known_vehicle(@vin1)
-    payload = Jason.encode!(%{"value" => 350, "created_at" => DateTime.to_iso8601(DateTime.utc_now())})
+
+    payload =
+      Jason.encode!(%{"value" => 350, "created_at" => DateTime.to_iso8601(DateTime.utc_now())})
+
     assert :ignored = Readings.ingest(@vin1, "PackVoltage", payload)
   end
 
-  test "disconnect removes only the caller's official binding and connection", %{first: first, second: second} do
+  test "disconnect removes only the caller's official binding and connection", %{
+    first: first,
+    second: second
+  } do
     response(@vin1, 100, "first-access")
     assert {:ok, _} = TeslaFleet.connect("code1", first)
     response(@vin2, 200, "second-access")
@@ -104,17 +157,22 @@ defmodule TeslaMate.TeslaFleetOwnershipTest do
     assert Repo.aggregate(TeslaMate.Log.Car, :count) == 2
   end
 
-  test "new fleet cars use their owner's token for collection and cannot fall back to legacy credentials", %{first: first} do
+  test "new fleet cars use their owner's token for collection and cannot fall back to legacy credentials",
+       %{first: first} do
     response(@vin1, 100, "first-access")
     assert {:ok, _} = TeslaFleet.connect("code1", first)
     [car] = Accounts.list_accessible_cars(first)
     assert TeslaFleet.fleet_collector?(car.eid)
     assert Repo.preload(car, :settings).settings.use_streaming_api == false
+
     Application.put_env(:teslamate, :tesla_fleet_http, fn :get, url, headers, _ ->
       assert url == "https://fleet-api.prd.cn.vn.cloud.tesla.cn/api/1/vehicles/" <> @vin1
       assert {"authorization", "Bearer first-access"} in headers
-      {:ok, %{"response" => %{"vin" => @vin1, "id" => 100, "vehicle_id" => 101, "state" => "asleep"}}}
+
+      {:ok,
+       %{"response" => %{"vin" => @vin1, "id" => 100, "vehicle_id" => 101, "state" => "asleep"}}}
     end)
+
     assert {:ok, %TeslaApi.Vehicle{vin: @vin1}} = TeslaFleet.collector_vehicle(car.eid, false)
     assert {:ok, :ok} = TeslaFleet.disconnect(first)
     assert TeslaFleet.fleet_collector?(car.eid)

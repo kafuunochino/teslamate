@@ -115,17 +115,25 @@ defmodule TeslaMate.Accounts do
   def authorized_admin?(_), do: false
 
   def sign_up_allowed? do
-    Repo.one(from s in "account_settings", prefix: "private",
-      where: s.id == 1, select: s.allow_registration) == true
+    Repo.one(
+      from s in "account_settings",
+        prefix: "private",
+        where: s.id == 1,
+        select: s.allow_registration
+    ) == true
   end
 
   def set_registration(%User{} = actor, allowed) when is_boolean(allowed) do
     Repo.transaction(fn ->
       Repo.query!("SELECT pg_advisory_xact_lock(847300002)")
       unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
-      {1, _} = Repo.update_all(
-        from(s in "account_settings", prefix: "private", where: s.id == 1),
-        set: [allow_registration: allowed])
+
+      {1, _} =
+        Repo.update_all(
+          from(s in "account_settings", prefix: "private", where: s.id == 1),
+          set: [allow_registration: allowed]
+        )
+
       audit(:registration_policy_changed, actor, metadata: %{"allowed" => allowed})
       allowed
     end)
@@ -137,6 +145,7 @@ defmodule TeslaMate.Accounts do
     Repo.transaction(fn ->
       Repo.query!("SELECT pg_advisory_xact_lock(847300002)")
       unless sign_up_allowed?(), do: Repo.rollback(:registration_closed)
+
       case register_user(attrs) do
         {:ok, user} -> user
         {:error, error} -> Repo.rollback(error)
@@ -154,18 +163,23 @@ defmodule TeslaMate.Accounts do
   def create_session(%User{} = user, metadata) do
     Repo.transaction(fn ->
       current = Repo.one(from u in User, where: u.id == ^user.id, lock: "FOR UPDATE")
+
       if is_nil(current) or current.status != :active or current.auth_version != user.auth_version,
         do: Repo.rollback(:account_disabled)
 
       token = @session_bytes |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
       time = now()
+
       session = %UserSession{
-        user_id: current.id, token_hash: token_hash(token),
-        expires_at: DateTime.add(time, session_days(), :day), last_seen_at: time,
+        user_id: current.id,
+        token_hash: token_hash(token),
+        expires_at: DateTime.add(time, session_days(), :day),
+        last_seen_at: time,
         auth_version: current.auth_version,
         user_agent: bounded_text(metadata[:user_agent], 512),
         ip_address: bounded_text(metadata[:ip_address], 64)
       }
+
       Repo.insert!(session)
       token
     end)
@@ -175,11 +189,16 @@ defmodule TeslaMate.Accounts do
 
   def get_user_by_session_token(token) when is_binary(token) and byte_size(token) <= 128 do
     time = now()
-    Repo.one(from s in UserSession,
-      join: u in assoc(s, :user),
-      where: s.token_hash == ^token_hash(token) and s.expires_at > ^time and
-        u.status == :active and s.auth_version == u.auth_version,
-      select: u, lock: "FOR SHARE")
+
+    Repo.one(
+      from s in UserSession,
+        join: u in assoc(s, :user),
+        where:
+          s.token_hash == ^token_hash(token) and s.expires_at > ^time and
+            u.status == :active and s.auth_version == u.auth_version,
+        select: u,
+        lock: "FOR SHARE"
+    )
   end
 
   def get_user_by_session_token(_), do: nil
@@ -192,22 +211,41 @@ defmodule TeslaMate.Accounts do
   def touch_session(token) when is_binary(token) do
     time = now()
     cutoff = DateTime.add(time, -60)
-    Repo.update_all(from(s in UserSession,
-      where: s.token_hash == ^token_hash(token) and s.last_seen_at < ^cutoff and s.expires_at > ^time),
-      set: [last_seen_at: time])
+
+    Repo.update_all(
+      from(s in UserSession,
+        where:
+          s.token_hash == ^token_hash(token) and s.last_seen_at < ^cutoff and s.expires_at > ^time
+      ),
+      set: [last_seen_at: time]
+    )
+
     :ok
   end
+
   def touch_session(_), do: :ok
 
   def list_sessions(%User{} = user, current_token) do
     if active?(user) do
       hash = if is_binary(current_token), do: token_hash(current_token)
-      Repo.all(from s in UserSession, where: s.user_id == ^user.id and s.expires_at > ^now(),
-        order_by: [desc: s.last_seen_at],
-        select: %{id: s.id, inserted_at: s.inserted_at, last_seen_at: s.last_seen_at,
-          expires_at: s.expires_at, user_agent: s.user_agent, ip_address: s.ip_address,
-          token_hash: s.token_hash})
-      |> Enum.map(fn row -> row |> Map.put(:current?, row.token_hash == hash) |> Map.delete(:token_hash) end)
+
+      Repo.all(
+        from s in UserSession,
+          where: s.user_id == ^user.id and s.expires_at > ^now(),
+          order_by: [desc: s.last_seen_at],
+          select: %{
+            id: s.id,
+            inserted_at: s.inserted_at,
+            last_seen_at: s.last_seen_at,
+            expires_at: s.expires_at,
+            user_agent: s.user_agent,
+            ip_address: s.ip_address,
+            token_hash: s.token_hash
+          }
+      )
+      |> Enum.map(fn row ->
+        row |> Map.put(:current?, row.token_hash == hash) |> Map.delete(:token_hash)
+      end)
     else
       []
     end
@@ -216,6 +254,7 @@ defmodule TeslaMate.Accounts do
   def revoke_session(%User{} = actor, id) do
     if active?(actor) do
       query = from s in UserSession, where: s.user_id == ^actor.id and s.id == ^parse_id(id)
+
       case remove_sessions(query) do
         0 -> {:error, :not_found}
         _ -> :ok
@@ -230,7 +269,11 @@ defmodule TeslaMate.Accounts do
       {:error, :forbidden}
     else
       hash = token_hash(current_token)
-      remove_sessions(from s in UserSession, where: s.user_id == ^actor.id and s.token_hash != ^hash)
+
+      remove_sessions(
+        from s in UserSession, where: s.user_id == ^actor.id and s.token_hash != ^hash
+      )
+
       :ok
     end
   end
@@ -239,6 +282,7 @@ defmodule TeslaMate.Accounts do
     remove_sessions(from s in UserSession, where: s.token_hash == ^token_hash(token))
     :ok
   end
+
   def delete_session(_), do: :ok
 
   def delete_user_sessions(%User{id: id}) do
@@ -251,7 +295,11 @@ defmodule TeslaMate.Accounts do
 
   defp remove_sessions(query) do
     {count, hashes} = Repo.delete_all(select(query, [s], s.token_hash))
-    if Process.whereis(TeslaMate.PubSub), do: Enum.each(hashes, &TeslaMateWeb.Endpoint.broadcast(session_topic(&1), "disconnect", %{}))
+
+    if Process.whereis(TeslaMate.PubSub),
+      do:
+        Enum.each(hashes, &TeslaMateWeb.Endpoint.broadcast(session_topic(&1), "disconnect", %{}))
+
     count
   end
 
@@ -271,16 +319,24 @@ defmodule TeslaMate.Accounts do
   def update_password(%User{} = user, current_password, attrs) when is_binary(current_password) do
     Repo.transaction(fn ->
       current = Repo.one!(from u in User, where: u.id == ^user.id, lock: "FOR UPDATE")
-      unless current.status == :active and current.auth_version == user.auth_version and Password.verify(current_password, current.password_hash),
-        do: Repo.rollback(:invalid_password)
-      changeset = current |> User.password_changeset(attrs)
+
+      unless current.status == :active and current.auth_version == user.auth_version and
+               Password.verify(current_password, current.password_hash),
+             do: Repo.rollback(:invalid_password)
+
+      changeset =
+        current
+        |> User.password_changeset(attrs)
         |> Ecto.Changeset.put_change(:auth_version, current.auth_version + 1)
+
       case Repo.update(changeset) do
         {:ok, updated_user} ->
           delete_user_sessions(updated_user)
           audit(:password_changed, updated_user, target_user: updated_user)
           updated_user
-        {:error, changeset} -> Repo.rollback(changeset)
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
       end
     end)
   end
@@ -288,8 +344,13 @@ defmodule TeslaMate.Accounts do
   def bootstrap_admin(attrs) when is_map(attrs) do
     normalized_email = attrs |> Map.get(:email, Map.get(attrs, "email", "")) |> normalize_email()
     existing = get_user_by_email(normalized_email)
-    changeset = User.bootstrap_admin_changeset(existing || %User{}, attrs)
-      |> Ecto.Changeset.put_change(:auth_version, if(existing, do: existing.auth_version + 1, else: 1))
+
+    changeset =
+      User.bootstrap_admin_changeset(existing || %User{}, attrs)
+      |> Ecto.Changeset.put_change(
+        :auth_version,
+        if(existing, do: existing.auth_version + 1, else: 1)
+      )
 
     Repo.transaction(fn ->
       case Repo.insert_or_update(changeset) do
@@ -312,7 +373,10 @@ defmodule TeslaMate.Accounts do
       unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
 
       locked_target = Repo.one!(from u in User, where: u.id == ^target.id, lock: "FOR UPDATE")
-      changeset = locked_target |> User.admin_changeset(attrs)
+
+      changeset =
+        locked_target
+        |> User.admin_changeset(attrs)
         |> Ecto.Changeset.put_change(:auth_version, locked_target.auth_version + 1)
 
       if removes_last_active_admin?(locked_target, changeset) do
@@ -388,7 +452,12 @@ defmodule TeslaMate.Accounts do
   def grant_car(%User{} = actor, %User{} = target, car_id) do
     Repo.transaction(fn ->
       unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
-      target = Repo.one(from u in User, where: u.id == ^target.id and u.status == :active, lock: "FOR UPDATE")
+
+      target =
+        Repo.one(
+          from u in User, where: u.id == ^target.id and u.status == :active, lock: "FOR UPDATE"
+        )
+
       if is_nil(target), do: Repo.rollback(:forbidden)
       car = Repo.one(from c in Car, where: c.id == ^parse_id(car_id), lock: "FOR UPDATE")
       if is_nil(car), do: Repo.rollback(:car_not_found)
@@ -403,11 +472,21 @@ defmodule TeslaMate.Accounts do
     # Call within a transaction while holding the car row lock.
     case Repo.get_by(UserCar, car_id: car.id) do
       nil ->
-        binding = Repo.insert!(%UserCar{user_id: user.id, car_id: car.id, granted_by_user_id: granted_by_id})
+        binding =
+          Repo.insert!(%UserCar{
+            user_id: user.id,
+            car_id: car.id,
+            granted_by_user_id: granted_by_id
+          })
+
         :ok = TeslaMate.Locations.refresh_car_geofences(car.id)
         binding
-      %UserCar{user_id: id} = binding when id == user.id -> binding
-      _ -> Repo.rollback(:vehicle_already_bound)
+
+      %UserCar{user_id: id} = binding when id == user.id ->
+        binding
+
+      _ ->
+        Repo.rollback(:vehicle_already_bound)
     end
   end
 
@@ -513,6 +592,7 @@ defmodule TeslaMate.Accounts do
       if is_nil(claim), do: Repo.rollback(:invalid_or_expired_claim)
 
       car = Repo.one!(from c in Car, where: c.id == ^claim.car_id, lock: "FOR UPDATE")
+
       binding =
         case Repo.get_by(UserCar, car_id: car.id) do
           nil -> bind_exclusive!(user, car, claim.created_by_user_id)

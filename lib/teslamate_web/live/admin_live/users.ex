@@ -11,9 +11,14 @@ defmodule TeslaMateWeb.AdminLive.Users do
   @impl true
   def handle_event("registration_policy", %{"registration" => params}, socket) do
     allowed = params["enabled"] == "true"
+
     case Accounts.set_registration(socket.assigns.current_user, allowed) do
-      {:ok, _} -> {:noreply, socket |> assign(:allow_registration, allowed) |> put_flash(:success, "注册设置已保存")}
-      _ -> {:noreply, socket |> put_flash(:error, "没有修改注册设置的权限") |> redirect(to: "/sign_in")}
+      {:ok, _} ->
+        {:noreply,
+         socket |> assign(:allow_registration, allowed) |> put_flash(:success, "注册设置已保存")}
+
+      _ ->
+        {:noreply, socket |> put_flash(:error, "没有修改注册设置的权限") |> redirect(to: "/sign_in")}
     end
   end
 
