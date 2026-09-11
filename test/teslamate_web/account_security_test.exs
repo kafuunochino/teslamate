@@ -160,10 +160,11 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     assert get_resp_header(response, "cache-control") == ["no-store"]
   end
 
-  test "enrollment QR is hidden before password verification, in other sessions and after expiry", %{
-    conn: conn,
-    current_user: user
-  } do
+  test "enrollment QR is hidden before password verification, in other sessions and after expiry",
+       %{
+         conn: conn,
+         current_user: user
+       } do
     refute get(conn, "/account").resp_body =~ ~s(id="totp-qr-code")
     post(conn, "/account/2fa/setup", %{security: %{password: "incorrect-password"}})
     refute get(conn, "/account").resp_body =~ ~s(id="totp-qr-code")

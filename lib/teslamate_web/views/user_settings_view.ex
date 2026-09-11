@@ -5,6 +5,7 @@ defmodule TeslaMateWeb.UserSettingsView do
   def authenticator_qr_data_uri(email, key) do
     issuer = "TeslaMate CN"
     label = URI.encode(issuer <> ":" <> email, &URI.char_unreserved?/1)
+
     query =
       URI.encode_query(
         [secret: key, issuer: issuer, algorithm: "SHA1", digits: 6, period: 30],
