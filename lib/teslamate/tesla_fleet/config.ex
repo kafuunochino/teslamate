@@ -2,8 +2,10 @@ defmodule TeslaMate.TeslaFleet.Config do
   @moduledoc false
   @regions %{
     "cn" => {"https://auth.tesla.cn", "https://fleet-api.prd.cn.vn.cloud.tesla.cn"},
-    "na" => {"https://fleet-auth.prd.vn.cloud.tesla.com", "https://fleet-api.prd.na.vn.cloud.tesla.com"},
-    "eu" => {"https://fleet-auth.prd.vn.cloud.tesla.com", "https://fleet-api.prd.eu.vn.cloud.tesla.com"}
+    "na" =>
+      {"https://fleet-auth.prd.vn.cloud.tesla.com", "https://fleet-api.prd.na.vn.cloud.tesla.com"},
+    "eu" =>
+      {"https://fleet-auth.prd.vn.cloud.tesla.com", "https://fleet-api.prd.eu.vn.cloud.tesla.com"}
   }
   @scopes ~w(openid offline_access vehicle_device_data vehicle_location)
 
@@ -18,6 +20,7 @@ defmodule TeslaMate.TeslaFleet.Config do
   def scopes, do: @scopes
 
   defp load_file(""), do: {:error, :not_configured}
+
   defp load_file(path) do
     with {:ok, contents} <- File.read(path),
          {:ok, config} <- Jason.decode(contents) do
@@ -34,11 +37,13 @@ defmodule TeslaMate.TeslaFleet.Config do
          %URI{scheme: "https", host: host, userinfo: nil, query: nil, fragment: nil, path: path} <-
            URI.parse(config["origin"] || ""),
          true <- is_binary(host) and path in [nil, "", "/"] do
-      {:ok, Map.merge(config, %{
-        "auth" => auth, "api" => api,
-        "origin" => String.trim_trailing(config["origin"], "/"),
-        "redirect_uri" => String.trim_trailing(config["origin"], "/") <> "/auth/tesla/callback"
-      })}
+      {:ok,
+       Map.merge(config, %{
+         "auth" => auth,
+         "api" => api,
+         "origin" => String.trim_trailing(config["origin"], "/"),
+         "redirect_uri" => String.trim_trailing(config["origin"], "/") <> "/auth/tesla/callback"
+       })}
     else
       _ -> {:error, :not_configured}
     end

@@ -8,12 +8,20 @@ defmodule TeslaMate.TeslaFleet.ReadingsTest do
     start_supervised!(TeslaMate.Vault)
     id = System.unique_integer([:positive])
     {:ok, car} = Log.create_car(%{eid: id, vid: id, vin: @vin, model: "3"})
-    Repo.insert!(%Connection{id: 1, access: "test-access", refresh: "test-refresh",
-      expires_at: DateTime.add(DateTime.utc_now(), 3600), vehicles: %{@vin => %{}}})
+
+    Repo.insert!(%Connection{
+      id: 1,
+      access: "test-access",
+      refresh: "test-refresh",
+      expires_at: DateTime.add(DateTime.utc_now(), 3600),
+      vehicles: %{@vin => %{}}
+    })
+
     %{car: car, now: DateTime.utc_now()}
   end
 
-  defp payload(value, time), do: Jason.encode!(%{"value" => value, "created_at" => DateTime.to_iso8601(time)})
+  defp payload(value, time),
+    do: Jason.encode!(%{"value" => value, "created_at" => DateTime.to_iso8601(time)})
 
   test "zero, negative currents and false survive decoding", %{car: car, now: now} do
     assert :ok = Readings.ingest(@vin, "PackCurrent", payload(0, now))
@@ -26,7 +34,10 @@ defmodule TeslaMate.TeslaFleet.ReadingsTest do
     assert Readings.merge_readings(%{}, car.id).pack_current.value == -25.5
   end
 
-  test "stored samples survive process-free reads and delayed MQTT replay cannot replace them", %{car: car, now: now} do
+  test "stored samples survive process-free reads and delayed MQTT replay cannot replace them", %{
+    car: car,
+    now: now
+  } do
     old = DateTime.add(now, -3600)
     assert :ok = Readings.ingest(@vin, "PackVoltage", payload(350, old))
     assert :ok = Readings.ingest(@vin, "PackVoltage", payload(360, now))
@@ -45,7 +56,10 @@ defmodule TeslaMate.TeslaFleet.ReadingsTest do
     refute reading.fresh?
   end
 
-  test "unknown VIN, unknown field, missing timestamp and future values are rejected", %{car: car, now: now} do
+  test "unknown VIN, unknown field, missing timestamp and future values are rejected", %{
+    car: car,
+    now: now
+  } do
     assert :ignored = Readings.ingest("LRW3E7EK9MC999999", "PackVoltage", payload(350, now))
     assert :ignored = Readings.ingest(@vin, "ArbitraryAtom", payload(350, now))
     assert :ignored = Readings.ingest(@vin, "PackVoltage", "350")

@@ -1,49 +1,81 @@
 <div class="platform-page">
   <div class="page-heading">
-    <div><p class="eyebrow">系统管理</p><h1>Tesla 官方接入</h1>
+    <div>
+      <p class="eyebrow">系统管理</p>
+      <h1>Tesla 官方接入</h1>
       <p>通过 Tesla 官网授权，并接收车辆主动上报的电池数据。</p>
     </div>
     <a class="button is-light" href="/admin/tesla-account">返回 Tesla 连接</a>
   </div>
   <div class="battery-panels">
     <section class="data-card battery-panel">
-      <div class="data-card__header"><div><h2><i class="mdi mdi-account-key-outline"></i> 官方账号授权</h2>
-        <p>只申请车辆信息和位置读取权限。车辆密码在 Tesla 官方页面输入。</p></div></div>
+      <div class="data-card__header">
+        <div>
+          <h2><i class="mdi mdi-account-key-outline"></i> 官方账号授权</h2>
+          <p>只申请车辆信息和位置读取权限。车辆密码在 Tesla 官方页面输入。</p>
+        </div>
+      </div>
       <div class="p-4">
         <p><strong>开发者应用：</strong><%= if @configured, do: "已配置", else: "尚未配置" %></p>
         <p class="mb-4"><strong>车辆授权：</strong><%= if @connected, do: "已连接", else: "等待官网授权" %></p>
         <a :if={@configured} class="button is-link" href="/auth/tesla/start">
-          <i class="mdi mdi-login mr-2"></i><%= if @connected, do: "重新通过 Tesla 官网授权", else: "前往 Tesla 官网授权" %>
+          <i class="mdi mdi-login mr-2"></i><%= if @connected,
+            do: "重新通过 Tesla 官网授权",
+            else: "前往 Tesla 官网授权" %>
         </a>
         <p class="mt-3">原有车辆采集与历史数据继续保留。</p>
       </div>
     </section>
     <section class="data-card battery-panel">
-      <div class="data-card__header"><div><h2><i class="mdi mdi-key-wireless"></i> 车辆数据钥匙</h2>
-        <p>请使用已配对车辆的手机打开，按 Tesla App 提示完成授权。</p></div></div>
+      <div class="data-card__header">
+        <div>
+          <h2><i class="mdi mdi-key-wireless"></i> 车辆数据钥匙</h2>
+          <p>请使用已配对车辆的手机打开，按 Tesla App 提示完成授权。</p>
+        </div>
+      </div>
       <div class="p-4">
         <p class="mb-4">先在 Tesla App 选择自己的车辆，再打开下方链接。部分旧款 Model S / X 需要在车内开启第三方数据流。</p>
-        <a :if={@domain} class="button is-link is-light"
-          href={"https://www.tesla.cn/_ak/" <> @domain} target="_blank" rel="noopener noreferrer">
+        <a
+          :if={@domain}
+          class="button is-link is-light"
+          href={"https://www.tesla.cn/_ak/" <> @domain}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <i class="mdi mdi-cellphone-key mr-2"></i>在 Tesla App 配对数据钥匙
         </a>
         <p class="mt-3"><%= @domain %></p>
       </div>
     </section>
     <section class="data-card battery-panel">
-      <div class="data-card__header"><div><h2><i class="mdi mdi-access-point"></i> 电池遥测</h2>
-        <p>车辆主动上报电池包电压、电流、温度范围、电压范围和能量数据。</p></div></div>
+      <div class="data-card__header">
+        <div>
+          <h2><i class="mdi mdi-access-point"></i> 电池遥测</h2>
+          <p>车辆主动上报电池包电压、电流、温度范围、电压范围和能量数据。</p>
+        </div>
+      </div>
       <div class="p-4">
         <p :if={@cars == []}>完成官网授权后，这里显示已在本系统录入的车辆。</p>
         <div :for={car <- @cars} class="mb-5">
           <h3><strong><%= car.name || car.model || "我的车辆" %></strong></h3>
-          <p class="mb-3">最近接收：<%= date_time(TeslaMate.TeslaFleet.Readings.last_received(car.id)) %></p>
-          <.form for={%{}} action="/admin/tesla-account/fleet/configure" method="post" class="mb-3">
+          <p class="mb-3">
+            最近接收：<%= date_time(TeslaMate.TeslaFleet.Readings.last_received(car.id)) %>
+          </p>
+          <.form
+            for={%{}}
+            action="/admin/tesla-account/fleet/configure"
+            method="post"
+            class="mb-3"
+          >
             <input type="hidden" name="vin" value={car.vin} />
             <label class="label" for={"fleet-interval-#{car.id}"}>遥测采集间隔</label>
             <div class="select mb-3">
               <select id={"fleet-interval-#{car.id}"} name="interval">
-                <option :for={seconds <- [5, 10, 30, 60, 300]} value={seconds} selected={seconds == @interval}>
+                <option
+                  :for={seconds <- [5, 10, 30, 60, 300]}
+                  value={seconds}
+                  selected={seconds == @interval}
+                >
                   <%= seconds %> 秒
                 </option>
               </select>
@@ -61,7 +93,9 @@
     </section>
   </div>
   <section :if={@result} class="data-card mt-4">
-    <div class="data-card__header"><h2>检查结果</h2></div>
+    <div class="data-card__header">
+      <h2>检查结果</h2>
+    </div>
     <div class="p-4">
       <p><%= result_message(@result) %></p>
       <p class="mt-2">完成配对后可重新启用遥测，然后检查同步状态。车辆休眠时需等待下次上线。</p>

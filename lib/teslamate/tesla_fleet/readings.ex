@@ -15,7 +15,7 @@ defmodule TeslaMate.TeslaFleet.Readings do
     "NumModuleTempMax" => {:num_module_temp_max, :integer, 0, 2000},
     "NumModuleTempMin" => {:num_module_temp_min, :integer, 0, 2000},
     "EnergyRemaining" => {:energy_remaining, :number, 0, 2000},
-    "LifetimeEnergyUsed" => {:lifetime_energy_used, :number, 0, 10000000},
+    "LifetimeEnergyUsed" => {:lifetime_energy_used, :number, 0, 10_000_000},
     "BMSState" => {:bms_state, :enum, nil, nil},
     "Hvil" => {:hvil, :enum, nil, nil},
     "BatteryLevel" => {:battery_level, :number, 0, 100},
@@ -31,11 +31,12 @@ defmodule TeslaMate.TeslaFleet.Readings do
     "DCChargingEnergyIn" => {:dc_charging_energy_in, :number, 0, 2000},
     "NominalFullPackEnergyKwh" => {:nominal_full_pack_energy, :number, 0, 2000},
     "BrickSocMinPercent" => {:brick_soc_min, :number, 0, 100},
-    "LifetimeEnergyChargedKwh" => {:lifetime_charged_energy, :number, 0, 10000000}
+    "LifetimeEnergyChargedKwh" => {:lifetime_charged_energy, :number, 0, 10_000_000}
   }
   @new_fields ~w(NominalFullPackEnergyKwh BrickSocMinPercent LifetimeEnergyChargedKwh)
   @enums %{
-    "BMSState" => ~w(BMSStateStandby BMSStateDrive BMSStateSupport BMSStateCharge BMSStateFEIM BMSStateClearFault BMSStateFault BMSStateWeld BMSStateTest),
+    "BMSState" =>
+      ~w(BMSStateStandby BMSStateDrive BMSStateSupport BMSStateCharge BMSStateFEIM BMSStateClearFault BMSStateFault BMSStateWeld BMSStateTest),
     "Hvil" => ~w(HvilStatusFault HvilStatusOK)
   }
 
@@ -43,7 +44,13 @@ defmodule TeslaMate.TeslaFleet.Readings do
     @fields
     |> Map.keys()
     |> Enum.reject(&(!include_new and &1 in @new_fields))
-    |> Map.new(&{&1, %{"interval_seconds" => if(&1 in ~w(PackVoltage PackCurrent), do: interval, else: max(interval, 10))}})
+    |> Map.new(
+      &{&1,
+       %{
+         "interval_seconds" =>
+           if(&1 in ~w(PackVoltage PackCurrent), do: interval, else: max(interval, 10))
+       }}
+    )
   end
 
   def decode(field, %{"value" => raw, "created_at" => time}, now \\ DateTime.utc_now()) do
@@ -63,38 +70,63 @@ defmodule TeslaMate.TeslaFleet.Readings do
     with {:ok, %{"value" => _, "created_at" => _} = data} <- Jason.decode(payload),
          {:ok, _key, value, date} <- decode(field, data),
          :ok <- TeslaFleet.known_vehicle(vin),
-         car_id when is_integer(car_id) <- Repo.one(from c in TeslaMate.Log.Car, where: c.vin == ^vin, select: c.id) do
+         car_id when is_integer(car_id) <-
+           Repo.one(from c in TeslaMate.Log.Car, where: c.vin == ^vin, select: c.id) do
       data = %{"value" => value, "invalid" => is_nil(value)}
-      Ecto.Adapters.SQL.query!(Repo, """
-      INSERT INTO public.fleet_readings (car_id, field, data, measured_at, received_at)
-      VALUES ($1, $2, $3::jsonb, $4, $5)
-      ON CONFLICT (car_id, field) DO UPDATE
-      SET data = EXCLUDED.data, measured_at = EXCLUDED.measured_at, received_at = EXCLUDED.received_at
-      WHERE fleet_readings.measured_at < EXCLUDED.measured_at
-      """, [car_id, field, data, date, DateTime.utc_now()])
+
+      Ecto.Adapters.SQL.query!(
+        Repo,
+        """
+        INSERT INTO public.fleet_readings (car_id, field, data, measured_at, received_at)
+        VALUES ($1, $2, $3::jsonb, $4, $5)
+        ON CONFLICT (car_id, field) DO UPDATE
+        SET data = EXCLUDED.data, measured_at = EXCLUDED.measured_at, received_at = EXCLUDED.received_at
+        WHERE fleet_readings.measured_at < EXCLUDED.measured_at
+        """,
+        [car_id, field, data, date, DateTime.utc_now()]
+      )
+
       :ok
     else
       _ -> :ignored
     end
   end
+
   def ingest(_, _, _), do: :ignored
 
   def merge_readings(existing, car_id, now \\ DateTime.utc_now()) do
-    rows = Repo.all(from r in "fleet_readings", where: r.car_id == ^car_id,
-      select: %{field: r.field, data: r.data, measured_at: type(r.measured_at, :utc_datetime_usec)})
+    rows =
+      Repo.all(
+        from r in "fleet_readings",
+          where: r.car_id == ^car_id,
+          select: %{
+            field: r.field,
+            data: r.data,
+            measured_at: type(r.measured_at, :utc_datetime_usec)
+          }
+      )
+
     Enum.reduce(rows, existing, fn row, acc ->
       case @fields[row.field] do
         {key, _, _, _} ->
           previous = acc[key]
-          if is_nil(previous) or is_nil(previous.measured_at) or DateTime.compare(row.measured_at, previous.measured_at) != :lt do
-            reading = %{value: row.data["value"], measured_at: row.measured_at,
+
+          if is_nil(previous) or is_nil(previous.measured_at) or
+               DateTime.compare(row.measured_at, previous.measured_at) != :lt do
+            reading = %{
+              value: row.data["value"],
+              measured_at: row.measured_at,
               fresh?: not row.data["invalid"] and DateTime.diff(now, row.measured_at) in -5..60,
-              source: :telemetry}
+              source: :telemetry
+            }
+
             Map.put(acc, key, reading)
           else
             acc
           end
-        _ -> acc
+
+        _ ->
+          acc
       end
     end)
     |> difference(:unavailable_level, :battery_level, :usable_battery_level, 1)
@@ -103,8 +135,11 @@ defmodule TeslaMate.TeslaFleet.Readings do
   end
 
   def last_received(car_id) do
-    Repo.one(from r in "fleet_readings", where: r.car_id == ^car_id,
-      select: type(max(r.received_at), :utc_datetime_usec))
+    Repo.one(
+      from r in "fleet_readings",
+        where: r.car_id == ^car_id,
+        select: type(max(r.received_at), :utc_datetime_usec)
+    )
   end
 
   defp difference(data, key, a, b, factor) do
@@ -121,14 +156,19 @@ defmodule TeslaMate.TeslaFleet.Readings do
   defp normalize("true", :boolean, _, _, _), do: true
   defp normalize("false", :boolean, _, _, _), do: false
   defp normalize(value, :enum, _, _, field), do: if(value in @enums[field], do: value)
-  defp normalize(value, type, min, max, field) when is_binary(value) and type in [:number, :integer] do
+
+  defp normalize(value, type, min, max, field)
+       when is_binary(value) and type in [:number, :integer] do
     case Float.parse(value) do
       {number, ""} -> normalize(number, type, min, max, field)
       _ -> nil
     end
   end
-  defp normalize(value, type, min, max, _) when is_number(value) and type in [:number, :integer] do
+
+  defp normalize(value, type, min, max, _)
+       when is_number(value) and type in [:number, :integer] do
     if value >= min and value <= max and (type != :integer or trunc(value) == value), do: value
   end
+
   defp normalize(_, _, _, _, _), do: nil
 end

@@ -43,7 +43,9 @@ defmodule TeslaMateWeb.BatteryComponents do
       <dt><%= @label %></dt>
       <dd><%= display(@reading && @reading.value, @format) %></dd>
       <small :if={@reading} class={if @reading.fresh?, do: "is-current", else: "is-recorded"}>
-        <%= if @reading.source == :telemetry, do: "遥测 · " %><%= if @reading.fresh?, do: "采集于", else: "最近记录" %>
+        <%= if @reading.source == :telemetry, do: "遥测 · " %><%= if @reading.fresh?,
+          do: "采集于",
+          else: "最近记录" %>
         <time><%= date_time(@reading.measured_at) %></time>
       </small>
       <small :if={@reading && is_nil(@reading.value)}>车辆上报无效读数</small>

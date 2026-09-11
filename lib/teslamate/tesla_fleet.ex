@@ -12,15 +12,35 @@ defmodule TeslaMate.TeslaFleet do
          {:ok, c} <- Config.get() do
       state = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
       now = DateTime.utc_now()
-      Repo.delete_all(from s in "fleet_oauth_states", prefix: "private", where: s.expires_at < ^now)
-      Repo.insert_all("fleet_oauth_states", [%{hash: hash(state), session_hash: hash(session_token),
-        expires_at: DateTime.add(now, 600)}], prefix: "private")
-      url = c["auth"] <> "/oauth2/v3/authorize?" <> URI.encode_query(%{
-        "client_id" => c["client_id"], "redirect_uri" => c["redirect_uri"],
-        "response_type" => "code", "scope" => Enum.join(Config.scopes(), " "),
-        "state" => state, "locale" => "zh-CN", "prompt_missing_scopes" => "true",
-        "require_requested_scopes" => "true"
-      })
+
+      Repo.delete_all(
+        from s in "fleet_oauth_states", prefix: "private", where: s.expires_at < ^now
+      )
+
+      Repo.insert_all(
+        "fleet_oauth_states",
+        [
+          %{
+            hash: hash(state),
+            session_hash: hash(session_token),
+            expires_at: DateTime.add(now, 600)
+          }
+        ], prefix: "private")
+
+      url =
+        c["auth"] <>
+          "/oauth2/v3/authorize?" <>
+          URI.encode_query(%{
+            "client_id" => c["client_id"],
+            "redirect_uri" => c["redirect_uri"],
+            "response_type" => "code",
+            "scope" => Enum.join(Config.scopes(), " "),
+            "state" => state,
+            "locale" => "zh-CN",
+            "prompt_missing_scopes" => "true",
+            "require_requested_scopes" => "true"
+          })
+
       {:ok, url, state}
     else
       _ -> {:error, :not_configured}
@@ -33,13 +53,22 @@ defmodule TeslaMate.TeslaFleet do
          user when not is_nil(user) <- Accounts.get_user_by_session_token(session_token),
          true <- Accounts.authorized_admin?(user) do
       now = DateTime.utc_now()
-      {count, _} = Repo.delete_all(from s in "fleet_oauth_states", prefix: "private",
-        where: s.hash == ^hash(state) and s.session_hash == ^hash(session_token) and s.expires_at > ^now)
+
+      {count, _} =
+        Repo.delete_all(
+          from s in "fleet_oauth_states",
+            prefix: "private",
+            where:
+              s.hash == ^hash(state) and s.session_hash == ^hash(session_token) and
+                s.expires_at > ^now
+        )
+
       if count == 1, do: {:ok, user}, else: {:error, :invalid_state}
     else
       _ -> {:error, :invalid_state}
     end
   end
+
   def consume_state(_, _, _), do: {:error, :invalid_state}
 
   def connect(code, user) when is_binary(code) and byte_size(code) <= 4096 do
@@ -48,14 +77,19 @@ defmodule TeslaMate.TeslaFleet do
          {:ok, attrs} <- token_attributes(tokens),
          {:ok, %{"response" => vehicles}} when is_list(vehicles) <-
            Client.request(:get, "/api/1/vehicles", attrs.access) do
-      vehicles = Map.new(Enum.filter(vehicles, &valid_vehicle?/1), fn v ->
-        {v["vin"], Map.take(v, ~w(id vehicle_id display_name vin state))}
-      end)
+      vehicles =
+        Map.new(Enum.filter(vehicles, &valid_vehicle?/1), fn v ->
+          {v["vin"], Map.take(v, ~w(id vehicle_id display_name vin state))}
+        end)
+
       attrs = Map.merge(attrs, %{id: 1, vehicles: vehicles, authorized_by_id: user.id})
+
       %Connection{id: 1}
       |> Ecto.Changeset.change(attrs)
-      |> Repo.insert(on_conflict: {:replace, Map.keys(Map.delete(attrs, :id)) ++ [:updated_at]},
-        conflict_target: [:id])
+      |> Repo.insert(
+        on_conflict: {:replace, Map.keys(Map.delete(attrs, :id)) ++ [:updated_at]},
+        conflict_target: [:id]
+      )
     else
       false -> {:error, :permission_denied}
       {:error, _} = error -> error
@@ -64,23 +98,27 @@ defmodule TeslaMate.TeslaFleet do
   end
 
   def with_token(fun) when is_function(fun, 1) do
-    result = Repo.transaction(fn ->
-      case Repo.one(from c in Connection, where: c.id == 1, lock: "FOR UPDATE") do
-        nil -> Repo.rollback(:not_connected)
-        c ->
-          if DateTime.diff(c.expires_at, DateTime.utc_now()) > 300 do
-            c.access
-          else
-            with {:ok, tokens} <- Client.refresh(c.refresh),
-                 {:ok, attrs} <- token_attributes(tokens, c.scopes),
-                 {:ok, c} <- Repo.update(Ecto.Changeset.change(c, attrs)) do
+    result =
+      Repo.transaction(fn ->
+        case Repo.one(from c in Connection, where: c.id == 1, lock: "FOR UPDATE") do
+          nil ->
+            Repo.rollback(:not_connected)
+
+          c ->
+            if DateTime.diff(c.expires_at, DateTime.utc_now()) > 300 do
               c.access
             else
-              {:error, reason} -> Repo.rollback(reason)
+              with {:ok, tokens} <- Client.refresh(c.refresh),
+                   {:ok, attrs} <- token_attributes(tokens, c.scopes),
+                   {:ok, c} <- Repo.update(Ecto.Changeset.change(c, attrs)) do
+                c.access
+              else
+                {:error, reason} -> Repo.rollback(reason)
+              end
             end
-          end
-      end
-    end)
+        end
+      end)
+
     case result do
       {:ok, token} when is_binary(token) -> fun.(token)
       {:error, _} = error -> error
@@ -90,20 +128,32 @@ defmodule TeslaMate.TeslaFleet do
 
   def refresh_if_needed do
     case connection() do
-      nil -> :ok
+      nil ->
+        :ok
+
       %Connection{expires_at: expiry} ->
         if DateTime.diff(expiry, DateTime.utc_now()) < 600,
-          do: with_token(fn _ -> :ok end), else: :ok
+          do: with_token(fn _ -> :ok end),
+          else: :ok
     end
   end
 
   def check_vehicle(vin) do
     with :ok <- known_vehicle(vin) do
       with_token(fn access ->
-        with {:ok, status} <- Client.request(:post, "/api/1/vehicles/fleet_status", access, %{"vins" => [vin]}),
-             {:ok, config} <- Client.request(:get, "/api/1/vehicles/" <> vin <> "/fleet_telemetry_config", access) do
-          {:ok, %{"status" => status["response"] || status,
-            "configuration" => config["response"] || config}}
+        with {:ok, status} <-
+               Client.request(:post, "/api/1/vehicles/fleet_status", access, %{"vins" => [vin]}),
+             {:ok, config} <-
+               Client.request(
+                 :get,
+                 "/api/1/vehicles/" <> vin <> "/fleet_telemetry_config",
+                 access
+               ) do
+          {:ok,
+           %{
+             "status" => status["response"] || status,
+             "configuration" => config["response"] || config
+           }}
         end
       end)
     end
@@ -116,8 +166,13 @@ defmodule TeslaMate.TeslaFleet do
          port when is_integer(port) and port in 1..65535 <- c["telemetry_port"],
          ca when is_binary(ca) <- c["telemetry_ca"],
          true <- String.contains?(ca, "BEGIN CERTIFICATE") do
-      config = %{"hostname" => host, "port" => port, "ca" => ca,
-        "fields" => Readings.field_config(interval)}
+      config = %{
+        "hostname" => host,
+        "port" => port,
+        "ca" => ca,
+        "fields" => Readings.field_config(interval)
+      }
+
       with_token(fn access -> Client.configure(vin, access, config) end)
     else
       {:error, _} = error -> error
@@ -129,14 +184,19 @@ defmodule TeslaMate.TeslaFleet do
     if Regex.match?(~r/^[A-HJ-NPR-Z0-9]{17}$/, vin) do
       case connection() do
         %Connection{vehicles: vehicles} ->
-          if Map.has_key?(vehicles, vin) and Repo.exists?(from c in TeslaMate.Log.Car, where: c.vin == ^vin),
-            do: :ok, else: {:error, :unknown_vehicle}
-        _ -> {:error, :not_connected}
+          if Map.has_key?(vehicles, vin) and
+               Repo.exists?(from c in TeslaMate.Log.Car, where: c.vin == ^vin),
+             do: :ok,
+             else: {:error, :unknown_vehicle}
+
+        _ ->
+          {:error, :not_connected}
       end
     else
       {:error, :unknown_vehicle}
     end
   end
+
   def known_vehicle(_), do: {:error, :unknown_vehicle}
 
   def error_message(:not_configured), do: "尚未配置 Tesla 开发者应用"
@@ -155,9 +215,18 @@ defmodule TeslaMate.TeslaFleet do
   defp token_attributes(tokens, previous_scopes \\ []) do
     with access when is_binary(access) and byte_size(access) > 0 <- tokens["access_token"],
          refresh when is_binary(refresh) and byte_size(refresh) > 0 <- tokens["refresh_token"],
-         expires when is_integer(expires) and expires > 0 and expires <= 31_536_000 <- tokens["expires_in"] do
-      scopes = if is_binary(tokens["scope"]), do: String.split(tokens["scope"]), else: previous_scopes
-      {:ok, %{access: access, refresh: refresh, expires_at: DateTime.add(DateTime.utc_now(), expires), scopes: scopes}}
+         expires when is_integer(expires) and expires > 0 and expires <= 31_536_000 <-
+           tokens["expires_in"] do
+      scopes =
+        if is_binary(tokens["scope"]), do: String.split(tokens["scope"]), else: previous_scopes
+
+      {:ok,
+       %{
+         access: access,
+         refresh: refresh,
+         expires_at: DateTime.add(DateTime.utc_now(), expires),
+         scopes: scopes
+       }}
     else
       _ -> {:error, :invalid_response}
     end
@@ -165,6 +234,7 @@ defmodule TeslaMate.TeslaFleet do
 
   defp valid_vehicle?(%{"vin" => vin}) when is_binary(vin),
     do: Regex.match?(~r/^[A-HJ-NPR-Z0-9]{17}$/, vin)
+
   defp valid_vehicle?(_), do: false
   defp hash(value), do: :crypto.hash(:sha256, value)
 end

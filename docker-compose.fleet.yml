@@ -23,13 +23,25 @@ services:
     security_opt: [no-new-privileges:true]
     logging:
       driver: json-file
-      options: {max-size: "10m", max-file: "3"}
+      options: { max-size: "10m", max-file: "3" }
 
   fleet-proxy:
     image: ${TESLA_COMMAND_IMAGE:-tesla/vehicle-command:latest}
     restart: always
     user: "1000:1000"
-    command: ["-tls-key", "/config/proxy-key.pem", "-cert", "/config/proxy-cert.pem", "-key-file", "/config/fleet-key.pem", "-host", "0.0.0.0", "-port", "4443"]
+    command:
+      [
+        "-tls-key",
+        "/config/proxy-key.pem",
+        "-cert",
+        "/config/proxy-cert.pem",
+        "-key-file",
+        "/config/fleet-key.pem",
+        "-host",
+        "0.0.0.0",
+        "-port",
+        "4443",
+      ]
     volumes:
       - ${TESLA_FLEET_DIR:-/opt/teslamate-fleet}/proxy:/config:ro
     networks: [fleet-private]
@@ -39,7 +51,7 @@ services:
     tmpfs: [/tmp]
     logging:
       driver: json-file
-      options: {max-size: "10m", max-file: "3"}
+      options: { max-size: "10m", max-file: "3" }
 
   fleet-receiver:
     build: ./deployment/fleet-telemetry
@@ -61,7 +73,7 @@ services:
       SUPPRESS_TLS_HANDSHAKE_ERROR_LOGGING: "true"
     logging:
       driver: json-file
-      options: {max-size: "10m", max-file: "3"}
+      options: { max-size: "10m", max-file: "3" }
 
 volumes:
   fleet-mqtt-data:

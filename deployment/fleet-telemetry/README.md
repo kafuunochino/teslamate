@@ -32,6 +32,7 @@ Telemetry supplements the battery, driving and charging dashboards.
    Check synced status and actual arrival of vehicle data.
 
 app-config/client.json keys:
+
 - client_id, client_secret, region (cn/na/eu), origin
 - domain (registered public-key domain)
 - public_key_file (container path to public PEM)
