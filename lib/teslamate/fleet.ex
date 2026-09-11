@@ -273,6 +273,27 @@ defmodule TeslaMate.Fleet do
       |> limit(1)
       |> Repo.one()
 
+    climate_position =
+      Position
+      |> where(
+        [p],
+        p.car_id == ^car_id and (not is_nil(p.inside_temp) or not is_nil(p.outside_temp))
+      )
+      |> order_by([p], desc: p.date, desc: p.id)
+      |> limit(1)
+      |> select(
+        [p],
+        map(p, [
+          :date,
+          :inside_temp,
+          :outside_temp,
+          :driver_temp_setting,
+          :passenger_temp_setting,
+          :is_climate_on
+        ])
+      )
+      |> Repo.one()
+
     process =
       ChargingProcess
       |> where([c], c.car_id == ^car_id)
@@ -290,7 +311,7 @@ defmodule TeslaMate.Fleet do
         |> Repo.one()
       end
 
-    TeslaMate.BatteryData.readings(live, [charge, battery_position, position])
+    TeslaMate.BatteryData.readings(live, [charge, battery_position, climate_position, position])
     |> TeslaMate.TeslaFleet.Readings.merge_readings(car_id)
   end
 

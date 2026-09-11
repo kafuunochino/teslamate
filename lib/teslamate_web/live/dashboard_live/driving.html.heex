@@ -255,37 +255,12 @@
       </section>
       <section class="data-card drive-support">
         <div class="data-card__header">
-          <h2>车内环境与辅助状态</h2>
+          <h2>车辆辅助状态</h2>
           <.link navigate={Routes.dashboard_path(@socket, :battery, car: @report.car.id)}>
             电池详情
           </.link>
         </div>
         <dl class="drive-support-grid">
-          <div>
-            <dt>车内温度</dt>
-            <dd><%= temperature(reading(@report, :inside_temp)) %></dd>
-          </div>
-          <div>
-            <dt>车外温度</dt>
-            <dd><%= temperature(reading(@report, :outside_temp)) %></dd>
-          </div>
-          <div>
-            <dt>内外温差</dt>
-            <dd><%= signed(temperature_delta(@report), " °C") %></dd>
-          </div>
-          <div>
-            <dt>空调状态</dt>
-            <dd>
-              <%= case reading(@report, :is_climate_on) do %>
-                <% true -> %>
-                  开启
-                <% false -> %>
-                  关闭
-                <% _ -> %>
-                  —
-              <% end %>
-            </dd>
-          </div>
           <div>
             <dt>车速</dt>
             <dd class="drive-current-value">

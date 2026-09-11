@@ -71,3 +71,33 @@ OAuth/telemetry registration alone does not grant new vehicle features or
 camera video access. Hardware, firmware, region, vehicle pairing and Tesla
 usage limits still apply. A missing vehicle signal is not an implementation
 or sensor error by itself.
+
+
+## Temperature readings
+
+Battery, driving and charging pages have a dedicated temperature panel. Module
+minimum/maximum temperatures and their matching module identifiers come from
+thermal sensors; they are not a complete array of individual cell temperatures.
+The cabin/outside difference is signed and requires the same source timestamp
+and source type. Module differences also require matching sample times.
+
+InsideTemp/OutsideTemp and HvacLeftTemperatureRequest/HvacRightTemperatureRequest
+supplement the existing climate API. Driver/passenger setpoints from the legacy
+API are labelled separately from left/right telemetry setpoints, so right-hand
+drive cars are not silently mapped to the wrong side. Saved climate positions
+provide a historical fallback after a collector restart.
+
+DiStatorTempF/R/REL/RER, DiInverterTF/TR/TREL/TRER and
+DiHeatsinkTF/TR/TREL/TRER add stator, inverter outlet and inverter heatsink
+temperatures. Separate rear-left/right drive-unit readings appear when reported.
+Temperatures are displayed in Celsius with a source timestamp; zero and negative
+temperatures are valid. Unsupported or invalid signals stay unknown, and stale
+readings retain their original time. No thermal warning threshold or estimated
+battery temperature is invented.
+
+Update the vehicle telemetry configuration after upgrading to request these
+fields. A paired application key is required; changing the dashboard alone does
+not activate the vehicle feed. Temperature fields are requested no more frequently
+than every 10 seconds, even when the page refresh interval is shorter.
+
+Field definitions: https://developer.tesla.com/docs/fleet-api/fleet-telemetry/available-data

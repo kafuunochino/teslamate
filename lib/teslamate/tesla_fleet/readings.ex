@@ -8,6 +8,22 @@ defmodule TeslaMate.TeslaFleet.Readings do
     "PackCurrent" => {:pack_current, :number, -3000, 3000},
     "ModuleTempMax" => {:module_temp_max, :number, -100, 250},
     "ModuleTempMin" => {:module_temp_min, :number, -100, 250},
+    "InsideTemp" => {:inside_temp, :number, -100, 250},
+    "OutsideTemp" => {:outside_temp, :number, -100, 250},
+    "HvacLeftTemperatureRequest" => {:hvac_left_temp_setting, :number, -100, 250},
+    "HvacRightTemperatureRequest" => {:hvac_right_temp_setting, :number, -100, 250},
+    "DiStatorTempF" => {:front_motor_temp, :number, -100, 500},
+    "DiStatorTempR" => {:rear_motor_temp, :number, -100, 500},
+    "DiStatorTempREL" => {:rear_left_motor_temp, :number, -100, 500},
+    "DiStatorTempRER" => {:rear_right_motor_temp, :number, -100, 500},
+    "DiInverterTF" => {:front_inverter_temp, :number, -100, 250},
+    "DiInverterTR" => {:rear_inverter_temp, :number, -100, 250},
+    "DiInverterTREL" => {:rear_left_inverter_temp, :number, -100, 250},
+    "DiInverterTRER" => {:rear_right_inverter_temp, :number, -100, 250},
+    "DiHeatsinkTF" => {:front_heatsink_temp, :number, -100, 300},
+    "DiHeatsinkTR" => {:rear_heatsink_temp, :number, -100, 300},
+    "DiHeatsinkTREL" => {:rear_left_heatsink_temp, :number, -100, 300},
+    "DiHeatsinkTRER" => {:rear_right_heatsink_temp, :number, -100, 300},
     "BrickVoltageMax" => {:brick_voltage_max, :number, 0, 10},
     "BrickVoltageMin" => {:brick_voltage_min, :number, 0, 10},
     "NumBrickVoltageMax" => {:num_brick_voltage_max, :integer, 1, 2000},
@@ -132,6 +148,7 @@ defmodule TeslaMate.TeslaFleet.Readings do
     |> difference(:unavailable_level, :battery_level, :usable_battery_level, 1)
     |> difference(:brick_voltage_delta_mv, :brick_voltage_max, :brick_voltage_min, 1000)
     |> difference(:module_temp_delta, :module_temp_max, :module_temp_min, 1)
+    |> TeslaMate.BatteryData.derive_temperature_delta()
   end
 
   def last_received(car_id) do

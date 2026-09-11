@@ -184,6 +184,62 @@ defmodule TeslaMate.BatteryDataTest do
     refute Map.has_key?(data, :active_route_energy_at_arrival)
   end
 
+  test "temperature values preserve negative and zero readings with their climate timestamp" do
+    climate = %Climate{
+      timestamp: DateTime.to_unix(@now, :millisecond),
+      inside_temp: -5.5,
+      outside_temp: 0,
+      driver_temp_setting: 21.5,
+      passenger_temp_setting: 22,
+      is_climate_on: false
+    }
+
+    data = BatteryData.readings(summary(nil, climate), [], @now)
+    assert data.inside_temp.value == -5.5
+    assert data.outside_temp.value == 0
+    assert data.driver_temp_setting.value == 21.5
+    assert data.passenger_temp_setting.value == 22
+    assert data.is_climate_on.value == false
+    assert data.cabin_temp_delta.value == -5.5
+    assert DateTime.compare(data.inside_temp.measured_at, @now) == :eq
+    assert data.inside_temp.fresh?
+
+    refute BatteryData.readings(summary(nil, climate), [], DateTime.add(@now, 120)).inside_temp.fresh?
+  end
+
+  test "stored temperature values survive restart without becoming current" do
+    stored = %{
+      date: @now,
+      inside_temp: Decimal.new("-1.5"),
+      outside_temp: Decimal.new("0"),
+      driver_temp_setting: Decimal.new("21"),
+      passenger_temp_setting: Decimal.new("22")
+    }
+
+    data = BatteryData.readings(nil, [stored, %{date: DateTime.add(@now, 1)}], @now)
+    assert data.inside_temp.value == -1.5
+    assert data.outside_temp.value == 0
+    assert data.cabin_temp_delta.value == -1.5
+    assert data.driver_temp_setting.value == 21
+    assert data.inside_temp.source == :record
+    refute data.inside_temp.fresh?
+
+    for bad <- [nil, "<invalid>", true, "hot", 999] do
+      invalid = %{date: @now, inside_temp: bad}
+      refute Map.has_key?(BatteryData.readings(nil, [invalid], @now), :inside_temp)
+    end
+  end
+
+  test "temperature differences never combine different source times or source types" do
+    stored = %{date: @now, inside_temp: 10, outside_temp: 20}
+    original = BatteryData.readings(nil, [stored], @now)
+    assert original.cabin_temp_delta.value == -10
+    changed = put_in(original, [:outside_temp, :measured_at], DateTime.add(@now, 1))
+    refute Map.has_key?(BatteryData.derive_temperature_delta(changed), :cabin_temp_delta)
+    changed = put_in(original, [:outside_temp, :source], :telemetry)
+    refute Map.has_key?(BatteryData.derive_temperature_delta(changed), :cabin_temp_delta)
+  end
+
   test "state-test deduplication ignores only timestamps and retains changed battery values" do
     pid = start_supervised!({PubSubMock, name: __MODULE__, pid: self()})
 

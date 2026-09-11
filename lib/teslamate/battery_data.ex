@@ -20,14 +20,17 @@ defmodule TeslaMate.BatteryData do
     max_range_charge_counter managed_charging_active managed_charging_start_time
     managed_charging_user_canceled
   )a
-  @climate_fields ~w(battery_heater battery_heater_no_power is_preconditioning smart_preconditioning)a
+  @temperature_fields ~w(inside_temp outside_temp driver_temp_setting passenger_temp_setting)a
+  @climate_fields ~w(battery_heater battery_heater_no_power is_preconditioning smart_preconditioning
+                     inside_temp outside_temp driver_temp_setting passenger_temp_setting is_climate_on)a
   @drive_fields ~w(active_route_destination active_route_energy_at_arrival)a
   @stored_fields ~w(
     battery_level usable_battery_level rated_battery_range_km ideal_battery_range_km
     est_battery_range_km battery_heater_on battery_heater battery_heater_no_power
     not_enough_power_to_heat charge_energy_added charger_power charger_voltage
     charger_actual_current charger_phases charger_pilot_current fast_charger_present
-    fast_charger_type fast_charger_brand conn_charge_cable
+    fast_charger_type fast_charger_brand conn_charge_cable inside_temp outside_temp
+    driver_temp_setting passenger_temp_setting is_climate_on
   )a
 
   def from_vehicle(vehicle) do
@@ -64,6 +67,24 @@ defmodule TeslaMate.BatteryData do
     |> derive(:full_rated_range_km, :rated_battery_range_km, :battery_level, fn range, level ->
       if range > 0 and level >= 20 and level <= 100, do: range / level * 100
     end)
+    |> derive_temperature_delta()
+  end
+
+  def derive_temperature_delta(data) do
+    data = Map.delete(data, :cabin_temp_delta)
+
+    with %{value: inside, measured_at: %DateTime{} = time, source: source} = left <-
+           data[:inside_temp],
+         %{value: outside, measured_at: ^time, source: ^source} = right <- data[:outside_temp],
+         true <- is_number(inside) and is_number(outside) do
+      Map.put(data, :cabin_temp_delta, %{
+        left
+        | value: inside - outside,
+          fresh?: left.fresh? and right.fresh?
+      })
+    else
+      _ -> data
+    end
   end
 
   def get(data, key), do: Map.get(data || %{}, key)
@@ -123,6 +144,8 @@ defmodule TeslaMate.BatteryData do
 
   defp merge(acc, values, date, fresh, source) do
     Enum.reduce(values, acc, fn {key, value}, readings ->
+      value = if key in @temperature_fields, do: temperature_value(value), else: value
+
       cond do
         value in [
           nil,
@@ -164,6 +187,13 @@ defmodule TeslaMate.BatteryData do
       _ -> data
     end
   end
+
+  defp temperature_value(%Decimal{} = value), do: temperature_value(Decimal.to_float(value))
+
+  defp temperature_value(value) when is_number(value) and value >= -100 and value <= 250,
+    do: value
+
+  defp temperature_value(_), do: nil
 
   defp number(%Decimal{} = value), do: Decimal.to_float(value)
   defp number(value), do: value

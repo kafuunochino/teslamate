@@ -76,6 +76,67 @@ defmodule TeslaMate.TeslaFleet.ReadingsTest do
     refute Map.has_key?(Readings.merge_readings(%{}, car.id), :brick_voltage_delta_mv)
   end
 
+  test "temperature config requests motor, inverter, ambient and setpoint signals", %{now: now} do
+    fields = Readings.field_config(5)
+
+    for {field, key} <- [
+          {"DiStatorTempF", :front_motor_temp},
+          {"DiStatorTempR", :rear_motor_temp},
+          {"DiStatorTempREL", :rear_left_motor_temp},
+          {"DiStatorTempRER", :rear_right_motor_temp},
+          {"DiInverterTF", :front_inverter_temp},
+          {"DiInverterTR", :rear_inverter_temp},
+          {"DiInverterTREL", :rear_left_inverter_temp},
+          {"DiInverterTRER", :rear_right_inverter_temp},
+          {"DiHeatsinkTF", :front_heatsink_temp},
+          {"DiHeatsinkTR", :rear_heatsink_temp},
+          {"DiHeatsinkTREL", :rear_left_heatsink_temp},
+          {"DiHeatsinkTRER", :rear_right_heatsink_temp},
+          {"InsideTemp", :inside_temp},
+          {"OutsideTemp", :outside_temp},
+          {"HvacLeftTemperatureRequest", :hvac_left_temp_setting},
+          {"HvacRightTemperatureRequest", :hvac_right_temp_setting}
+        ] do
+      assert fields[field]["interval_seconds"] == 10
+
+      assert {:ok, ^key, 0, ^now} =
+               Readings.decode(field, %{"value" => 0, "created_at" => DateTime.to_iso8601(now)})
+    end
+  end
+
+  test "new telemetry temperatures persist and obsolete cabin differences are discarded", %{
+    car: car,
+    now: now
+  } do
+    for {field, value} <- [
+          {"InsideTemp", -5},
+          {"OutsideTemp", 0},
+          {"ModuleTempMax", 35},
+          {"ModuleTempMin", 30},
+          {"DiStatorTempR", 62},
+          {"DiInverterTR", 31.5}
+        ] do
+      assert :ok = Readings.ingest(@vin, field, payload(value, now))
+    end
+
+    data = Readings.merge_readings(%{}, car.id, now)
+    assert data.cabin_temp_delta.value == -5
+    assert data.module_temp_delta.value == 5
+    assert data.rear_motor_temp.value == 62
+    assert data.rear_inverter_temp.value == 31.5
+    assert data.rear_motor_temp.source == :telemetry
+
+    Readings.ingest(@vin, "OutsideTemp", payload(1, DateTime.add(now, 1)))
+    Readings.ingest(@vin, "ModuleTempMax", payload(36, DateTime.add(now, 1)))
+    data = Readings.merge_readings(data, car.id, DateTime.add(now, 120))
+    refute Map.has_key?(data, :cabin_temp_delta)
+    refute Map.has_key?(data, :module_temp_delta)
+    refute data.rear_motor_temp.fresh?
+
+    Readings.ingest(@vin, "DiStatorTempR", payload("<invalid>", DateTime.add(now, 2)))
+    assert Readings.merge_readings(%{}, car.id).rear_motor_temp.value == nil
+  end
+
   test "known vehicle access is removed when the OAuth connection is removed", %{now: now} do
     assert :ok = TeslaFleet.known_vehicle(@vin)
     Repo.delete_all(Connection)

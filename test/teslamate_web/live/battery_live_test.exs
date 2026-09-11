@@ -71,6 +71,82 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     refute render(view) =~ "0.0 °C"
   end
 
+  test "temperature panels use saved climate samples when newer streaming positions omit them", %{
+    conn: conn,
+    car: car,
+    position: position
+  } do
+    position
+    |> Ecto.Changeset.change(
+      inside_temp: Decimal.new("-2.5"),
+      outside_temp: Decimal.new("0"),
+      driver_temp_setting: Decimal.new("21"),
+      passenger_temp_setting: Decimal.new("22")
+    )
+    |> Repo.update!()
+
+    Repo.insert!(%Position{
+      car_id: car.id,
+      date: DateTime.utc_now(),
+      latitude: Decimal.new("30"),
+      longitude: Decimal.new("100"),
+      battery_level: 50,
+      usable_battery_level: 49
+    })
+
+    for page <- ["battery", "charging", "driving"] do
+      {:ok, view, html} = live(conn, "/#{page}")
+      assert has_element?(view, "##{page}-temperature", "温度监测")
+      assert has_element?(view, "##{page}-inside_temp dd", "-2.5 °C")
+      assert has_element?(view, "##{page}-outside_temp dd", "0.0 °C")
+      assert has_element?(view, "##{page}-inside_temp small", "最近记录")
+      assert has_element?(view, "##{page}-cabin_temp_delta dd", "-2.5 °C")
+      assert has_element?(view, "##{page}-module_temp_max dd", "—")
+      assert has_element?(view, "##{page}-module_temp_max small", "车辆尚未上报")
+      ids = html |> Floki.parse_document!() |> Floki.find("[id]") |> Floki.attribute("id")
+      assert length(ids) == length(Enum.uniq(ids))
+    end
+  end
+
+  test "temperature telemetry is rendered with timestamps and removed on invalid refresh", %{
+    conn: conn,
+    car: car
+  } do
+    now = DateTime.utc_now()
+
+    Repo.insert_all("fleet_readings", [
+      %{
+        car_id: car.id,
+        field: "DiStatorTempR",
+        data: %{"value" => 63.5, "invalid" => false},
+        measured_at: now,
+        received_at: now
+      },
+      %{
+        car_id: car.id,
+        field: "DiStatorTempREL",
+        data: %{"value" => 0, "invalid" => false},
+        measured_at: now,
+        received_at: now
+      }
+    ])
+
+    {:ok, view, _} = live(conn, "/battery")
+    assert has_element?(view, "#battery-rear_motor_temp dd", "63.5 °C")
+    assert has_element?(view, "#battery-rear_motor_temp small", "遥测")
+    assert has_element?(view, "#battery-rear_left_motor_temp dd", "0.0 °C")
+    refute has_element?(view, "#battery-rear_right_motor_temp")
+
+    Repo.query!(
+      "UPDATE fleet_readings SET data = $1::jsonb WHERE car_id = $2 AND field = $3",
+      [%{"value" => nil, "invalid" => true}, car.id, "DiStatorTempR"]
+    )
+
+    view |> element("#battery-refresh-now") |> render_click()
+    assert has_element?(view, "#battery-rear_motor_temp dd", "—")
+    assert has_element?(view, "#battery-rear_motor_temp small", "车辆上报无效读数")
+  end
+
   test "refresh updates samples, keeps the selected range and rejects a hidden-tab timer", %{
     conn: conn,
     car: car,

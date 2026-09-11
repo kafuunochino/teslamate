@@ -7,11 +7,20 @@ defmodule TeslaMateWeb.BatteryComponents do
   attr :mode, :string, default: "battery"
 
   def battery_panel(assigns) do
-    assigns = assign(assigns, :groups, panel_groups(assigns.mode))
+    assigns =
+      assign(
+        assigns,
+        :groups,
+        panel_groups(assigns.mode) |> Enum.map(&optional_fields(&1, assigns.data))
+      )
 
     ~H"""
     <div class="battery-panels" id={"#{@mode}-readings"}>
-      <section :for={group <- @groups} class="data-card battery-panel">
+      <section
+        :for={group <- @groups}
+        id={group[:id] && "#{@mode}-#{group.id}"}
+        class="data-card battery-panel"
+      >
         <div class="data-card__header">
           <div>
             <h2><i class={"mdi mdi-#{group.icon}"} aria-hidden="true"></i> <%= group.title %></h2>
@@ -64,7 +73,8 @@ defmodule TeslaMateWeb.BatteryComponents do
       %{
         main
         | fields: Enum.filter(main.fields, fn {key, _, _} -> key in @primary_charge_fields end)
-      }
+      },
+      temperature_group()
     ]
   end
 
@@ -77,7 +87,9 @@ defmodule TeslaMateWeb.BatteryComponents do
         fields: Enum.reject(main.fields, fn {key, _, _} -> key in @primary_charge_fields end)
     }
 
-    [details | rest] ++ [telemetry_group()] ++ groups("charging-extra")
+    [details | rest] ++
+      [telemetry_group(), drive_temperature_group(), climate_settings_group()] ++
+      groups("charging-extra")
   end
 
   defp panel_groups(mode), do: groups(mode)
@@ -91,8 +103,6 @@ defmodule TeslaMateWeb.BatteryComponents do
         fields: [
           {:pack_voltage, "电池包电压", {:unit, " V", 1}},
           {:pack_current, "电池包电流", {:unit, " A", 1}},
-          {:module_temp_max, "最高模组温度", {:unit, " °C", 1}},
-          {:module_temp_min, "最低模组温度", {:unit, " °C", 1}},
           {:brick_voltage_delta_mv, "电芯组最大压差", {:unit, " mV", 1}},
           {:usable_battery_level, "可用电量", :percent},
           {:unavailable_level, "显示与可用电量差", :points},
@@ -101,7 +111,10 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:active_route_energy_at_arrival, "预计到达电量", :percent},
           {:active_route_destination, "当前导航目的地", :text}
         ]
-      }
+      },
+      temperature_group(),
+      drive_temperature_group(),
+      climate_settings_group()
     ]
   end
 
@@ -122,7 +135,10 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:charge_limit_soc, "充电上限", :percent}
         ]
       },
+      temperature_group(),
+      drive_temperature_group(),
       thermal_group(),
+      climate_settings_group(),
       telemetry_group(),
       %{
         title: "充电读数",
@@ -212,16 +228,11 @@ defmodule TeslaMateWeb.BatteryComponents do
     %{
       title: "电池包遥测",
       icon: "battery-sync",
-      hint: "来自 Fleet Telemetry。温度为模组热敏传感器极值，电压为电芯组极值；压差和温差仅在同次采样时计算。",
+      hint: "来自 Fleet Telemetry。电压为电芯组极值；压差仅在同次采样时计算。温度在上方独立区域显示。",
       fields: [
         {:pack_voltage, "电池包电压", {:unit, " V", 1}},
         {:pack_current, "电池包电流", {:unit, " A", 1}},
         {:energy_remaining, "电池剩余能量", :energy},
-        {:module_temp_max, "最高模组温度", {:unit, " °C", 1}},
-        {:module_temp_min, "最低模组温度", {:unit, " °C", 1}},
-        {:module_temp_delta, "模组温差", {:unit, " °C", 1}},
-        {:num_module_temp_max, "最高温度模组编号", {:unit, "", 0}},
-        {:num_module_temp_min, "最低温度模组编号", {:unit, "", 0}},
         {:brick_voltage_max, "最高电芯组电压", {:unit, " V", 3}},
         {:brick_voltage_min, "最低电芯组电压", {:unit, " V", 3}},
         {:brick_voltage_delta_mv, "电芯组最大压差", {:unit, " mV", 1}},
@@ -241,11 +252,81 @@ defmodule TeslaMateWeb.BatteryComponents do
     }
   end
 
+  defp temperature_group do
+    %{
+      id: "temperature",
+      title: "温度监测",
+      icon: "thermometer",
+      hint: "单位为摄氏度。模组温度需完成数据钥匙配对后由车辆遥测上报；内外温差为车内减车外，温差只使用同次采样。",
+      fields: [
+        {:module_temp_max, "最高模组温度", {:unit, " °C", 1}},
+        {:module_temp_min, "最低模组温度", {:unit, " °C", 1}},
+        {:module_temp_delta, "模组温差", {:unit, " °C", 1}},
+        {:inside_temp, "车内温度", {:unit, " °C", 1}},
+        {:outside_temp, "车外温度", {:unit, " °C", 1}},
+        {:cabin_temp_delta, "车内 − 车外温差", :signed_celsius},
+        {:num_module_temp_max, "最高温度模组编号", {:unit, "", 0}},
+        {:num_module_temp_min, "最低温度模组编号", {:unit, "", 0}}
+      ]
+    }
+  end
+
+  defp drive_temperature_group do
+    %{
+      id: "drive-temperature",
+      title: "驱动系统温度",
+      icon: "engine",
+      hint: "来自 Fleet Telemetry。电机显示定子温度，逆变器分别显示出口和散热器温度；未搭载或未上报的读数保持为“—”。",
+      fields: [
+        {:front_motor_temp, "前电机定子温度", {:unit, " °C", 1}},
+        {:rear_motor_temp, "后电机定子温度", {:unit, " °C", 1}},
+        {:front_inverter_temp, "前逆变器出口温度", {:unit, " °C", 1}},
+        {:rear_inverter_temp, "后逆变器出口温度", {:unit, " °C", 1}},
+        {:front_heatsink_temp, "前逆变器散热器温度", {:unit, " °C", 1}},
+        {:rear_heatsink_temp, "后逆变器散热器温度", {:unit, " °C", 1}},
+        {:rear_left_motor_temp, "左后电机定子温度", {:unit, " °C", 1}},
+        {:rear_right_motor_temp, "右后电机定子温度", {:unit, " °C", 1}},
+        {:rear_left_inverter_temp, "左后逆变器出口温度", {:unit, " °C", 1}},
+        {:rear_right_inverter_temp, "右后逆变器出口温度", {:unit, " °C", 1}},
+        {:rear_left_heatsink_temp, "左后逆变器散热器温度", {:unit, " °C", 1}},
+        {:rear_right_heatsink_temp, "右后逆变器散热器温度", {:unit, " °C", 1}}
+      ]
+    }
+  end
+
+  defp climate_settings_group do
+    %{
+      id: "climate-settings",
+      title: "空调设定温度",
+      icon: "air-conditioner",
+      hint: "以下为目标温度，实际车内温度在“温度监测”中显示。遥测按车辆左 / 右侧命名，不假定方向盘位置。",
+      fields: [
+        {:driver_temp_setting, "驾驶位设定温度", {:unit, " °C", 1}},
+        {:passenger_temp_setting, "副驾驶位设定温度", {:unit, " °C", 1}},
+        {:hvac_left_temp_setting, "左前设定温度（遥测）", {:unit, " °C", 1}},
+        {:hvac_right_temp_setting, "右前设定温度（遥测）", {:unit, " °C", 1}},
+        {:is_climate_on, "空调状态", :on_off}
+      ]
+    }
+  end
+
+  @extra_motor_fields ~w(rear_left_motor_temp rear_right_motor_temp rear_left_inverter_temp
+                         rear_right_inverter_temp rear_left_heatsink_temp rear_right_heatsink_temp)a
+
+  defp optional_fields(group, data) do
+    fields =
+      Enum.reject(group.fields, fn {key, _, _} ->
+        key in @extra_motor_fields and is_nil(BatteryData.get(data, key))
+      end)
+
+    %{group | fields: fields}
+  end
+
   defp thermal_group do
     %{
       title: "电池加热与预处理",
       icon: "thermometer",
-      hint: "加热标志来自车辆接口；模组温度在下方遥测读数中显示。",
+      hint: "加热标志来自车辆接口；实际温度在“温度监测”中显示。",
       fields: [
         {:battery_heater_on, "电池加热器", :on_off},
         {:battery_heater, "气候接口电池加热标志", :on_off},
@@ -258,6 +339,10 @@ defmodule TeslaMateWeb.BatteryComponents do
   end
 
   defp display(nil, _format), do: "—"
+
+  defp display(value, :signed_celsius) when is_number(value),
+    do: if(value > 0, do: "+", else: "") <> format_number(value, 1) <> " °C"
+
   defp display(value, :percent), do: percentage(value)
   defp display(value, :points), do: format_number(value, 1) <> " 个百分点"
   defp display(value, :distance), do: distance(value)

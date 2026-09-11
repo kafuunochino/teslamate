@@ -181,18 +181,6 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
   defp scalar(nil, _unit, _precision), do: "—"
   defp scalar(value, unit, precision), do: format_number(value, precision) <> unit
 
-  defp temperature_delta(report) do
-    inside = reading(report, :inside_temp)
-    outside = reading(report, :outside_temp)
-
-    if not is_nil(inside) and not is_nil(outside) do
-      number(inside) - number(outside)
-    end
-  end
-
-  defp number(%Decimal{} = value), do: Decimal.to_float(value)
-  defp number(value), do: value
-
   defp heading(nil), do: "—"
 
   defp heading(value) when is_number(value) do
