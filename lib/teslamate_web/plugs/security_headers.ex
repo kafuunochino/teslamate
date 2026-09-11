@@ -49,6 +49,7 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
     nonce = :crypto.strong_rand_bytes(24) |> Base.encode64()
     amap? = TeslaMate.Maps.preferences().provider == :amap
     sources = if amap?, do: " https://*.amap.com https://*.autonavi.com", else: ""
+    geocoding_source = if amap?, do: "", else: " https://nominatim.openstreetmap.org"
 
     # JS API 2.0 loads its renderer from a separate official CDN and uses
     # dynamic functions. Keep this compatibility exception provider-specific;
@@ -81,7 +82,7 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
         "font-src 'self' data:",
         "script-src #{script_src()} 'nonce-#{nonce}'#{amap_scripts}",
         "style-src #{style_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
-        "connect-src 'self' ws: wss:#{sources}",
+        "connect-src 'self' ws: wss:#{sources}#{geocoding_source}",
         "worker-src 'self'#{if amap?, do: " blob:", else: ""}",
         "frame-src 'none'",
         "frame-ancestors #{frame_ancestors()}",

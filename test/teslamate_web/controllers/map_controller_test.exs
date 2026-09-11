@@ -30,6 +30,7 @@ defmodule TeslaMateWeb.MapControllerTest do
     refute policy =~ "https://jsapi-service.amap.com"
     refute policy =~ "https://mapplugin.amap.com"
     assert policy =~ "worker-src 'self';"
+    assert policy =~ "connect-src 'self' ws: wss: https://nominatim.openstreetmap.org;"
   end
 
   test "browser config excludes the security code and applies CSP for the saved provider", %{
@@ -74,6 +75,7 @@ defmodule TeslaMateWeb.MapControllerTest do
     refute script =~ "'unsafe-inline'"
     assert policy =~ "frame-src 'none'"
     assert policy =~ "worker-src 'self' blob:"
+    refute policy =~ "nominatim.openstreetmap.org"
     refute page.resp_body =~ code
     refute inspect(get_session(page)) =~ code
   end
