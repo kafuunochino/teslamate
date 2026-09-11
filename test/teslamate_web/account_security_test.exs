@@ -27,6 +27,25 @@ defmodule TeslaMateWeb.AccountSecurityTest do
     member
   end
 
+  test "request logs redact verification factors and OAuth credentials" do
+    values = %{
+      "verification" => %{"code" => "sensitive-factor"},
+      "security" => %{"password" => "sensitive-password", "code" => "recovery-factor"},
+      "access_token" => "sensitive-access",
+      "refresh_token" => "sensitive-refresh",
+      "client_secret" => "sensitive-secret",
+      "device_id" => "42"
+    }
+
+    filtered = Phoenix.Logger.filter_values(values)
+    assert filtered["verification"]["code"] == "[FILTERED]"
+    assert filtered["security"] == %{"password" => "[FILTERED]", "code" => "[FILTERED]"}
+    assert filtered["access_token"] == "[FILTERED]"
+    assert filtered["refresh_token"] == "[FILTERED]"
+    assert filtered["client_secret"] == "[FILTERED]"
+    assert filtered["device_id"] == "42"
+  end
+
   test "admin registration switch persists and gates both GET and POST", %{conn: conn} do
     assert get(build_conn(), "/register").status == 404
     {:ok, view, _} = live(conn, "/admin/users")
