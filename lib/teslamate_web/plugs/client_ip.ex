@@ -13,22 +13,27 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
 
   ## IP resolution
 
-    1. If the *socket peer* is one of the trusted proxies
-       (see `TESLAMATE_TRUSTED_PROXIES`), use the **first** entry of
-       `X-Forwarded-For`.
-    2. Otherwise, fall back to the socket's `remote_ip`.
+    1. Normalize IPv4-mapped IPv6 addresses before proxy matching and display.
+    2. If the socket peer is trusted (see `TESLAMATE_TRUSTED_PROXIES`), walk
+       `X-Forwarded-For` from right to left, stopping at the first untrusted
+       address. Multiple header lines form one chain. An invalid hop stops
+       resolution; it must never be skipped to reach a spoofed address.
+    3. Use a single `X-Real-IP` only when `X-Forwarded-For` is absent and the
+       socket peer is trusted. Otherwise, keep the socket's `remote_ip`.
 
   Operators behind a reverse proxy MUST:
 
     1. Configure the proxy to send `X-Forwarded-For`.
-    2. Strip any incoming `X-Forwarded-For` from the client before adding
-       its own (otherwise clients can spoof).
+    2. Overwrite incoming forwarding headers at the public edge, or append
+       the actual socket peer to `X-Forwarded-For` at each trusted hop.
+       Always overwrite `X-Real-IP` if using that fallback.
     3. Set `TESLAMATE_TRUSTED_PROXIES` to a comma-separated list of the
        proxy's network interfaces (e.g. `172.18.0.1,10.0.0.5`). CIDR
        notation is supported (e.g. `172.18.0.0/16`).
 
   When `TESLAMATE_TRUSTED_PROXIES` is unset, the plug trusts no proxy and
-  ignores `X-Forwarded-For`.
+  ignores all forwarding headers. Run this plug after `:fetch_session`
+  when the resolved address must also be available to LiveViews.
   """
 
   import Bitwise
@@ -46,31 +51,42 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
 
   # ---- resolution --------------------------------------------------------
 
-  defp resolve(conn) do
+  @doc "Resolves the canonical client IP, including when called outside the router pipeline."
+  def resolve(conn) do
     peer = conn.remote_ip
-    peer_string = format_ip(peer)
+    proxies = trusted_proxies()
 
-    if trusted_proxy?(peer) do
-      forwarded_ip(conn) || peer_string
-    else
-      peer_string
-    end
+    resolved = if trusted_proxy?(peer, proxies), do: forwarded_ip(conn, peer, proxies), else: peer
+    format_ip(resolved)
   end
 
-  defp forwarded_ip(conn) do
-    with {_, value} when is_binary(value) <-
-           List.keyfind(conn.req_headers, "x-forwarded-for", 0),
-         first when is_binary(first) <-
-           value |> String.split(",") |> List.first() |> String.trim(),
-         parsed when is_tuple(parsed) <- parse_ip(first) do
-      format_ip(parsed)
-    else
-      _ -> nil
+  defp forwarded_ip(conn, peer, proxies) do
+    case get_req_header(conn, "x-forwarded-for") do
+      [] ->
+        case get_req_header(conn, "x-real-ip") do
+          [value] -> parse_ip(String.trim(value)) || peer
+          _ -> peer
+        end
+
+      headers ->
+        headers
+        |> Enum.flat_map(&String.split(&1, ","))
+        |> Enum.reverse()
+        |> Enum.reduce_while(peer, fn value, current ->
+          if trusted_proxy?(current, proxies) do
+            case parse_ip(String.trim(value)) do
+              nil -> {:halt, current}
+              address -> {:cont, address}
+            end
+          else
+            {:halt, current}
+          end
+        end)
     end
   end
 
   defp format_ip(ip) when is_tuple(ip) do
-    case :inet.ntoa(ip) do
+    case :inet.ntoa(normalize_ip(ip)) do
       chars when is_list(chars) -> List.to_string(chars)
       _ -> "unknown"
     end
@@ -115,23 +131,25 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
   end
 
   defp parse_ip(ip) do
-    case :inet.parse_address(String.to_charlist(ip)) do
+    case :inet.parse_strict_address(String.to_charlist(ip)) do
       {:ok, parsed} -> parsed
       _ -> nil
     end
   end
 
-  defp trusted_proxy?(peer) when is_tuple(peer) do
-    Enum.any?(trusted_proxies(), fn
-      {:address, address} -> peer == address
+  defp trusted_proxy?(peer, proxies) when is_tuple(peer) do
+    Enum.any?(proxies, fn
+      {:address, address} -> normalize_ip(peer) == normalize_ip(address)
       {:network, network, prefix} -> cidr_match?(peer, network, prefix)
     end)
   end
 
-  defp trusted_proxy?(_), do: false
+  defp trusted_proxy?(_, _), do: false
 
   defp cidr_match?(peer, network, prefix) do
-    with {peer, bits} <- ip_integer(peer),
+    {network, prefix} = normalize_network(network, prefix)
+
+    with {peer, bits} <- ip_integer(normalize_ip(peer)),
          {network, ^bits} <- ip_integer(network),
          true <- prefix in 0..bits do
       mask =
@@ -146,6 +164,19 @@ defmodule TeslaMateWeb.Plugs.ClientIP do
       _ -> false
     end
   end
+
+  defp normalize_ip({0, 0, 0, 0, 0, 0xFFFF, high, low}) do
+    {high >>> 8, high &&& 255, low >>> 8, low &&& 255}
+  end
+
+  defp normalize_ip(ip), do: ip
+
+  defp normalize_network({0, 0, 0, 0, 0, 0xFFFF, _, _} = network, prefix)
+       when prefix >= 96 do
+    {normalize_ip(network), prefix - 96}
+  end
+
+  defp normalize_network(network, prefix), do: {network, prefix}
 
   defp ip_integer(ip) when tuple_size(ip) == 4 do
     {Enum.reduce(Tuple.to_list(ip), 0, fn part, acc -> acc <<< 8 ||| part end), 32}

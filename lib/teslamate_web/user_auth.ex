@@ -54,7 +54,7 @@ defmodule TeslaMateWeb.UserAuth do
   end
 
   def session_metadata(conn) do
-    ip = conn.private[:client_ip] || conn.remote_ip |> :inet.ntoa() |> to_string()
+    ip = conn.private[:client_ip] || TeslaMateWeb.Plugs.ClientIP.resolve(conn)
     %{user_agent: get_req_header(conn, "user-agent") |> List.first(), ip_address: ip}
   end
 

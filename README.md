@@ -181,20 +181,20 @@ rm -rf /var/lib/grafana
 
 ## 关键环境变量
 
-| 变量                             | 说明                                        | 1Panel 建议值        |
-| -------------------------------- | ------------------------------------------- | -------------------- |
-| `ENCRYPTION_KEY`                 | 加密 Tesla Token，已有部署绝不能重新生成    | 保留原值             |
-| `SECRET_KEY_BASE`                | Cookie 和平台会话签名密钥                   | 独立随机值           |
-| `SIGNING_SALT`                   | LiveView 签名盐                             | 独立随机值           |
-| `DATABASE_HOST`                  | PostgreSQL 主机                             | `postgres`           |
-| `DATABASE_PORT`                  | PostgreSQL 端口                             | `5432`               |
-| `PANEL_NETWORK`                  | PostgreSQL 和应用共同使用的外部 Docker 网络 | `1panel-network`     |
-| `GRAFANA_VOLUME_NAME`            | 旧 Grafana `/var/lib/grafana` 的真实卷名    | 从旧容器检测         |
-| `VIRTUAL_HOST`                   | 公网域名，不包含协议                        | 实际域名             |
-| `CHECK_ORIGIN`                   | 允许的浏览器 Origin                         | `https://实际域名`   |
-| `TESLAMATE_TRUSTED_PROXIES`      | 可以信任转发头的反向代理 IP/CIDR            | 实际代理容器地址     |
-| `TESLAMATE_ALLOW_SIGN_UP`        | 是否开放普通用户注册                        | 首次部署先设 `false` |
-| `TESLAMATE_ACCOUNT_SESSION_DAYS` | 登录会话期限，最大 90 天                    | `30`                 |
+| 变量                             | 说明                                                                     | 1Panel 建议值        |
+| -------------------------------- | ------------------------------------------------------------------------ | -------------------- |
+| `ENCRYPTION_KEY`                 | 加密 Tesla Token，已有部署绝不能重新生成                                 | 保留原值             |
+| `SECRET_KEY_BASE`                | Cookie 和平台会话签名密钥                                                | 独立随机值           |
+| `SIGNING_SALT`                   | LiveView 签名盐                                                          | 独立随机值           |
+| `DATABASE_HOST`                  | PostgreSQL 主机                                                          | `postgres`           |
+| `DATABASE_PORT`                  | PostgreSQL 端口                                                          | `5432`               |
+| `PANEL_NETWORK`                  | PostgreSQL 和应用共同使用的外部 Docker 网络                              | `1panel-network`     |
+| `GRAFANA_VOLUME_NAME`            | 旧 Grafana `/var/lib/grafana` 的真实卷名                                 | 从旧容器检测         |
+| `VIRTUAL_HOST`                   | 公网域名，不包含协议                                                     | 实际域名             |
+| `CHECK_ORIGIN`                   | 允许的浏览器 Origin                                                      | `https://实际域名`   |
+| `TESLAMATE_TRUSTED_PROXIES`      | 可以信任转发头的反向代理 IP/CIDR，见 [真实客户端 IP](CLIENT_IP.zh-CN.md) | 实际代理容器地址     |
+| `TESLAMATE_ALLOW_SIGN_UP`        | 是否开放普通用户注册                                                     | 首次部署先设 `false` |
+| `TESLAMATE_ACCOUNT_SESSION_DAYS` | 登录会话期限，最大 90 天                                                 | `30`                 |
 
 完整示例和防爆破参数见 [.env.example](.env.example)。
 
@@ -233,7 +233,8 @@ Connection
 ```dotenv
 VIRTUAL_HOST=car.example.com
 CHECK_ORIGIN=https://car.example.com
-TESLAMATE_TRUSTED_PROXIES=172.18.0.0/16
+# 示例地址；请按实际代理地址填写，不要直接信任整个 Docker 网段
+TESLAMATE_TRUSTED_PROXIES=172.18.0.1
 TESLAMATE_API_ORIGIN_CHECK=true
 ```
 

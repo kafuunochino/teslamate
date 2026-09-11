@@ -13,8 +13,8 @@ defmodule TeslaMateWeb.Router do
 
   pipeline :browser do
     plug :accepts, ["html"]
-    plug TeslaMateWeb.Plugs.ClientIP
     plug :fetch_session
+    plug TeslaMateWeb.Plugs.ClientIP
     plug :fetch_live_flash
 
     plug Cldr.Plug.AcceptLanguage,
@@ -38,8 +38,8 @@ defmodule TeslaMateWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
-    plug TeslaMateWeb.Plugs.ClientIP
     plug :fetch_session
+    plug TeslaMateWeb.Plugs.ClientIP
     plug :fetch_current_user
   end
 

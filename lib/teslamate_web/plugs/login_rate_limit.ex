@@ -138,18 +138,9 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   defp client_ip(conn) do
     case conn.private[:client_ip] do
       ip when is_binary(ip) -> ip
-      _ -> format_ip(conn.remote_ip)
+      _ -> TeslaMateWeb.Plugs.ClientIP.resolve(conn)
     end
   end
-
-  defp format_ip(ip) when is_tuple(ip) do
-    case :inet.ntoa(ip) do
-      chars when is_list(chars) -> List.to_string(chars)
-      _ -> "unknown"
-    end
-  end
-
-  defp format_ip(_), do: "unknown"
 
   defp extract_email(conn) do
     with %{"tokens" => %{"email" => email}} when is_binary(email) <- conn.body_params do
