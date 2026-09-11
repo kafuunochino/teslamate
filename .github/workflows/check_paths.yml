@@ -26,6 +26,8 @@ jobs:
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
+          # Compare the checked-out Git history without requesting PR API access.
+          token: ""
           base: "main" # needed to set as a called workflow does not have direct access to repository.default_branch
           filters: |
             githubfolder:

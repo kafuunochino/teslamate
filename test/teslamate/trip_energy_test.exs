@@ -62,8 +62,9 @@ defmodule TeslaMate.TripEnergyTest do
   test "a measured zero range change remains zero" do
     drive = %{drive() | end_rated_range_km: Decimal.new("300")}
 
-    assert %{energy_kwh: 0.0, consumption_wh_km: 0.0} =
-             TripEnergy.calculate(drive, 0.15, :rated)
+    result = TripEnergy.calculate(drive, 0.15, :rated)
+    assert result.energy_kwh == 0.0
+    assert result.consumption_wh_km == 0.0
   end
 
   test "a net range gain is retained instead of clamped to zero" do

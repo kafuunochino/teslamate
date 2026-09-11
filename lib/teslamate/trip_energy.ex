@@ -25,8 +25,7 @@ defmodule TeslaMate.TripEnergy do
 
       %{
         energy_kwh: energy,
-        consumption_wh_km:
-          if(is_number(distance) and distance > 0, do: energy * 1000 / distance)
+        consumption_wh_km: if(is_number(distance) and distance > 0, do: energy * 1000 / distance)
       }
     else
       _ -> empty()

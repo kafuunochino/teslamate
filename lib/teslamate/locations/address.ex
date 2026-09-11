@@ -23,7 +23,6 @@ defmodule TeslaMate.Locations.Address do
     timestamps()
   end
 
-
   @china_names ["中国", "中國", "中华人民共和国", "China"]
 
   @doc "Formats the saved address without discarding street or neighbourhood detail."
@@ -51,7 +50,7 @@ defmodule TeslaMate.Locations.Address do
   def format_display_name(value) when is_binary(value) do
     parts =
       value
-      |> String.split(~r/[,，]/)
+      |> String.split(~r/[,，]/u)
       |> Enum.map(&clean_part/1)
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
