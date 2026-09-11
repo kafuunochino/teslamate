@@ -9,21 +9,39 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     {:ok, car} = Log.create_car(%{eid: id, vid: id, vin: "BATTERY#{id}", model: "3"})
     date = DateTime.add(DateTime.utc_now(), -120)
 
-    position = Repo.insert!(%Position{
-      car_id: car.id, date: date, latitude: Decimal.new("30"), longitude: Decimal.new("100"),
-      battery_level: 51, usable_battery_level: 50, battery_heater_on: false,
-      rated_battery_range_km: Decimal.new("210")
-    })
+    position =
+      Repo.insert!(%Position{
+        car_id: car.id,
+        date: date,
+        latitude: Decimal.new("30"),
+        longitude: Decimal.new("100"),
+        battery_level: 51,
+        usable_battery_level: 50,
+        battery_heater_on: false,
+        rated_battery_range_km: Decimal.new("210")
+      })
 
-    process = Repo.insert!(%ChargingProcess{
-      car_id: car.id, start_date: DateTime.add(date, -3600), end_date: date,
-      charge_energy_added: Decimal.new("20"), charge_energy_used: Decimal.new("22"), duration_min: 60
-    })
+    process =
+      Repo.insert!(%ChargingProcess{
+        car_id: car.id,
+        position_id: position.id,
+        start_date: DateTime.add(date, -3600),
+        end_date: date,
+        charge_energy_added: Decimal.new("20"),
+        charge_energy_used: Decimal.new("22"),
+        duration_min: 60
+      })
 
     Repo.insert!(%Charge{
-      charging_process_id: process.id, date: date, battery_level: 51,
-      usable_battery_level: 50, charger_voltage: 220, charger_power: 0,
-      charge_energy_added: Decimal.new("20"), battery_heater_on: false
+      charging_process_id: process.id,
+      date: date,
+      battery_level: 51,
+      usable_battery_level: 50,
+      charger_voltage: 220,
+      charger_power: 0,
+      charge_energy_added: Decimal.new("20"),
+      ideal_battery_range_km: Decimal.new("210"),
+      battery_heater_on: false
     })
 
     %{car: car, position: position, charge: process}
@@ -54,7 +72,9 @@ defmodule TeslaMateWeb.BatteryLiveTest do
   end
 
   test "refresh updates samples, keeps the selected range and rejects a hidden-tab timer", %{
-    conn: conn, car: car, position: position
+    conn: conn,
+    car: car,
+    position: position
   } do
     {:ok, view, _} = live(conn, "/battery?car=#{car.id}&days=7")
     token = :sys.get_state(view.pid).socket.assigns.battery_token
@@ -66,16 +86,23 @@ defmodule TeslaMateWeb.BatteryLiveTest do
 
     # A later position must win over the old charge sample.
     Repo.insert!(%Position{
-      car_id: car.id, date: DateTime.utc_now(), latitude: Decimal.new("30"), longitude: Decimal.new("100"),
-      battery_level: 50, usable_battery_level: 49
+      car_id: car.id,
+      date: DateTime.utc_now(),
+      latitude: Decimal.new("30"),
+      longitude: Decimal.new("100"),
+      battery_level: 50,
+      usable_battery_level: 49
     })
+
     view |> element("#battery-refresh-now") |> render_click()
     assert has_element?(view, "#battery-usable_battery_level dd", "49.0%")
     assert has_element?(view, ".range-picker button.is-active", "7 天")
   end
 
   test "refresh clears battery and charge editing after access revocation", %{
-    conn: conn, current_user: user, charge: charge
+    conn: conn,
+    current_user: user,
+    charge: charge
   } do
     {:ok, battery, _} = live(conn, "/battery")
     {:ok, charging, _} = live(conn, "/charging")
@@ -92,7 +119,10 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     refute has_element?(charging, "#charge-cost-form")
   end
 
-  test "background charge refresh keeps cost form and validation errors", %{conn: conn, charge: charge} do
+  test "background charge refresh keeps cost form and validation errors", %{
+    conn: conn,
+    charge: charge
+  } do
     {:ok, view, _} = live(conn, "/charging")
     view |> element("#charge-cost-edit-#{charge.id}") |> render_click()
     view |> form("#charge-cost-form", charge_cost: %{cost: "0.001"}) |> render_submit()
@@ -102,7 +132,7 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     render(view)
     assert :sys.get_state(view.pid).socket.assigns.cost_changeset == before
     assert has_element?(view, "#charge-cost-form")
-    assert has_element?(view, "#charging-charger_voltage dd", "220 V")
+    assert has_element?(view, "#charging-extra-charger_voltage dd", "220 V")
     assert has_element?(view, "#charging-charger_power dd", "0.0 kW")
     assert render(view) =~ "并非电池包电压"
   end

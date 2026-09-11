@@ -5,7 +5,11 @@
       <h1>充电</h1>
       <p>充电会话、能量、成本与常用站点统一管理。</p>
     </div>
-    <.vehicle_picker :if={@report && @report.cars != []} cars={@report.cars} current_car={@report.car} />
+    <.vehicle_picker
+      :if={@report && @report.cars != []}
+      cars={@report.cars}
+      current_car={@report.car}
+    />
   </header>
 
   <.no_vehicle :if={@report && !@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
@@ -22,7 +26,7 @@
     </div>
     <.battery_panel data={@report.battery_data} mode="charging" />
     <details class="battery-extra">
-      <summary>更多车辆充电状态</summary>
+      <summary>电压、电流、充电接口与更多状态</summary>
       <.battery_panel data={@report.battery_data} mode="charging-extra" />
     </details>
     <.range_picker days={@report.days} />

@@ -7,7 +7,7 @@ defmodule TeslaMateWeb.BatteryComponents do
   attr :mode, :string, default: "battery"
 
   def battery_panel(assigns) do
-    assigns = assign(assigns, :groups, groups(assigns.mode))
+    assigns = assign(assigns, :groups, panel_groups(assigns.mode))
 
     ~H"""
     <div class="battery-panels" id={"#{@mode}-readings"}>
@@ -50,6 +50,34 @@ defmodule TeslaMateWeb.BatteryComponents do
     </div>
     """
   end
+
+  @primary_charge_fields ~w(charging_state battery_level usable_battery_level charge_limit_soc
+                            charger_power charge_energy_added time_to_full_charge charge_rate_km_h)a
+
+  defp panel_groups("charging") do
+    [main | _] = groups("charging")
+
+    [
+      %{
+        main
+        | fields: Enum.filter(main.fields, fn {key, _, _} -> key in @primary_charge_fields end)
+      }
+    ]
+  end
+
+  defp panel_groups("charging-extra") do
+    [main | rest] = groups("charging")
+
+    details = %{
+      main
+      | title: "电压、电流与充入续航",
+        fields: Enum.reject(main.fields, fn {key, _, _} -> key in @primary_charge_fields end)
+    }
+
+    [details | rest] ++ groups("charging-extra")
+  end
+
+  defp panel_groups(mode), do: groups(mode)
 
   defp groups("driving") do
     [

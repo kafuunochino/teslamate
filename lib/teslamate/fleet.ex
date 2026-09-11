@@ -241,7 +241,6 @@ defmodule TeslaMate.Fleet do
     end
   end
 
-
   # Live refreshes only read collector memory and indexed recent samples. The
   # expensive historical aggregates are rebuilt at most once per minute.
   def refresh_battery(%User{} = user, report, page, full?)

@@ -15,7 +15,8 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
        editing_charge: nil,
        cost_changeset: nil,
        cost_notice: nil
-     ) |> BatteryRefresh.attach(:charging)}
+     )
+     |> BatteryRefresh.attach(:charging)}
   end
 
   @impl true
@@ -29,7 +30,8 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
        cost_changeset: nil,
        cost_notice: nil,
        battery_error: false
-     ) |> BatteryRefresh.schedule()}
+     )
+     |> BatteryRefresh.schedule()}
   end
 
   @impl true

@@ -13,7 +13,9 @@ defmodule TeslaMateWeb.DashboardLive.Battery do
   @impl true
   def handle_params(params, _uri, socket) do
     report = Fleet.battery(socket.assigns.current_user, params["car"], params["days"] || 90)
-    {:noreply, socket |> assign(report: report, battery_error: false) |> BatteryRefresh.schedule()}
+
+    {:noreply,
+     socket |> assign(report: report, battery_error: false) |> BatteryRefresh.schedule()}
   end
 
   @impl true

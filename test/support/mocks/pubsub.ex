@@ -32,7 +32,15 @@ defmodule PubSubMock do
     comparable =
       case event do
         {:broadcast, server, topic, %TeslaMate.Vehicles.Vehicle.Summary{} = summary} ->
-          {:broadcast, server, topic, %{summary | data_updated_at: nil}}
+          battery_data =
+            if summary.battery_data do
+              Map.new(summary.battery_data, fn {key, group} ->
+                {key, %{group | measured_at: nil}}
+              end)
+            end
+
+          {:broadcast, server, topic,
+           %{summary | data_updated_at: nil, battery_data: battery_data}}
 
         _ ->
           event

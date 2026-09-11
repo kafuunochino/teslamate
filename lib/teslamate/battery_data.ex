@@ -94,8 +94,12 @@ defmodule TeslaMate.BatteryData do
     do: {:est_battery_range_km, distance(value)}
 
   defp normalize(:charge_rate, value), do: {:charge_rate_km_h, distance(value)}
-  defp normalize(:charge_miles_added_rated, value), do: {:charge_range_added_rated_km, distance(value)}
-  defp normalize(:charge_miles_added_ideal, value), do: {:charge_range_added_ideal_km, distance(value)}
+
+  defp normalize(:charge_miles_added_rated, value),
+    do: {:charge_range_added_rated_km, distance(value)}
+
+  defp normalize(:charge_miles_added_ideal, value),
+    do: {:charge_range_added_ideal_km, distance(value)}
 
   defp normalize(key, value)
        when key in [:scheduled_charging_start_time, :managed_charging_start_time],

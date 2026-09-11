@@ -60,7 +60,7 @@ defmodule TeslaMate.BatteryDataTest do
       )
 
     data = BatteryData.readings(live, [], @now)
-    assert data.battery_level.measured_at == old
+    assert DateTime.compare(data.battery_level.measured_at, old) == :eq
     refute data.battery_level.fresh?
     assert data.battery_heater.fresh?
     refute BatteryData.readings(%{live | state: :asleep}, [], @now).battery_heater.fresh?
@@ -81,7 +81,10 @@ defmodule TeslaMate.BatteryDataTest do
 
   test "newer complete records win over older cached live values including false" do
     old = DateTime.add(@now, -60)
-    live = summary(%Charge{timestamp: DateTime.to_unix(old, :millisecond), battery_heater_on: true})
+
+    live =
+      summary(%Charge{timestamp: DateTime.to_unix(old, :millisecond), battery_heater_on: true})
+
     data = BatteryData.readings(live, [%{date: @now, battery_heater_on: false}], @now)
     assert data.battery_heater_on.value == false
     assert data.battery_heater_on.source == :record
@@ -102,12 +105,24 @@ defmodule TeslaMate.BatteryDataTest do
     assert data.full_rated_range_km.value == 321.86
 
     for {level, usable} <- [{-1, 0}, {101, 100}, {50, 51}] do
-      data = BatteryData.readings(nil, [%{date: @now, battery_level: level, usable_battery_level: usable}], @now)
+      data =
+        BatteryData.readings(
+          nil,
+          [%{date: @now, battery_level: level, usable_battery_level: usable}],
+          @now
+        )
+
       refute Map.has_key?(data, :unavailable_level)
     end
 
     for level <- [0, 19] do
-      data = BatteryData.readings(nil, [%{date: @now, battery_level: level, rated_battery_range_km: 100}], @now)
+      data =
+        BatteryData.readings(
+          nil,
+          [%{date: @now, battery_level: level, rated_battery_range_km: 100}],
+          @now
+        )
+
       refute Map.has_key?(data, :full_rated_range_km)
     end
   end
@@ -122,18 +137,64 @@ defmodule TeslaMate.BatteryDataTest do
   end
 
   test "scheduled times are epoch seconds and disabled or invalid timestamps stay absent" do
-    live = summary(%Charge{scheduled_charging_start_time: DateTime.to_unix(@now), managed_charging_start_time: 0})
+    live =
+      summary(%Charge{
+        scheduled_charging_start_time: DateTime.to_unix(@now),
+        managed_charging_start_time: 0
+      })
+
     data = BatteryData.readings(live, [], @now)
     assert data.scheduled_charging_start_time.value == @now
     refute Map.has_key?(data, :managed_charging_start_time)
-    data = BatteryData.readings(summary(%Charge{timestamp: 99_999_999_999_999_999, battery_level: 50}), [], @now)
+
+    data =
+      BatteryData.readings(
+        summary(%Charge{timestamp: 99_999_999_999_999_999, battery_level: 50}),
+        [],
+        @now
+      )
+
     refute data.battery_level.fresh?
   end
 
   test "arrival zero is valid only with active navigation" do
-    drive = %Drive{timestamp: DateTime.to_unix(@now, :millisecond), active_route_energy_at_arrival: 0, active_route_destination: "家"}
-    assert BatteryData.readings(summary(nil, nil, drive), [], @now).active_route_energy_at_arrival.value == 0
-    data = BatteryData.readings(summary(nil, nil, %{drive | active_route_destination: nil}), [], @now)
+    drive = %Drive{
+      timestamp: DateTime.to_unix(@now, :millisecond),
+      active_route_energy_at_arrival: 0,
+      active_route_destination: "家"
+    }
+
+    assert BatteryData.readings(summary(nil, nil, drive), [], @now).active_route_energy_at_arrival.value ==
+             0
+
+    data =
+      BatteryData.readings(summary(nil, nil, %{drive | active_route_destination: nil}), [], @now)
+
     refute Map.has_key?(data, :active_route_energy_at_arrival)
+  end
+
+  test "state-test deduplication ignores only timestamps and retains changed battery values" do
+    pid = start_supervised!({PubSubMock, name: __MODULE__, pid: self()})
+
+    live =
+      summary(%Charge{timestamp: DateTime.to_unix(@now, :millisecond), battery_heater_on: false})
+
+    :ok = PubSubMock.broadcast(pid, :test, "battery", live)
+    assert_receive {:pubsub, {:broadcast, :test, "battery", ^live}}
+
+    newer =
+      summary(%Charge{
+        timestamp: DateTime.to_unix(DateTime.add(@now, 1), :millisecond),
+        battery_heater_on: false
+      })
+
+    :ok = PubSubMock.broadcast(pid, :test, "battery", newer)
+    refute_receive {:pubsub, _}
+
+    changed =
+      summary(%Charge{timestamp: DateTime.to_unix(@now, :millisecond), battery_heater_on: true})
+
+    :ok = PubSubMock.broadcast(pid, :test, "battery", changed)
+    assert_receive {:pubsub, {:broadcast, :test, "battery", ^changed}}
   end
 end

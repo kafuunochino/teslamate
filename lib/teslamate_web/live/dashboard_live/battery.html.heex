@@ -5,7 +5,11 @@
       <h1>电池</h1>
       <p>电量、续航、加热与补能状态，以及长期变化。</p>
     </div>
-    <.vehicle_picker :if={@report && @report.cars != []} cars={@report.cars} current_car={@report.car} />
+    <.vehicle_picker
+      :if={@report && @report.cars != []}
+      cars={@report.cars}
+      current_car={@report.car}
+    />
   </header>
 
   <.no_vehicle :if={@report && !@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
@@ -25,7 +29,9 @@
     <section class="metrics-grid">
       <.metric_card
         title="归一化续航损耗估算"
-        value={if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"}
+        value={
+          if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"
+        }
         hint="按所选时间范围比较；不是官方 SOH 或电池容量检测"
         icon="battery-heart-variant"
         tone="amber"
@@ -88,7 +94,9 @@
           <div>
             <span>电网取电</span><strong><%= energy(@report.charge_stats.energy_used) %></strong>
           </div>
-          <div><span>累计费用</span><strong><%= if @report.charge_stats.cost_count > 0, do: money(@report.charge_stats.cost), else: "未填写" %></strong></div>
+          <div>
+            <span>累计费用</span><strong><%= if @report.charge_stats.cost_count > 0, do: money(@report.charge_stats.cost), else: "未填写" %></strong>
+          </div>
           <div>
             <span>平均结束电量</span><strong><%= percentage(@report.charge_stats.average_end_level) %></strong>
           </div>
