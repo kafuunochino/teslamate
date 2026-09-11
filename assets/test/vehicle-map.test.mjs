@@ -283,7 +283,7 @@ test("falls back to window resize and removes the listener on navigation", async
   assert.equal(resized, 1);
 });
 
-test("AMap stays mounted across CSS theme changes with no native style API dependency", async () => {
+test("AMap keeps its theme target across LiveView refreshes and theme changes", async () => {
   const { win, doc, element } = environment();
   const { sdk, calls } = amap();
   const hook = createVehicleMapHook(() => assert.fail("unexpected fallback"), {
@@ -298,11 +298,13 @@ test("AMap stays mounted across CSS theme changes with no native style API depen
   await hook.loading;
   calls.maps[0].events.complete();
   for (const theme of ["light", "dark", "light", "dark"]) {
+    // LiveView merges server data attributes even on phx-update="ignore" roots.
+    hook.el.dataset = { points: hook.el.dataset.points };
     doc.documentElement.dataset.theme = theme;
     win.dispatchEvent(new Event("themechange"));
     hook.updated();
+    assert.equal(hook.canvas.dataset.mapProvider, "amap");
   }
-  assert.equal(hook.el.dataset.mapProvider, "amap");
   assert.equal(calls.maps.length, 1);
   assert.equal(calls.markers.length, 1);
   assert.equal(hook.status.hidden, true);

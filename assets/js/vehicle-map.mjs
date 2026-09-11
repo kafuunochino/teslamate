@@ -251,7 +251,9 @@ export function createVehicleMapHook(createLeaflet, dependencies = {}) {
         if (this.disposed) return;
         if (!["amap", "openstreetmap"].includes(config.provider))
           throw new Error("地图提供商配置无效");
-        this.el.dataset.mapProvider = config.provider;
+        // LiveView refreshes data attributes on the hook element. Keep provider
+        // state inside the ignored subtree alongside the SDK-owned map layers.
+        this.canvas.dataset.mapProvider = config.provider;
         const options = {
           theme: doc.documentElement.dataset.theme || "light",
           mode: this.el.dataset.mode,

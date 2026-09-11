@@ -66,11 +66,9 @@
 // native styles. Markers, controls, status messages and attribution are siblings
 // of these layers, so their colors and legibility are preserved. Target one level
 // only: filtering both a tile layer and its child tiles would invert it twice.
-[data-theme="dark"] .vehicle-map[data-map-provider="amap"] {
-  .vehicle-map__canvas {
-    background-color: var(--platform-surface-soft) !important;
-    background-image: none;
-  }
+[data-theme="dark"] .vehicle-map__canvas[data-map-provider="amap"] {
+  background-color: var(--platform-surface-soft) !important;
+  background-image: none;
 
   .amap-layers > .amap-layer,
   .amap-layers > .amap-tile-container {
