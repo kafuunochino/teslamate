@@ -4,6 +4,7 @@ defmodule TeslaMate.Locations.GeoFence do
   import Ecto.Changeset
 
   schema "geofences" do
+    field :user_id, :id
     field :name, :string
     field :latitude, :decimal, read_after_writes: true
     field :longitude, :decimal, read_after_writes: true

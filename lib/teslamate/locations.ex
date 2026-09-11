@@ -12,6 +12,7 @@ defmodule TeslaMate.Locations do
   alias TeslaMate.Log.{Drive, ChargingProcess}
   alias TeslaMate.Settings.GlobalSettings
   alias TeslaMate.{Repo, Settings}
+  alias TeslaMate.Accounts.{User, UserCar}
 
   ## Address
 
@@ -125,9 +126,9 @@ defmodule TeslaMate.Locations do
     |> Map.values()
   end
 
-  defp apply_geofence(%GeoFence{latitude: lat, longitude: lng, radius: r}, opts \\ []) do
+  defp apply_geofence(%GeoFence{latitude: lat, longitude: lng, radius: r} = geofence, opts \\ []) do
     except_id = Keyword.get(opts, :except) || -1
-    args = [lat, lng, r, except_id]
+    args = [lat, lng, r, except_id, geofence.user_id]
 
     q = fn module, geofence_field, position_field ->
       """
@@ -137,17 +138,19 @@ defmodule TeslaMate.Locations do
           FROM geofences g
           WHERE
             earth_box(ll_to_earth(g.latitude, g.longitude), g.radius) @> ll_to_earth(p.latitude, p.longitude) AND
-            earth_distance(ll_to_earth(g.latitude, g.longitude), ll_to_earth(latitude, p.longitude)) < g.radius AND
-            g.id != $4
+            earth_distance(ll_to_earth(g.latitude, g.longitude), ll_to_earth(p.latitude, p.longitude)) < g.radius AND
+            g.id != $4 AND g.user_id IS NOT DISTINCT FROM $5::bigint
           ORDER BY
-            earth_distance(ll_to_earth(g.latitude, g.longitude), ll_to_earth(latitude, p.longitude)) ASC
+            earth_distance(ll_to_earth(g.latitude, g.longitude), ll_to_earth(p.latitude, p.longitude)) ASC
           LIMIT 1
         )
         FROM positions p
         WHERE
           m.#{position_field} = p.id AND
+          (EXISTS (SELECT 1 FROM private.user_cars uc WHERE uc.car_id = m.car_id AND uc.user_id = $5::bigint)
+           OR ($5::bigint IS NULL AND NOT EXISTS (SELECT 1 FROM private.user_cars uc WHERE uc.car_id = m.car_id))) AND
           earth_box(ll_to_earth($1::numeric, $2::numeric), $3) @> ll_to_earth(p.latitude, p.longitude) AND
-          earth_distance(ll_to_earth($1::numeric, $2::numeric), ll_to_earth(latitude, p.longitude)) < $3
+          earth_distance(ll_to_earth($1::numeric, $2::numeric), ll_to_earth(p.latitude, p.longitude)) < $3
       """
     end
 
@@ -160,6 +163,103 @@ defmodule TeslaMate.Locations do
 
   ## GeoFence
 
+  def list_geofences(%User{} = user) do
+    GeoFence |> owned_geofences(user) |> order_by([g], asc: g.name) |> Repo.all()
+  end
+
+  def get_geofence(%User{} = user, id) do
+    GeoFence |> owned_geofences(user) |> where([g], g.id == ^safe_id(id)) |> Repo.one()
+  end
+
+  def create_geofence(%User{} = user, attrs) do
+    owned_transaction(user, fn current ->
+      case %GeoFence{user_id: current.id} |> GeoFence.changeset(attrs) |> Repo.insert() do
+        {:ok, geofence} -> :ok = apply_geofence(geofence); geofence
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  def update_geofence(%User{} = user, %GeoFence{id: id}, attrs) do
+    owned_transaction(user, fn current ->
+      geofence = owned_geofence!(current, id)
+      case update_geofence(geofence, attrs) do
+        {:ok, result} -> result
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
+
+  def delete_geofence(%User{} = user, id) do
+    owned_transaction(user, fn current ->
+      case delete_geofence(owned_geofence!(current, id)) do
+        {:ok, result} -> result
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
+
+  def calculate_charge_costs(%User{} = user, %GeoFence{id: id}) do
+    case owned_transaction(user, fn current -> calculate_charge_costs(owned_geofence!(current, id)) end) do
+      {:ok, result} -> result
+      error -> error
+    end
+  end
+
+  defp owned_geofences(query, user) do
+    from g in query, join: u in User, on: u.id == g.user_id,
+      where: g.user_id == ^user.id and u.status == :active
+  end
+
+  defp owned_geofence!(user, id) do
+    case GeoFence |> owned_geofences(user) |> where([g], g.id == ^safe_id(id))
+         |> lock("FOR UPDATE") |> Repo.one() do
+      nil -> Repo.rollback(:forbidden)
+      geofence -> geofence
+    end
+  end
+
+  defp owned_transaction(user, fun) do
+    Repo.transaction(fn ->
+      current = Repo.one(from u in User, where: u.id == ^user.id and u.status == :active, lock: "FOR SHARE")
+      if is_nil(current), do: Repo.rollback(:forbidden)
+      fun.(current)
+    end)
+  end
+
+  defp safe_id(id) when is_integer(id), do: id
+  defp safe_id(id) when is_binary(id) do
+    case Integer.parse(id) do {n, ""} -> n; _ -> -1 end
+  end
+  defp safe_id(_), do: -1
+
+  def latest_owned_position(user) do
+    ids = from b in UserCar, where: b.user_id == ^user.id, select: b.car_id
+    Repo.one(from p in TeslaMate.Log.Position, where: p.car_id in subquery(ids),
+      order_by: [desc: p.date, desc: p.id], limit: 1)
+  end
+
+  # Re-evaluate labels when an administrator assigns a previously unbound car.
+  # This prevents the previous owner's private place names following the car.
+  def refresh_car_geofences(car_id) do
+    for {table, field, position} <- [
+      {"drives", "start_geofence_id", "start_position_id"},
+      {"drives", "end_geofence_id", "end_position_id"},
+      {"charging_processes", "geofence_id", "position_id"}] do
+      Repo.query!("""
+      UPDATE #{table} m SET #{field} = (
+        SELECT g.id FROM public.geofences g JOIN private.user_cars b ON b.user_id = g.user_id
+        WHERE b.car_id = m.car_id
+          AND earth_box(ll_to_earth(g.latitude, g.longitude), g.radius) @> ll_to_earth(p.latitude, p.longitude)
+          AND earth_distance(ll_to_earth(g.latitude, g.longitude), ll_to_earth(p.latitude, p.longitude)) < g.radius
+        ORDER BY earth_distance(ll_to_earth(g.latitude, g.longitude), ll_to_earth(p.latitude, p.longitude)), g.id LIMIT 1
+      ) FROM positions p WHERE m.car_id = $1 AND m.#{position} = p.id
+      """, [car_id])
+    end
+    :ok
+  end
+
+
   def list_geofences do
     GeoFence
     |> order_by([g], fragment("? COLLATE \"C\" ASC", g.name))
@@ -171,8 +271,13 @@ defmodule TeslaMate.Locations do
   end
 
   def find_geofence(%{latitude: _, longitude: _} = point) do
-    GeoFence
-    |> select([:id, :name])
+    user_id =
+      if car_id = Map.get(point, :car_id),
+        do: Repo.one(from b in UserCar, where: b.car_id == ^car_id, select: b.user_id)
+    query = if user_id, do: from(g in GeoFence, where: g.user_id == ^user_id),
+      else: from(g in GeoFence, where: is_nil(g.user_id))
+    query
+    |> select([:id, :name, :user_id])
     |> where([geofence], within_geofence?(point, geofence, :left))
     |> order_by([geofence], asc: distance(geofence, point))
     |> limit(1)
@@ -224,7 +329,8 @@ defmodule TeslaMate.Locations do
       from c in ChargingProcess,
         select: count(),
         join: p in assoc(c, :position),
-        where: is_nil(c.cost) and within_geofence?(p, geofence, :right)
+        where: is_nil(c.cost) and within_geofence?(p, geofence, :right),
+        where: fragment("EXISTS (SELECT 1 FROM private.user_cars uc WHERE uc.car_id = ? AND uc.user_id = ?) OR (?::bigint IS NULL AND NOT EXISTS (SELECT 1 FROM private.user_cars uc WHERE uc.car_id = ?))", c.car_id, ^Map.get(geofence, :user_id), ^Map.get(geofence, :user_id), c.car_id)
     )
   end
 
@@ -246,7 +352,12 @@ defmodule TeslaMate.Locations do
       JOIN geofences g ON g.id = c.geofence_id
       WHERE cp.id = c.id
     )
-    WHERE cp.geofence_id = $1 AND cp.cost IS NULL;
+    WHERE cp.geofence_id = $1 AND cp.cost IS NULL AND EXISTS (
+      SELECT 1 FROM public.geofences g WHERE g.id = $1 AND (
+        EXISTS (SELECT 1 FROM private.user_cars uc WHERE uc.car_id = cp.car_id AND uc.user_id = g.user_id)
+        OR (g.user_id IS NULL AND NOT EXISTS (SELECT 1 FROM private.user_cars uc WHERE uc.car_id = cp.car_id))
+      )
+    );
     """
 
     with {:ok, %Postgrex.Result{num_rows: _}} <- Repo.query(query, [id]) do

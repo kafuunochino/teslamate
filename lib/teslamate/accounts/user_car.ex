@@ -4,6 +4,7 @@ defmodule TeslaMate.Accounts.UserCar do
   @schema_prefix "private"
 
   schema "user_cars" do
+    field :source, :string, default: "admin"
     belongs_to :user, TeslaMate.Accounts.User
     belongs_to :car, TeslaMate.Log.Car
     belongs_to :granted_by_user, TeslaMate.Accounts.User

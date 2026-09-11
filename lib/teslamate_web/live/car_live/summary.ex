@@ -8,6 +8,7 @@ defmodule TeslaMateWeb.CarLive.Summary do
   alias TeslaMate.{Vehicles, Convert}
 
   on_mount {TeslaMateWeb.InitAssigns, :locale}
+  on_mount {TeslaMateWeb.UserAuth, :ensure_admin}
 
   @impl true
   def mount(_params, %{"summary" => %Summary{car: car} = summary} = session, socket) do

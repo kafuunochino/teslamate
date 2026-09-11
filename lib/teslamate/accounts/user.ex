@@ -10,6 +10,7 @@ defmodule TeslaMate.Accounts.User do
     field :password_hash, :string, redact: true
     field :role, Ecto.Enum, values: [:admin, :member], default: :member
     field :status, Ecto.Enum, values: [:active, :disabled], default: :active
+    field :auth_version, :integer, default: 1
     field :last_login_at, :utc_datetime_usec
     field :password_changed_at, :utc_datetime_usec
 

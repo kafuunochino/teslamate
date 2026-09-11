@@ -11,7 +11,7 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
     {:ok, address} =
       attrs
       |> Enum.into(%{radius: 100})
-      |> Locations.create_geofence()
+      |> then(&Locations.create_geofence(Repo.one!(TeslaMate.Accounts.User), &1))
 
     address
   end
@@ -30,6 +30,8 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
       })
       |> Log.create_car()
 
+    user = Repo.one!(TeslaMate.Accounts.User)
+    {:ok, _} = TeslaMate.Accounts.grant_car(user, user, car.id)
     car
   end
 

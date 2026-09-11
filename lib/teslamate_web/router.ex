@@ -79,6 +79,8 @@ defmodule TeslaMateWeb.Router do
 
     get "/sign_in", UserSessionController, :new
     post "/sign_in", UserSessionController, :create
+    get "/sign_in/verify", UserSessionController, :verify
+    post "/sign_in/verify", UserSessionController, :verify_code
     get "/register", UserRegistrationController, :new
     post "/register", UserRegistrationController, :create
   end
@@ -90,6 +92,16 @@ defmodule TeslaMateWeb.Router do
     get "/account", UserSettingsController, :edit
     put "/account/profile", UserSettingsController, :update_profile
     put "/account/password", UserSettingsController, :update_password
+    post "/account/2fa/setup", UserSettingsController, :begin_two_factor
+    post "/account/2fa/confirm", UserSettingsController, :enable_two_factor
+    post "/account/2fa/recovery-codes", UserSettingsController, :recovery_codes
+    delete "/account/2fa", UserSettingsController, :disable_two_factor
+    delete "/account/devices/others", UserSettingsController, :revoke_other_devices
+    delete "/account/devices/:id", UserSettingsController, :revoke_device
+    get "/tesla-account", TeslaFleetController, :index
+    post "/tesla-account/check", TeslaFleetController, :check
+    post "/tesla-account/configure", TeslaFleetController, :configure
+    delete "/tesla-account", TeslaFleetController, :disconnect
     get "/drive/:id/gpx", DriveController, :gpx
 
     live_session :platform,
@@ -105,6 +117,9 @@ defmodule TeslaMateWeb.Router do
       live "/charging", DashboardLive.Charging, :charging, as: :dashboard
       live "/analysis", DashboardLive.Analysis, :analysis, as: :dashboard
       live "/vehicles", VehicleLive.Index
+      live "/geo-fences", GeoFenceLive.Index
+      live "/geo-fences/new", GeoFenceLive.Form
+      live "/geo-fences/:id/edit", GeoFenceLive.Form
     end
   end
 
@@ -118,7 +133,7 @@ defmodule TeslaMateWeb.Router do
   end
 
   scope "/auth/tesla", TeslaMateWeb do
-    pipe_through [:browser, :authenticated_user, :platform_admin]
+    pipe_through [:browser, :authenticated_user]
     get "/start", TeslaFleetController, :start
   end
 
@@ -159,9 +174,6 @@ defmodule TeslaMateWeb.Router do
         {TeslaMateWeb.UserAuth, :ensure_admin}
       ] do
       live "/settings", SettingsLive.Index
-      live "/geo-fences", GeoFenceLive.Index
-      live "/geo-fences/new", GeoFenceLive.Form
-      live "/geo-fences/:id/edit", GeoFenceLive.Form
       live "/charge-cost/:id", ChargeLive.Cost
       live "/import", ImportLive.Index
     end

@@ -36,16 +36,24 @@ defmodule TeslaMate.Api do
   end
 
   def get_vehicle(name \\ @name, id) do
-    with {:ok, auth} <- fetch_auth(name) do
-      TeslaApi.Vehicle.get(auth, id)
-      |> handle_result(auth, name)
+    if name == @name and TeslaMate.TeslaFleet.fleet_collector?(id) do
+      TeslaMate.TeslaFleet.collector_vehicle(id, false)
+    else
+      with {:ok, auth} <- fetch_auth(name) do
+        TeslaApi.Vehicle.get(auth, id)
+        |> handle_result(auth, name)
+      end
     end
   end
 
   def get_vehicle_with_state(name \\ @name, id) do
-    with {:ok, auth} <- fetch_auth(name) do
-      TeslaApi.Vehicle.get_with_state(auth, id)
-      |> handle_result(auth, name)
+    if name == @name and TeslaMate.TeslaFleet.fleet_collector?(id) do
+      TeslaMate.TeslaFleet.collector_vehicle(id, true)
+    else
+      with {:ok, auth} <- fetch_auth(name) do
+        TeslaApi.Vehicle.get_with_state(auth, id)
+        |> handle_result(auth, name)
+      end
     end
   end
 

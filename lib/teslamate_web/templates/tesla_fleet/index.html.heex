@@ -1,11 +1,11 @@
 <div class="platform-page">
   <div class="page-heading">
     <div>
-      <p class="eyebrow">系统管理</p>
-      <h1>Tesla 官方接入</h1>
-      <p>通过 Tesla 官网授权，并接收车辆主动上报的电池数据。</p>
+      <p class="eyebrow">我的车辆</p>
+      <h1>Tesla 连接</h1>
+      <p>授权自己的 Tesla 账号后绑定车辆。授权凭据独立保存，车辆数据只对所属账号和平台管理员开放。</p>
     </div>
-    <a class="button is-light" href="/admin/tesla-account">返回 Tesla 连接</a>
+    <a class="button is-light" href="/vehicles">查看我的车辆</a>
   </div>
   <div class="battery-panels">
     <section class="data-card battery-panel">
@@ -23,7 +23,14 @@
             do: "重新通过 Tesla 官网授权",
             else: "前往 Tesla 官网授权" %>
         </a>
-        <p class="mt-3">原有车辆采集与历史数据继续保留。</p>
+        <p class="mt-3">历史数据会保留；更换 Tesla 账号不会覆盖其他用户的车辆归属。</p>
+        <details :if={@connected} class="mt-4">
+          <summary>解除本账号授权</summary>
+          <p>移除本账号保存的 Tesla 授权和通过该授权建立的车辆绑定，登出当前账号的所有设备。历史记录保留；其他用户的授权不受影响。</p>
+          <.form for={%{}} action="/tesla-account" method="delete" class="mt-3">
+            <button class="button is-danger is-light" type="submit">解除授权并登出</button>
+          </.form>
+        </details>
       </div>
     </section>
     <section class="data-card battery-panel">
@@ -55,7 +62,7 @@
         </div>
       </div>
       <div class="p-4">
-        <p :if={@cars == []}>完成官网授权后，这里显示已在本系统录入的车辆。</p>
+        <p :if={@cars == []}>完成官网授权后，这里显示绑定到当前账号的车辆。</p>
         <div :for={car <- @cars} class="mb-5">
           <h3><strong><%= car.name || car.model || "我的车辆" %></strong></h3>
           <p class="mb-3">
@@ -63,7 +70,7 @@
           </p>
           <.form
             for={%{}}
-            action="/admin/tesla-account/fleet/configure"
+            action="/tesla-account/configure"
             method="post"
             class="mb-3"
           >
@@ -82,7 +89,7 @@
             </div>
             <div><button class="button is-link" type="submit">启用 / 更新电池遥测</button></div>
           </.form>
-          <.form for={%{}} action="/admin/tesla-account/fleet/check" method="post">
+          <.form for={%{}} action="/tesla-account/check" method="post">
             <input type="hidden" name="vin" value={car.vin} />
             <button class="button is-light" type="submit">检查车辆授权与同步状态</button>
           </.form>

@@ -717,7 +717,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
             {:ok, %{elevation: elevation} = position} =
               call(data.deps.log, :insert_position, [drv, create_position(stream_data, data)])
 
-            geofence = call(data.deps.locations, :find_geofence, [position])
+            geofence = call(data.deps.locations, :find_geofence, [Map.put(position, :car_id, data.car.id)])
             {elevation, geofence}
           end)
 
@@ -1028,7 +1028,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
           call(data.deps.log, :start_state, [car, :online, date_opts(vehicle)])
 
         {:ok, pos} = call(data.deps.log, :insert_position, [car, create_position(vehicle, data)])
-        geofence = call(data.deps.locations, :find_geofence, [pos])
+        geofence = call(data.deps.locations, :find_geofence, [Map.put(pos, :car_id, data.car.id)])
 
         {car, last_state_change, geofence}
       end)
@@ -1364,7 +1364,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
             {:ok, pos} =
               call(data.deps.log, :insert_position, [drv, create_position(vehicle, data)])
 
-            call(data.deps.locations, :find_geofence, [pos])
+            call(data.deps.locations, :find_geofence, [Map.put(pos, :car_id, data.car.id)])
           end)
 
         {:keep_state, %{data | last_used: DateTime.utc_now(), geofence: geofence},
@@ -1376,7 +1376,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
             {:ok, pos} =
               call(data.deps.log, :insert_position, [drv, create_position(vehicle, data)])
 
-            geofence = call(data.deps.locations, :find_geofence, [pos])
+            geofence = call(data.deps.locations, :find_geofence, [Map.put(pos, :car_id, data.car.id)])
 
             {:ok, drive} =
               call(data.deps.log, :close_drive, [drv, [lookup_address: !data.import?]])
@@ -1537,7 +1537,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
           vehicle_state: vehicle_state
       }
 
-      geofence = call(data.deps.locations, :find_geofence, [position])
+      geofence = call(data.deps.locations, :find_geofence, [Map.put(position, :car_id, data.car.id)])
 
       {vehicle, geofence}
     else
@@ -1898,7 +1898,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
       Repo.transaction(fn ->
         {:ok, drive} = call(deps.log, :start_drive, [car])
         {:ok, pos} = call(deps.log, :insert_position, [drive, position])
-        geofence = call(deps.locations, :find_geofence, [pos])
+        geofence = call(deps.locations, :find_geofence, [Map.put(pos, :car_id, car.id)])
         {drive, geofence}
       end)
 

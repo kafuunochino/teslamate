@@ -30,7 +30,7 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
          }}
 
       :get, "https://fleet-api.prd.cn.vn.cloud.tesla.cn/api/1/vehicles", _, _ ->
-        {:ok, %{"response" => [%{"vin" => @vin, "id" => 123}]}}
+        {:ok, %{"response" => [%{"vin" => @vin, "id" => 123, "vehicle_id" => 456}]}}
     end)
 
     on_exit(fn ->
@@ -47,9 +47,10 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
   end
 
   @tag platform_role: :member
-  test "members cannot view, initiate, check or configure official access", %{conn: conn} do
+  test "members use their own official page while admin aliases remain protected", %{conn: conn} do
     assert get(conn, "/admin/tesla-account/fleet").status == 404
-    assert get(conn, "/auth/tesla/start").status == 404
+    assert get(conn, "/tesla-account").status == 200
+    assert get(conn, "/auth/tesla/start").status == 302
     assert post(conn, "/admin/tesla-account/fleet/check", %{vin: @vin}).status == 404
 
     assert post(conn, "/admin/tesla-account/fleet/configure", %{vin: @vin, interval: "10"}).status ==
@@ -61,7 +62,7 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
     assert redirected_to(get(conn, "/auth/tesla/start")) == "/sign_in"
 
     assert redirected_to(get(conn, "/auth/tesla/callback?code=test&state=invalid")) ==
-             "/admin/tesla-account/fleet"
+             "/tesla-account"
 
     assert TeslaFleet.connection() == nil
   end
@@ -104,10 +105,10 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
 
     html = html_response(callback, 200)
     assert html =~ "官网授权已完成"
-    assert html =~ "1;url=/admin/tesla-account/fleet"
+    assert html =~ "1;url=/tesla-account"
     assert get_resp_header(callback, "location") == []
     assert get_session(callback, :user_session_token) == get_session(conn, :user_session_token)
-    assert callback |> recycle() |> get("/admin/tesla-account/fleet") |> html_response(200)
+    assert callback |> recycle() |> get("/tesla-account") |> html_response(200)
     assert TeslaFleet.connection().access == "fleet-access"
     assert Auth.get_tokens().access == "legacy-access"
     assert Repo.query!("SELECT access FROM private.fleet_connections").rows != [["fleet-access"]]
@@ -132,13 +133,13 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
     assert {:error, :invalid_state} = TeslaFleet.consume_state(state, state, token)
   end
 
-  test "demoted admins cannot finish an already started authorization", %{
+  test "disabled users cannot finish an already started authorization", %{
     conn: conn,
     current_user: user
   } do
     token = get_session(conn, :user_session_token)
     {:ok, _, state} = TeslaFleet.start_authorization(token)
-    user |> Ecto.Changeset.change(role: :member) |> Repo.update!()
+    user |> Ecto.Changeset.change(status: :disabled) |> Repo.update!()
     assert {:error, :invalid_state} = TeslaFleet.consume_state(state, state, token)
   end
 
@@ -168,6 +169,7 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
 
     Repo.insert!(%Connection{
       id: 1,
+      authorized_by_id: user.id,
       access: "existing-fleet",
       refresh: "existing-refresh",
       expires_at: DateTime.add(DateTime.utc_now(), 3600)
@@ -183,25 +185,27 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
   end
 
   test "admin integration page renders before and after authorization without exposing credentials",
-       %{conn: conn} do
-    html = conn |> get("/admin/tesla-account/fleet") |> html_response(200)
-    assert html =~ "Tesla 官方接入"
+       %{conn: conn, current_user: user} do
+    html = conn |> get("/tesla-account") |> html_response(200)
+    assert html =~ "Tesla 连接"
     assert html =~ "/auth/tesla/start"
     refute html =~ "test-secret"
     id = System.unique_integer([:positive])
     {:ok, car} = TeslaMate.Log.create_car(%{eid: id, vid: id, vin: @vin, model: "3"})
 
+    assert {:ok, _} = Accounts.grant_car(user, user, car.id)
     Repo.insert!(%Connection{
       id: 1,
+      authorized_by_id: user.id,
       access: "private-fleet-token",
       refresh: "private-refresh",
       expires_at: DateTime.add(DateTime.utc_now(), 3600),
       vehicles: %{@vin => %{}}
     })
 
-    html = conn |> get("/admin/tesla-account/fleet") |> html_response(200)
+    html = conn |> get("/tesla-account") |> html_response(200)
     assert html =~ "fleet-interval-#{car.id}"
-    assert html =~ "/admin/tesla-account/fleet/configure"
+    assert html =~ "/tesla-account/configure"
     refute html =~ "private-fleet-token"
     refute html =~ "private-refresh"
   end

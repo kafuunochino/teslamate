@@ -3,7 +3,7 @@ defmodule TeslaMate.TeslaFleet.Connection do
   alias TeslaMate.Vault.Encrypted
 
   @schema_prefix "private"
-  @primary_key {:id, :integer, autogenerate: false}
+  @primary_key {:id, :id, autogenerate: true}
   schema "fleet_connections" do
     field :access, Encrypted.Binary, redact: true
     field :refresh, Encrypted.Binary, redact: true

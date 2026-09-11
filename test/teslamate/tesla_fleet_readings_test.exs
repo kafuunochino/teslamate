@@ -9,7 +9,12 @@ defmodule TeslaMate.TeslaFleet.ReadingsTest do
     id = System.unique_integer([:positive])
     {:ok, car} = Log.create_car(%{eid: id, vid: id, vin: @vin, model: "3"})
 
+    user = Repo.insert!(%TeslaMate.Accounts.User{
+      email: "fleet-owner-#{id}@example.com", name: "Fleet Owner", role: :admin,
+      password_hash: "test-only", password_changed_at: DateTime.utc_now()})
+    {:ok, _} = TeslaMate.Accounts.grant_car(user, user, car.id)
     Repo.insert!(%Connection{
+      authorized_by_id: user.id,
       id: 1,
       access: "test-access",
       refresh: "test-refresh",

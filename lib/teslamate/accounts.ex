@@ -1,10 +1,8 @@
 defmodule TeslaMate.Accounts do
   @moduledoc """
-  Platform accounts, sessions and vehicle-level authorization.
-
-  Tesla API credentials remain global collector credentials. Platform users
-  never receive those credentials and only see cars granted through this
-  context. Administrators are the only role that bypasses the per-car join.
+  Platform accounts, revocable sessions and exclusive vehicle ownership.
+  Ordinary users can access only their bound vehicles. Global administration
+  is separately checked against the current database role.
   """
 
   import Ecto.Query, warn: false
@@ -116,91 +114,182 @@ defmodule TeslaMate.Accounts do
   def authorized_admin?(%User{} = user), do: active_admin_actor?(user)
   def authorized_admin?(_), do: false
 
-  def sign_up_allowed?, do: TeslaMateWeb.Config.account_sign_up?()
+  def sign_up_allowed? do
+    Repo.one(from s in "account_settings", prefix: "private",
+      where: s.id == 1, select: s.allow_registration) == true
+  end
+
+  def set_registration(%User{} = actor, allowed) when is_boolean(allowed) do
+    Repo.transaction(fn ->
+      Repo.query!("SELECT pg_advisory_xact_lock(847300002)")
+      unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
+      {1, _} = Repo.update_all(
+        from(s in "account_settings", prefix: "private", where: s.id == 1),
+        set: [allow_registration: allowed])
+      audit(:registration_policy_changed, actor, metadata: %{"allowed" => allowed})
+      allowed
+    end)
+  end
+
+  def set_registration(_, _), do: {:error, :forbidden}
+
+  def register_public_user(attrs) when is_map(attrs) do
+    Repo.transaction(fn ->
+      Repo.query!("SELECT pg_advisory_xact_lock(847300002)")
+      unless sign_up_allowed?(), do: Repo.rollback(:registration_closed)
+      case register_user(attrs) do
+        {:ok, user} -> user
+        {:error, error} -> Repo.rollback(error)
+      end
+    end)
+  end
+
+  def active?(%User{id: id}), do: active_user_id?(id)
+  def active?(_), do: false
 
   ## Sessions
 
-  def create_session(%User{status: :active} = user) do
-    token = @session_bytes |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
-    current_time = now()
-    Repo.delete_all(from s in UserSession, where: s.expires_at <= ^current_time)
+  def create_session(user, metadata \\ %{})
 
-    session = %UserSession{
-      user_id: user.id,
-      token_hash: token_hash(token),
-      expires_at: DateTime.add(current_time, session_days(), :day),
-      last_seen_at: current_time
-    }
+  def create_session(%User{} = user, metadata) do
+    Repo.transaction(fn ->
+      current = Repo.one(from u in User, where: u.id == ^user.id, lock: "FOR UPDATE")
+      if is_nil(current) or current.status != :active or current.auth_version != user.auth_version,
+        do: Repo.rollback(:account_disabled)
 
-    case Repo.insert(session) do
-      {:ok, _session} -> {:ok, token}
-      {:error, changeset} -> {:error, changeset}
-    end
+      token = @session_bytes |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
+      time = now()
+      session = %UserSession{
+        user_id: current.id, token_hash: token_hash(token),
+        expires_at: DateTime.add(time, session_days(), :day), last_seen_at: time,
+        auth_version: current.auth_version,
+        user_agent: bounded_text(metadata[:user_agent], 512),
+        ip_address: bounded_text(metadata[:ip_address], 64)
+      }
+      Repo.insert!(session)
+      token
+    end)
   end
 
-  def create_session(_), do: {:error, :account_disabled}
+  def create_session(_, _), do: {:error, :account_disabled}
 
-  def get_user_by_session_token(token) when is_binary(token) do
-    current_time = now()
-
-    query =
-      from s in UserSession,
-        join: u in assoc(s, :user),
-        where:
-          s.token_hash == ^token_hash(token) and s.expires_at > ^current_time and
-            u.status == :active,
-        select: u
-
-    Repo.one(query)
+  def get_user_by_session_token(token) when is_binary(token) and byte_size(token) <= 128 do
+    time = now()
+    Repo.one(from s in UserSession,
+      join: u in assoc(s, :user),
+      where: s.token_hash == ^token_hash(token) and s.expires_at > ^time and
+        u.status == :active and s.auth_version == u.auth_version,
+      select: u, lock: "FOR SHARE")
   end
 
   def get_user_by_session_token(_), do: nil
 
-  def delete_session(token) when is_binary(token) do
-    Repo.delete_all(from s in UserSession, where: s.token_hash == ^token_hash(token))
+  def session_topic(hash) when is_binary(hash),
+    do: "platform_session:" <> Base.url_encode64(hash, padding: false)
+
+  def live_socket_id(token), do: token |> token_hash() |> session_topic()
+
+  def touch_session(token) when is_binary(token) do
+    time = now()
+    cutoff = DateTime.add(time, -60)
+    Repo.update_all(from(s in UserSession,
+      where: s.token_hash == ^token_hash(token) and s.last_seen_at < ^cutoff and s.expires_at > ^time),
+      set: [last_seen_at: time])
     :ok
   end
+  def touch_session(_), do: :ok
 
+  def list_sessions(%User{} = user, current_token) do
+    if active?(user) do
+      hash = if is_binary(current_token), do: token_hash(current_token)
+      Repo.all(from s in UserSession, where: s.user_id == ^user.id and s.expires_at > ^now(),
+        order_by: [desc: s.last_seen_at],
+        select: %{id: s.id, inserted_at: s.inserted_at, last_seen_at: s.last_seen_at,
+          expires_at: s.expires_at, user_agent: s.user_agent, ip_address: s.ip_address,
+          token_hash: s.token_hash})
+      |> Enum.map(fn row -> row |> Map.put(:current?, row.token_hash == hash) |> Map.delete(:token_hash) end)
+    else
+      []
+    end
+  end
+
+  def revoke_session(%User{} = actor, id) do
+    if active?(actor) do
+      query = from s in UserSession, where: s.user_id == ^actor.id and s.id == ^parse_id(id)
+      case remove_sessions(query) do
+        0 -> {:error, :not_found}
+        _ -> :ok
+      end
+    else
+      {:error, :forbidden}
+    end
+  end
+
+  def revoke_other_sessions(%User{} = actor, current_token) when is_binary(current_token) do
+    if not match?(%User{id: id} when id == actor.id, get_user_by_session_token(current_token)) do
+      {:error, :forbidden}
+    else
+      hash = token_hash(current_token)
+      remove_sessions(from s in UserSession, where: s.user_id == ^actor.id and s.token_hash != ^hash)
+      :ok
+    end
+  end
+
+  def delete_session(token) when is_binary(token) do
+    remove_sessions(from s in UserSession, where: s.token_hash == ^token_hash(token))
+    :ok
+  end
   def delete_session(_), do: :ok
 
-  def delete_user_sessions(%User{id: user_id}) do
-    Repo.delete_all(from s in UserSession, where: s.user_id == ^user_id)
+  def delete_user_sessions(%User{id: id}) do
+    remove_sessions(from s in UserSession, where: s.user_id == ^id)
     :ok
   end
 
-  def prune_expired_sessions do
-    {count, _} = Repo.delete_all(from s in UserSession, where: s.expires_at <= ^now())
+  def prune_expired_sessions,
+    do: remove_sessions(from s in UserSession, where: s.expires_at <= ^now())
+
+  defp remove_sessions(query) do
+    {count, hashes} = Repo.delete_all(select(query, [s], s.token_hash))
+    if Process.whereis(TeslaMate.PubSub), do: Enum.each(hashes, &TeslaMateWeb.Endpoint.broadcast(session_topic(&1), "disconnect", %{}))
     count
   end
+
+  defp bounded_text(value, limit) when is_binary(value), do: String.slice(value, 0, limit)
+  defp bounded_text(_, _), do: nil
 
   ## Profiles and administration
 
   def update_profile(%User{} = user, attrs) do
-    user |> User.profile_changeset(attrs) |> Repo.update()
+    with %User{status: :active} = current <- get_user(user.id) do
+      current |> User.profile_changeset(attrs) |> Repo.update()
+    else
+      _ -> {:error, :forbidden}
+    end
   end
 
   def update_password(%User{} = user, current_password, attrs) when is_binary(current_password) do
-    if Password.verify(current_password, user.password_hash) do
-      Repo.transaction(fn ->
-        case user |> User.password_changeset(attrs) |> Repo.update() do
-          {:ok, updated_user} ->
-            delete_user_sessions(updated_user)
-            audit(:password_changed, updated_user, target_user: updated_user)
-            updated_user
-
-          {:error, changeset} ->
-            Repo.rollback(changeset)
-        end
-      end)
-    else
-      {:error, :invalid_password}
-    end
+    Repo.transaction(fn ->
+      current = Repo.one!(from u in User, where: u.id == ^user.id, lock: "FOR UPDATE")
+      unless current.status == :active and current.auth_version == user.auth_version and Password.verify(current_password, current.password_hash),
+        do: Repo.rollback(:invalid_password)
+      changeset = current |> User.password_changeset(attrs)
+        |> Ecto.Changeset.put_change(:auth_version, current.auth_version + 1)
+      case Repo.update(changeset) do
+        {:ok, updated_user} ->
+          delete_user_sessions(updated_user)
+          audit(:password_changed, updated_user, target_user: updated_user)
+          updated_user
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
   end
 
   def bootstrap_admin(attrs) when is_map(attrs) do
     normalized_email = attrs |> Map.get(:email, Map.get(attrs, "email", "")) |> normalize_email()
     existing = get_user_by_email(normalized_email)
     changeset = User.bootstrap_admin_changeset(existing || %User{}, attrs)
+      |> Ecto.Changeset.put_change(:auth_version, if(existing, do: existing.auth_version + 1, else: 1))
 
     Repo.transaction(fn ->
       case Repo.insert_or_update(changeset) do
@@ -223,7 +312,8 @@ defmodule TeslaMate.Accounts do
       unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
 
       locked_target = Repo.one!(from u in User, where: u.id == ^target.id, lock: "FOR UPDATE")
-      changeset = User.admin_changeset(locked_target, attrs)
+      changeset = locked_target |> User.admin_changeset(attrs)
+        |> Ecto.Changeset.put_change(:auth_version, locked_target.auth_version + 1)
 
       if removes_last_active_admin?(locked_target, changeset) do
         Repo.rollback(:last_active_admin)
@@ -296,24 +386,28 @@ defmodule TeslaMate.Accounts do
   end
 
   def grant_car(%User{} = actor, %User{} = target, car_id) do
-    with true <- active_admin_actor?(actor),
-         %Car{} = car <- Repo.get(Car, parse_id(car_id)) do
-      binding = %UserCar{user_id: target.id, car_id: car.id, granted_by_user_id: actor.id}
+    Repo.transaction(fn ->
+      unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
+      target = Repo.one(from u in User, where: u.id == ^target.id and u.status == :active, lock: "FOR UPDATE")
+      if is_nil(target), do: Repo.rollback(:forbidden)
+      car = Repo.one(from c in Car, where: c.id == ^parse_id(car_id), lock: "FOR UPDATE")
+      if is_nil(car), do: Repo.rollback(:car_not_found)
+      binding = bind_exclusive!(target, car, actor.id)
+      audit(:vehicle_access_granted, actor, target_user: target, car: car)
+      binding
+    end)
+  end
 
-      case Repo.insert(binding,
-             on_conflict: :nothing,
-             conflict_target: [:user_id, :car_id]
-           ) do
-        {:ok, binding} ->
-          audit(:vehicle_access_granted, actor, target_user: target, car: car)
-          {:ok, binding}
-
-        other ->
-          other
-      end
-    else
-      false -> {:error, :forbidden}
-      nil -> {:error, :car_not_found}
+  @doc false
+  def bind_exclusive!(%User{} = user, %Car{} = car, granted_by_id) do
+    # Call within a transaction while holding the car row lock.
+    case Repo.get_by(UserCar, car_id: car.id) do
+      nil ->
+        binding = Repo.insert!(%UserCar{user_id: user.id, car_id: car.id, granted_by_user_id: granted_by_id})
+        :ok = TeslaMate.Locations.refresh_car_geofences(car.id)
+        binding
+      %UserCar{user_id: id} = binding when id == user.id -> binding
+      _ -> Repo.rollback(:vehicle_already_bound)
     end
   end
 
@@ -418,17 +512,13 @@ defmodule TeslaMate.Accounts do
 
       if is_nil(claim), do: Repo.rollback(:invalid_or_expired_claim)
 
-      binding = %UserCar{
-        user_id: user.id,
-        car_id: claim.car_id,
-        granted_by_user_id: claim.created_by_user_id
-      }
-
-      {:ok, binding} =
-        Repo.insert(binding,
-          on_conflict: :nothing,
-          conflict_target: [:user_id, :car_id]
-        )
+      car = Repo.one!(from c in Car, where: c.id == ^claim.car_id, lock: "FOR UPDATE")
+      binding =
+        case Repo.get_by(UserCar, car_id: car.id) do
+          nil -> bind_exclusive!(user, car, claim.created_by_user_id)
+          %UserCar{user_id: id} = binding when id == user.id -> binding
+          _ -> Repo.rollback(:invalid_or_expired_claim)
+        end
 
       {1, _} =
         Repo.update_all(from(c in VehicleClaim, where: c.id == ^claim.id),

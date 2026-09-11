@@ -17,7 +17,7 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
       end
 
     assigns = %{
-      geofences: Locations.list_geofences(),
+      geofences: Locations.list_geofences(socket.assigns.current_user),
       unit_of_length: unit_of_length,
       page_title: gettext("Geo-Fences")
     }
@@ -26,13 +26,10 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
   end
 
   @impl true
-  def handle_event("delete", %{"id" => id}, %{assigns: %{geofences: geofences}} = socket) do
-    {:ok, deleted_geofence} =
-      Locations.get_geofence!(id)
-      |> Locations.delete_geofence()
-
-    geofences = Enum.reject(geofences, &(&1.id == deleted_geofence.id))
-
-    {:noreply, assign(socket, geofences: geofences)}
+  def handle_event("delete", %{"id" => id}, socket) do
+    case Locations.delete_geofence(socket.assigns.current_user, id) do
+      {:ok, _} -> {:noreply, assign(socket, :geofences, Locations.list_geofences(socket.assigns.current_user))}
+      {:error, _} -> {:noreply, put_flash(socket, :error, "围栏不存在或无权操作")}
+    end
   end
 end

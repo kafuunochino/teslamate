@@ -7,6 +7,7 @@ defmodule TeslaMateWeb.CarLive.Index do
   alias TeslaMate.Settings.GlobalSettings
 
   on_mount {TeslaMateWeb.InitAssigns, :locale}
+  on_mount {TeslaMateWeb.UserAuth, :ensure_admin}
 
   @impl true
   def mount(_params, %{"settings" => settings}, socket) do

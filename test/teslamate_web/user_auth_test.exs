@@ -13,6 +13,9 @@ defmodule TeslaMateWeb.UserAuthTest do
 
   @tag auth: false
   test "a user can register, sign in and receives no vehicle access", %{conn: conn} do
+    {:ok, admin} = Accounts.bootstrap_admin(%{email: "signup-admin@example.com", name: "Signup Admin",
+      password: @valid_password, password_confirmation: @valid_password})
+    assert {:ok, true} = Accounts.set_registration(admin, true)
     email = "web-#{System.unique_integer([:positive])}@example.com"
 
     conn =

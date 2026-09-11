@@ -27,6 +27,20 @@ defmodule TeslaMate.Vehicles do
     end)
   end
 
+  def ensure_started(%Car{} = car) do
+    car = TeslaMate.Repo.preload(car, :settings)
+    if car.settings.enabled do
+      case Supervisor.start_child(@name, {Vehicle, car: car}) do
+        {:ok, _} -> :ok
+        {:error, {:already_started, _}} -> :ok
+        {:error, :already_present} -> :ok
+        _ -> {:error, :collector_start_failed}
+      end
+    else
+      :ok
+    end
+  end
+
   def kill do
     Logger.warning("Restarting #{__MODULE__} supervisor")
     __MODULE__ |> Process.whereis() |> Process.exit(:kill)
@@ -95,8 +109,13 @@ defmodule TeslaMate.Vehicles do
         fallback_vehicles()
 
       {:ok, vehicles} ->
-        vehicles
+        (vehicles ++ fleet_vehicles()) |> Enum.uniq_by(& &1.vin)
     end
+  end
+
+  defp fleet_vehicles do
+    Log.list_cars() |> Enum.filter(& &1.fleet_api)
+    |> Enum.map(fn car -> %TeslaApi.Vehicle{id: car.eid, vehicle_id: car.vid, vin: car.vin, display_name: car.name} end)
   end
 
   defp fallback_vehicles do

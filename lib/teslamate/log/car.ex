@@ -8,6 +8,7 @@ defmodule TeslaMate.Log.Car do
   @schema_prefix "public"
 
   schema "cars" do
+    field :fleet_api, :boolean, default: false
     field :name, :string
     field :efficiency, :float
     field :model, :string

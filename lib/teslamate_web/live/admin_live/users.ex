@@ -9,6 +9,14 @@ defmodule TeslaMateWeb.AdminLive.Users do
   end
 
   @impl true
+  def handle_event("registration_policy", %{"registration" => params}, socket) do
+    allowed = params["enabled"] == "true"
+    case Accounts.set_registration(socket.assigns.current_user, allowed) do
+      {:ok, _} -> {:noreply, socket |> assign(:allow_registration, allowed) |> put_flash(:success, "注册设置已保存")}
+      _ -> {:noreply, socket |> put_flash(:error, "没有修改注册设置的权限") |> redirect(to: "/sign_in")}
+    end
+  end
+
   def handle_event("create_claim", %{"claim" => %{"car_id" => car_id, "hours" => hours}}, socket) do
     hours = parse_hours(hours)
 
@@ -53,7 +61,7 @@ defmodule TeslaMateWeb.AdminLive.Users do
           {:noreply, socket |> put_flash(:success, "车辆权限已授予") |> load(new_claim: nil)}
 
         {:error, reason} ->
-          {:noreply, put_flash(socket, :error, "授权失败：#{inspect(reason)}")}
+          {:noreply, put_flash(socket, :error, "授权失败：#{access_error(reason)}")}
       end
     else
       nil -> {:noreply, put_flash(socket, :error, "用户不存在")}
@@ -85,6 +93,7 @@ defmodule TeslaMateWeb.AdminLive.Users do
         socket,
         [
           page_title: "用户与车辆权限",
+          allow_registration: Accounts.sign_up_allowed?(),
           users: users,
           cars: Log.list_cars(),
           claims: Accounts.list_vehicle_claims(socket.assigns.current_user),
@@ -97,6 +106,9 @@ defmodule TeslaMateWeb.AdminLive.Users do
       |> redirect(to: "/sign_in")
     end
   end
+
+  defp access_error(:vehicle_already_bound), do: "车辆已有所属账号，请先核对并撤销原归属"
+  defp access_error(_), do: "账号或车辆状态已变化，请刷新后重试"
 
   defp parse_hours(value) do
     case Integer.parse(to_string(value)) do

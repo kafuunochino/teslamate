@@ -57,7 +57,7 @@ defmodule TeslaMateWeb.Config do
   def hsts?, do: truthy?(System.get_env("TESLAMATE_HSTS", "false"))
 
   @doc "Allow creation of member accounts. New accounts have no vehicle access."
-  def account_sign_up?, do: truthy?(System.get_env("TESLAMATE_ALLOW_SIGN_UP", "true"))
+  def account_sign_up?, do: TeslaMate.Accounts.sign_up_allowed?()
 
   @doc "Lifetime of a platform login session in days."
   def account_session_days,

@@ -7,6 +7,9 @@ defmodule TeslaMate.Accounts.UserSession do
     field :token_hash, :binary, redact: true
     field :expires_at, :utc_datetime_usec
     field :last_seen_at, :utc_datetime_usec
+    field :user_agent, :string
+    field :ip_address, :string
+    field :auth_version, :integer, default: 1
 
     belongs_to :user, TeslaMate.Accounts.User
 

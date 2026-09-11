@@ -46,7 +46,7 @@ defmodule TeslaMate.Settings do
 
   def update_car_settings(%CarSettings{car: %Car{}} = pre, attrs) do
     Repo.transaction(fn ->
-      with {:ok, post} <- pre |> CarSettings.changeset(attrs) |> Repo.update(),
+      with {:ok, post} <- pre |> collector_changeset(attrs) |> Repo.update(),
            :ok <- on_enabled_change(pre, post),
            :ok <- broadcast(pre.car, post) do
         post
@@ -61,8 +61,13 @@ defmodule TeslaMate.Settings do
   end
 
   def change_car_settings(%CarSettings{} = car_settings, attrs \\ %{}) do
-    CarSettings.changeset(car_settings, attrs)
+    collector_changeset(car_settings, attrs)
   end
+
+  defp collector_changeset(%CarSettings{car: %Car{fleet_api: true}} = settings, attrs) do
+    settings |> CarSettings.changeset(attrs) |> Ecto.Changeset.put_change(:use_streaming_api, false)
+  end
+  defp collector_changeset(settings, attrs), do: CarSettings.changeset(settings, attrs)
 
   def topic(%Car{id: id}), do: inspect(CarSettings) <> to_string(id)
 

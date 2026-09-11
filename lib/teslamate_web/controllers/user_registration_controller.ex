@@ -40,12 +40,17 @@ defmodule TeslaMateWeb.UserRegistrationController do
     end
   end
 
+  def create(conn, _params), do: conn |> put_status(:unprocessable_entity) |> new(%{})
+
   defp register(conn, user_params) do
-    case Accounts.register_user(user_params) do
+    case Accounts.register_public_user(user_params) do
       {:ok, user} ->
         conn
-        |> put_flash(:success, "账号创建成功。请使用管理员提供的车辆认领码绑定车辆。")
+        |> put_flash(:success, "账号创建成功。请在 Tesla 连接中授权自己的车辆，或使用管理员提供的认领码。")
         |> UserAuth.log_in_user(user)
+
+      {:error, :registration_closed} ->
+        conn |> put_status(:not_found) |> put_view(TeslaMateWeb.ErrorView) |> render("404.html")
 
       {:error, changeset} ->
         conn

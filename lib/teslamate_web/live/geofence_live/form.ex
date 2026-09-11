@@ -1,11 +1,9 @@
 defmodule TeslaMateWeb.GeoFenceLive.Form do
   use TeslaMateWeb, :live_view
 
-  require Logger
-
   alias TeslaMateWeb.GeoFenceLive
 
-  alias TeslaMate.{Log, Locations, Settings}
+  alias TeslaMate.Locations
   alias TeslaMate.Settings.GlobalSettings
   alias TeslaMate.Locations.GeoFence
   alias TeslaMate.Log.Position
@@ -14,15 +12,15 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
 
   @impl true
   def mount(%{"id" => id}, %{"settings" => settings}, socket) do
-    geofence = Locations.get_geofence!(id)
-
-    {:ok, base_assigns(socket, geofence, settings, :edit)}
+    case Locations.get_geofence(socket.assigns.current_user, id) do
+      nil -> {:ok, socket |> put_flash(:error, "围栏不存在或无权访问") |> redirect(to: "/geo-fences")}
+      geofence -> {:ok, base_assigns(socket, geofence, settings, :edit)}
+    end
   end
 
   def mount(%{"lat" => lat, "lng" => lng}, %{"settings" => settings}, socket) do
-    {:ok, settings} = set_grafana_url(settings, socket)
-
     geofence = %GeoFence{
+      user_id: socket.assigns.current_user.id,
       radius: 20,
       latitude: lat,
       longitude: lng
@@ -33,12 +31,13 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
 
   def mount(_params, %{"settings" => settings}, socket) do
     %{latitude: lat, longitude: lng} =
-      case Log.get_latest_position() do
+      case Locations.latest_owned_position(socket.assigns.current_user) do
         %Position{latitude: lat, longitude: lng} -> %{latitude: lat, longitude: lng}
         nil -> %{latitude: 0.0, longitude: 0.0}
       end
 
     geofence = %GeoFence{
+      user_id: socket.assigns.current_user.id,
       radius: 20,
       latitude: lat,
       longitude: lng
@@ -64,17 +63,19 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
     else
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, changeset: changeset, show_errors: true)}
+      {:error, :forbidden} -> {:noreply, redirect(socket, to: "/geo-fences")}
     end
   end
 
   def handle_event("calc-costs", %{"result" => result}, socket) do
     case save(socket) do
+      {:error, :forbidden} -> {:noreply, redirect(socket, to: "/geo-fences")}
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, changeset: changeset, show_modal: false, show_errors: true)}
 
       {:ok, socket} ->
         if result == "yes" do
-          :ok = Locations.calculate_charge_costs(socket.assigns.geofence)
+          :ok = Locations.calculate_charge_costs(socket.assigns.current_user, socket.assigns.geofence)
         end
 
         {:noreply, socket}
@@ -101,7 +102,6 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
       settings: settings,
       geofence: geofence,
       changeset: Locations.change_geofence(geofence),
-      car_settings: Settings.get_car_settings(),
       charges_without_costs: 0,
       show_errors: false,
       show_modal: false,
@@ -154,8 +154,8 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
 
     with {:ok, %GeoFence{name: name} = geofence} <-
            (case action do
-              :new -> Locations.create_geofence(params)
-              :edit -> Locations.update_geofence(geofence, params)
+              :new -> Locations.create_geofence(assigns.current_user, params)
+              :edit -> Locations.update_geofence(assigns.current_user, geofence, params)
             end) do
       socket =
         socket
@@ -164,20 +164,6 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
         |> push_navigate(to: Routes.live_path(socket, GeoFenceLive.Index))
 
       {:ok, socket}
-    end
-  end
-
-  defp set_grafana_url(settings, socket) do
-    with nil <- settings.grafana_url,
-         %{"referrer" => referrer} when is_binary(referrer) <- get_connect_params(socket),
-         %URI{path: path} = url when is_binary(path) <- URI.parse(referrer),
-         [_, _, _ | path] <- path |> String.split("/") |> Enum.reverse(),
-         url = %URI{url | path: Enum.join([nil | path], "/"), query: nil} |> URI.to_string(),
-         {:ok, settings} <- Settings.update_global_settings(settings, %{grafana_url: url}) do
-      {:ok, settings}
-    else
-      {:error, reason} -> Logger.warning("Updating settings failed: #{inspect(reason)}")
-      _ -> {:ok, settings}
     end
   end
 
