@@ -54,6 +54,11 @@
       src={Routes.static_path(@conn, "/assets/app.js")}
     >
     </script>
+    <meta
+      :if={@conn.assigns[:tesla_fleet_completed]}
+      http-equiv="refresh"
+      content="1;url=/admin/tesla-account/fleet"
+    />
   </head>
   <% current_user = @conn.assigns[:current_user] %>
   <body class={if current_user, do: "platform-body", else: "auth-body"} tabindex="0">

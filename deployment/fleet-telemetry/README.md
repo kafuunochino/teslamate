@@ -21,9 +21,10 @@ Telemetry supplements the battery, driving and charging dashboards.
    its CA in the application. Keep the proxy and MQTT broker off public ports.
 5. Create protected app-config/client.json, proxy/, receiver/, and mqtt/ under
    TESLA_FLEET_DIR. Never commit these files. The application/proxy/receiver run
-   as uid 1000; their configuration directories should only be readable by that
-   uid and root. MQTT must require authentication with separate publisher and
-   subscriber ACLs and persistent storage.
+   with different identities: the application uses uid 10000 / gid 10001, while
+   the proxy and receiver use uid/gid 1000. Make each configuration directory
+   readable only by root and its service group. MQTT must require authentication
+   with separate publisher/subscriber ACLs and persistent storage.
 6. Back up PostgreSQL and the existing encryption/session keys. Build and migrate
    with both Compose files, preserving the current .env and database volume.
    Pin TESLA_COMMAND_IMAGE to the verified deployed image digest.
@@ -51,7 +52,10 @@ are rejected. Missing and invalid values are never displayed as zero.
 OAuth state is single-use, expires in 10 minutes and is bound to the initiating
 admin session. A narrowly scoped encrypted SameSite=Lax callback cookie permits
 Tesla's cross-site return without weakening the application's Strict session
-cookie. The callback rechecks the administrator session. Fleet tokens are
+cookie. After validating the administrator session, the callback returns a
+200 confirmation document before navigating within this site. This breaks the
+cross-site redirect chain so browsers send the Strict login cookie on the next
+request. The callback uses no-store and no-referrer headers. Fleet tokens are
 encrypted using the existing vault and serialized refresh writes preserve token
 rotation. Credentials are never rendered to the browser.
 

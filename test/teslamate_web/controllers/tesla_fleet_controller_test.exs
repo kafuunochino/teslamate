@@ -102,7 +102,12 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
       |> put_req_header("cookie", @cookie <> "=" <> cookie)
       |> get("/auth/tesla/callback", %{"code" => "one-time-code", "state" => state})
 
-    assert redirected_to(callback) == "/admin/tesla-account/fleet"
+    html = html_response(callback, 200)
+    assert html =~ "官网授权已完成"
+    assert html =~ "1;url=/admin/tesla-account/fleet"
+    assert get_resp_header(callback, "location") == []
+    assert get_session(callback, :user_session_token) == get_session(conn, :user_session_token)
+    assert callback |> recycle() |> get("/admin/tesla-account/fleet") |> html_response(200)
     assert TeslaFleet.connection().access == "fleet-access"
     assert Auth.get_tokens().access == "legacy-access"
     assert Repo.query!("SELECT access FROM private.fleet_connections").rows != [["fleet-access"]]

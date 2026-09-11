@@ -77,8 +77,11 @@ defmodule TeslaMateWeb.TeslaFleetController do
          {:ok, _} <- TeslaFleet.connect(code, user) do
       conn
       |> put_session(:user_session_token, token)
+      |> assign(:current_user, user)
+      |> assign(:current_user_session_token, token)
+      |> assign(:tesla_fleet_completed, true)
       |> put_flash(:info, "Tesla 官网授权成功，现有采集与历史数据已保留")
-      |> redirect(to: @page)
+      |> render("completed.html", page_title: "Tesla 授权成功")
     else
       {:error, reason} -> failure(conn, reason)
       _ -> failure(conn, :invalid_state)
