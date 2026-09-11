@@ -1,7 +1,7 @@
 defmodule TeslaMateWeb.MapController do
   use TeslaMateWeb, :controller
 
-  alias TeslaMate.Maps
+  alias TeslaMate.{Accounts, Maps}
   alias TeslaMate.Maps.{AmapProxy, Settings}
 
   plug :require_map_user
@@ -13,6 +13,14 @@ defmodule TeslaMateWeb.MapController do
   end
 
   def proxy(conn, %{"path" => path}) do
+    if path == ["v3", "geocode", "geo"] and not Accounts.admin?(conn.assigns[:current_user]) do
+      conn |> put_status(:forbidden) |> json(%{error: "administrator_required"})
+    else
+      proxy_request(conn, path)
+    end
+  end
+
+  defp proxy_request(conn, path) do
     case Maps.get_settings!() do
       %Settings{provider: :amap} = settings ->
         case AmapProxy.request(settings, path, conn.query_string) do

@@ -15,6 +15,12 @@ defmodule TeslaMateWeb.MapControllerTest do
     assert conn |> get("/_AMapService/v4/map/styles") |> json_response(404)
   end
 
+  @tag platform_role: :member
+  test "members cannot use the administrator geofence address lookup", %{conn: conn} do
+    assert conn |> get("/_AMapService/v3/geocode/geo?address=Guiyang") |> json_response(403) ==
+             %{"error" => "administrator_required"}
+  end
+
   test "default provider keeps dynamic evaluation and provider scripts disabled", %{conn: conn} do
     page = get(conn, "/admin/settings")
     [policy] = get_resp_header(page, "content-security-policy")

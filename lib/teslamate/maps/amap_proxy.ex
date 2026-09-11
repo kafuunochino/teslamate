@@ -3,9 +3,9 @@ defmodule TeslaMate.Maps.AmapProxy do
 
   alias TeslaMate.Maps.Settings
 
-  # Only the map SDK's read endpoints. No arbitrary upstream URLs, route
-  # planners or other paid Web Service APIs can be called through this proxy.
-  @rest_paths ~w(v3/log/init v4/log v4/maps v4/map/lite v4/map/config v3/coordinate/convert)
+  # Map rendering and explicit geofence address lookup only. The controller
+  # restricts address lookup to administrators; arbitrary URLs remain blocked.
+  @rest_paths ~w(v3/log/init v4/log v4/maps v4/map/lite v4/map/config v3/coordinate/convert v3/geocode/geo)
   @style_paths ~w(v4/map/styles v4/map/styles/data v4/map/styles/info)
 
   def request(

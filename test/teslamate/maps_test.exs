@@ -95,6 +95,22 @@ defmodule TeslaMate.MapsTest do
              AmapProxy.upstream_url(config, ["v4", "map", "styles"], "callback=alert(1)")
   end
 
+  test "proxy permits geofence address lookup but blocks other web service APIs" do
+    config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
+
+    assert {:ok, url} =
+             AmapProxy.upstream_url(config, ["v3", "geocode", "geo"], "address=Guiyang&key=untrusted")
+
+    uri = URI.parse(url)
+    assert uri.host == "restapi.amap.com"
+    assert uri.path == "/v3/geocode/geo"
+    assert URI.decode_query(uri.query)["address"] == "Guiyang"
+    assert URI.decode_query(uri.query)["key"] == @key
+
+    assert {:error, :invalid_request} =
+             AmapProxy.upstream_url(config, ["v3", "place", "around"], "")
+  end
+
   test "proxy handles failures without exposing upstream secrets" do
     config = %Settings{provider: :amap, amap_key: @key, amap_security_code: @code}
 

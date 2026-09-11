@@ -193,6 +193,7 @@ export function createVehicleMapHook(createLeaflet, dependencies = {}) {
       return response.json();
     });
   const loadSDK = dependencies.loadSDK || loadAMap;
+  const createAMap = dependencies.createAMap || createAMapAdapter;
 
   return {
     mounted() {
@@ -200,7 +201,10 @@ export function createVehicleMapHook(createLeaflet, dependencies = {}) {
       this.el.classList.add("vehicle-map");
       this.canvas = doc.createElement("div");
       this.canvas.className = "vehicle-map__canvas";
-      this.canvas.setAttribute("aria-label", "车辆位置地图");
+      this.canvas.setAttribute(
+        "aria-label",
+        this.el.dataset.mapLabel || "车辆位置地图",
+      );
       this.status = doc.createElement("div");
       this.status.className = "vehicle-map__status";
       this.status.setAttribute("role", "status");
@@ -273,7 +277,7 @@ export function createVehicleMapHook(createLeaflet, dependencies = {}) {
         };
         this.timeout = win.setTimeout(options.failed, 20000);
         this.adapter = AMap
-          ? createAMapAdapter(AMap, this.canvas, options)
+          ? createAMap(AMap, this.canvas, options)
           : createLeaflet(this.canvas, options);
         this.updated();
       } catch (error) {

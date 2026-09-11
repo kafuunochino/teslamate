@@ -88,3 +88,55 @@
     background-color: var(--platform-text);
   }
 }
+
+.geofence-heading {
+  margin-bottom: 24px;
+  align-items: flex-start;
+
+  > div { max-width: 780px; }
+  > .button { flex-shrink: 0; }
+  p:not(.page-kicker) { line-height: 1.8; }
+}
+
+.geofence-empty {
+  margin-bottom: 20px;
+  color: var(--platform-muted);
+}
+
+.geofence-search {
+  margin-bottom: 16px;
+}
+
+.geofence-search-controls {
+  display: flex;
+  gap: 10px;
+
+  .input { min-width: 0; }
+  .button { flex-shrink: 0; }
+}
+
+.geofence-search-results {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+
+  .geofence-search-result {
+    width: 100%;
+    height: auto;
+    justify-content: flex-start;
+    white-space: normal;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+}
+
+.geofence-radius {
+  max-width: 260px;
+  margin-top: 16px;
+}
+
+.geofence-map {
+  overflow: hidden;
+  border: 1px solid var(--platform-border);
+  border-radius: 12px;
+}

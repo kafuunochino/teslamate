@@ -1,4 +1,7 @@
 import { createVehicleMapHook } from "./vehicle-map.mjs";
+import { createGeoFenceMapHook, createLeafletGeoFenceAdapter } from "./geofence-map.mjs";
+import { geocoders } from "leaflet-control-geocoder";
+import "@geoman-io/leaflet-geoman-free";
 import { initializeTheme } from "./theme.mjs";
 import {
   toBeijingTime as toLocalTime,
@@ -95,8 +98,6 @@ export const ConfirmGeoFenceDeletion = {
 import {
   Map as M,
   TileLayer,
-  LatLng,
-  Control,
   Marker,
   Icon,
   Circle,
@@ -153,15 +154,6 @@ function createMap(opts) {
   const osm = new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
   });
-
-  if (opts.enableHybridLayer) {
-    const hybrid = new TileLayer(
-      "http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
-      { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"] },
-    );
-
-    new Control.Layers({ OSM: osm, Hybrid: hybrid }).addTo(map);
-  }
 
   map.addLayer(osm);
 
@@ -420,84 +412,14 @@ export const TriggerChange = {
   },
 };
 
-import("leaflet-control-geocoder");
-import("@geoman-io/leaflet-geoman-free");
-
-export const Map = {
-  mounted() {
-    const geoFence = (name) =>
-      document.querySelector(`input[name='geo_fence[${name}]']`);
-
-    const $radius = geoFence("radius");
-    const $latitude = geoFence("latitude");
-    const $longitude = geoFence("longitude");
-
-    const location = new LatLng($latitude.value, $longitude.value);
-
-    const controlOpts = {
-      position: "topleft",
-      cutPolygon: false,
-      drawCircle: false,
-      drawCircleMarker: false,
-      drawMarker: false,
-      drawPolygon: false,
-      drawPolyline: false,
-      drawRectangle: false,
-      removalMode: false,
-    };
-
-    const editOpts = {
-      allowSelfIntersection: false,
-      preventMarkerRemoval: true,
-    };
-
-    const map = createMap({ enableHybridLayer: true });
-    map.setView(location, 17, { animate: false });
-    const language = document.documentElement.lang.toLowerCase();
-    const mapLanguage =
-      { "zh-hans": "zh", "zh-hant": "zh_tw" }[language] || language || "en";
-    map.pm.setLang(mapLanguage);
-    map.pm.addControls(controlOpts);
-    map.pm.enableGlobalEditMode(editOpts);
-
-    const circle = new Circle(location, { radius: $radius.value })
-      .addTo(map)
-      .on("pm:edit", (e) => {
-        const { lat, lng } = e.target.getLatLng();
-        const radius = Math.round(e.target.getRadius());
-
-        $radius.value = radius;
-        $latitude.value = lat;
-        $longitude.value = lng;
-
-        const mBox = map.getBounds();
-        const cBox = circle.getBounds();
-        const bounds = mBox.contains(cBox) ? mBox : cBox;
-        map.fitBounds(bounds);
-      });
-
-    new Control.geocoder({ defaultMarkGeocode: false })
-      .on("markgeocode", (e) => {
-        const { bbox, center } = e.geocode;
-
-        circle.setLatLng(center);
-
-        const lBox = bbox;
-        const cBox = circle.getBounds();
-        const bounds = cBox.contains(lBox) ? cBox : lBox;
-
-        map.fitBounds(bounds);
-        map.pm.enableGlobalEditMode();
-
-        const { lat, lng } = center;
-        $latitude.value = lat;
-        $longitude.value = lng;
-      })
-      .addTo(map);
-
-    map.fitBounds(circle.getBounds(), { animate: false });
-  },
-};
+export const GeoFenceMap = createGeoFenceMapHook((canvas, options) =>
+  createLeafletGeoFenceAdapter(
+    { Map: M, TileLayer, Circle },
+    new geocoders.Nominatim(),
+    canvas,
+    options,
+  ),
+);
 
 export const Modal = {
   _freeze() {

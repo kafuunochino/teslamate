@@ -7,15 +7,26 @@
   </ul>
 </nav>
 
-<.link
-  navigate={Routes.live_path(@socket, TeslaMateWeb.GeoFenceLive.Form)}
-  class="button is-info is-small is-rounded is-pulled-right mb-4"
->
-  <span><%= gettext("Create") %></span>
-  <span class="icon">
-    <span class="mdi mdi-plus"></span>
-  </span>
-</.link>
+<header class="page-heading geofence-heading">
+  <div>
+    <p class="page-kicker">常用地点与充电计费</p>
+    <h1>地理围栏</h1>
+    <p>
+      为家、公司或常用充电站划定范围。行程起点、终点和充电记录落在范围内时，会显示你设置的地点名称；还可设置该地点的充电计费规则。
+    </p>
+  </div>
+  <.link
+    navigate={Routes.live_path(@socket, TeslaMateWeb.GeoFenceLive.Form)}
+    class="button is-info"
+  >
+    <span class="icon"><span class="mdi mdi-plus"></span></span>
+    <span><%= gettext("Create") %></span>
+  </.link>
+</header>
+
+<%= if @geofences == [] do %>
+  <p class="geofence-empty">还没有地理围栏。点击“新建”，在地图上选择地点并设置范围。</p>
+<% end %>
 
 <div class="responsive-table">
   <table class="table is-fullwidth">

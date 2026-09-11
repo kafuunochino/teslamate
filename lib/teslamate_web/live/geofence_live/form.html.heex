@@ -13,6 +13,16 @@
   </ul>
 </nav>
 
+<header class="page-heading geofence-heading">
+  <div>
+    <p class="page-kicker">常用地点与充电计费</p>
+    <h1><%= if @action == :new, do: "新建地理围栏", else: "编辑地理围栏" %></h1>
+    <p>
+      为地点命名并划定范围，系统会据此识别行程起终点和充电地点；填写计费规则后，可计算该地点的充电费用。
+    </p>
+  </div>
+</header>
+
 <.form :let={f} for={@changeset} phx-change="validate" phx-submit="save" class="geofence">
   <div class="field is-horizontal">
     <div class="field-label is-normal">
@@ -21,13 +31,46 @@
     <div class="field-body">
       <div class="field">
         <div class="control">
-          <div id="map_container" phx-update="ignore">
-            <figure id="map" class="geofence-map" style="position: relative;" phx-hook="Map">
+          <div id="geofence_search" class="geofence-search" phx-update="ignore">
+            <label for="geofence_query" class="label">查找地点</label>
+            <div class="geofence-search-controls">
+              <input
+                id="geofence_query"
+                type="search"
+                class="input"
+                placeholder="输入城市、地址或地点名称"
+                autocomplete="off"
+                data-geofence-query
+              />
+              <button type="button" class="button is-info" data-geofence-search disabled>
+                搜索
+              </button>
+            </div>
+            <p class="help" role="status" data-geofence-search-status></p>
+            <div class="geofence-search-results" data-geofence-results></div>
+          </div>
+          <div id="map_container">
+            <figure
+              id="map"
+              class="geofence-map"
+              phx-hook="GeoFenceMap"
+              phx-update="ignore"
+              data-map-label="地理围栏地图"
+              data-latitude={input_value(f, :latitude)}
+              data-longitude={input_value(f, :longitude)}
+              data-radius={input_value(f, :radius)}
+            >
             </figure>
+          </div>
+          <p class="help">
+            地图跟随系统设置中的地图提供商和当前颜色模式。搜索后选择地点，也可点击地图或拖动圆心定位，拖动圆边缘调整范围。修改后点击“保存”才会生效。
+          </p>
+          <div class="geofence-radius">
+            <%= label(f, :radius, "范围半径（米）", class: "label") %>
+            <%= number_input(f, :radius, class: "input", min: 1, max: 4999, step: 1) %>
           </div>
           <%= hidden_input(f, :latitude) %>
           <%= hidden_input(f, :longitude) %>
-          <%= hidden_input(f, :radius) %>
         </div>
         <%= if @show_errors do %>
           <p class="help is-danger">

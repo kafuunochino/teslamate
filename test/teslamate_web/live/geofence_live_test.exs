@@ -34,6 +34,15 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
   end
 
   describe "Index" do
+    test "explains the purpose and offers creation when there are no fences", %{conn: conn} do
+      assert {:ok, _view, html} = live(conn, "/geo-fences")
+      document = Floki.parse_document!(html)
+      assert document |> Floki.find("h1") |> Floki.text() == "地理围栏"
+      assert html =~ "行程起点、终点和充电记录"
+      assert html =~ "充电计费规则"
+      assert html =~ "还没有地理围栏"
+    end
+
     test "renders all geo-fences", %{conn: conn} do
       _gf1 =
         geofence_fixture(%{name: "Post office", latitude: -25.066188, longitude: -130.100502})
@@ -109,6 +118,26 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
   end
 
   describe "Edit" do
+    test "uses the shared map editor without rewriting stored coordinates on validation", %{conn: conn} do
+      fence = geofence_fixture(%{name: "Home", latitude: 26.647123, longitude: 106.630456})
+      assert {:ok, view, html} = live(conn, "/geo-fences/#{fence.id}/edit")
+      assert html =~ "编辑地理围栏"
+      assert html =~ ~s(phx-hook="GeoFenceMap")
+      refute html =~ ~s(phx-hook="Map")
+      assert html =~ ~s(data-map-label="地理围栏地图")
+
+      render_change(view, :validate, %{geo_fence: %{name: "Home draft", radius: "150"}})
+      stored = Locations.get_geofence!(fence.id)
+      assert stored.latitude == fence.latitude
+      assert stored.longitude == fence.longitude
+      assert stored.radius == fence.radius
+
+      html = render(view) |> Floki.parse_document!()
+      assert html |> Floki.find("#geo_fence_radius") |> Floki.attribute("value") == ["150"]
+      assert html |> Floki.find("#geo_fence_latitude") |> Floki.attribute("value") == ["26.647123"]
+      assert html |> Floki.find("#geo_fence_longitude") |> Floki.attribute("value") == ["106.630456"]
+    end
+
     test "validates changes when editing of a geo-fence", %{conn: conn} do
       %GeoFence{id: id} =
         geofence_fixture(%{
