@@ -119,4 +119,28 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
 
     assert {:error, {:redirect, %{to: "/trips"}}} = live(conn, "/trips/#{other_drive.id}")
   end
+  test "official boundaries agree across list, detail, home, driving and analysis", %{
+    conn: conn, current_user: user, car: car, drive: drive
+  } do
+    alias TeslaMate.TeslaFleet.Energy
+    Energy.record(car.id, "EnergyRemaining", 50.0, drive.start_date)
+    Energy.record(car.id, "EnergyRemaining", 49.0, drive.end_date)
+    for {url, selector} <- [{"/trips", "#trip-row-#{drive.id}"},
+                           {"/trips/#{drive.id}", "#trip-energy-summary"},
+                           {"/", ".activity-list"}] do
+      {:ok, view, _} = live(conn, url)
+      assert has_element?(view, selector, "200.0 Wh/km")
+      assert has_element?(view, selector, "1.00 kWh")
+      assert render(view) =~ "官方电池能量差估算"
+    end
+    report = Fleet.driving(user, car.id)
+    assert report.metrics.net_energy == 1.0
+    assert report.metrics.consumption == 200
+    assert report.metrics.energy_source == :fleet_battery
+    analysis = Fleet.analysis(user, car.id)
+    assert analysis.drive.consumption_wh_km == 200
+    assert analysis.drive.official_count == 1
+    assert analysis.drive.energy_count == 1
+  end
+
 end

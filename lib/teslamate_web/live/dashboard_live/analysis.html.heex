@@ -22,7 +22,7 @@
       <.score_card
         label="能效表现"
         value={@report.scores.efficiency}
-        hint="基于续航变化估算，并非电池 BMS 实测"
+        hint={"与行程轨迹相同口径：#{@report.drive.official_count} / #{@report.drive.energy_count} 程使用官方电池采样"}
       />
       <.score_card
         label="用车模式"

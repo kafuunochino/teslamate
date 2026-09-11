@@ -1,19 +1,14 @@
 <div id="battery-dashboard" class="platform-page battery-dashboard" phx-hook="DrivingDashboard">
   <header class="page-heading">
     <div>
-      <p class="page-kicker">健康与能效</p>
+      <p class="page-kicker">电池状态与长期变化</p>
       <h1>电池</h1>
-      <p>电量、续航、电池与驱动系统温度，以及长期变化。</p>
+      <p>电量、续航、模组温度与容量趋势。</p>
     </div>
-    <.vehicle_picker
-      :if={@report && @report.cars != []}
-      cars={@report.cars}
-      current_car={@report.car}
-    />
+    <.vehicle_picker :if={@report && @report.cars != []}
+      cars={@report.cars} current_car={@report.car} />
   </header>
-
   <.no_vehicle :if={@report && !@report.car} admin={TeslaMate.Accounts.admin?(@current_user)} />
-
   <div class="drive-disconnected" role="status">连接已中断，显示的是旧数据，正在尝试重连。</div>
   <p :if={@battery_error} class="drive-notice" role="status">暂时无法读取数据，正在等待重新连接。</p>
 
@@ -26,106 +21,52 @@
     </div>
     <.battery_panel data={@report.battery_data} />
     <.range_picker days={@report.days} />
+    <% capacity? = @report.history_source != :range_estimate %>
+    <% basis = case @report.history_source do
+      :fleet_capacity -> "官方标称满电能量"
+      :fleet_normalized -> "官方剩余能量 / SOC 归一化估算"
+      _ -> "额定续航归一化估算"
+    end %>
     <section class="metrics-grid">
-      <.metric_card
-        title="归一化续航损耗估算"
-        value={
-          if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"
-        }
-        hint="按所选时间范围比较；不是官方 SOH 或电池容量检测"
-        icon="battery-heart-variant"
-        tone="amber"
-      />
-      <.metric_card
-        title="充入电量"
-        value={energy(@report.charge_stats.energy_added)}
-        hint={"最近 #{@report.days} 天"}
-        icon="lightning-bolt"
-        tone="cyan"
-      />
-      <.metric_card
-        title="电池类型"
+      <.metric_card title="所选时期的容量变化估算"
+        value={if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"}
+        hint="正值表示下降、负值表示回升；不是出厂衰减率或官方 SOH"
+        icon="battery-heart-variant" tone="amber" />
+      <.metric_card title="趋势数据来源" value={basis}
+        hint="同一曲线使用相同口径，不混合容量与续航基线" icon="chart-line" tone="cyan" />
+      <.metric_card title="电池类型"
         value={if @report.car.settings.lfp_battery, do: "LFP", else: "未标记为 LFP"}
-        hint="来自车辆设置，不通过电量或续航反推"
-        icon="car-battery"
-        tone="slate"
-      />
+        hint="来自车辆设置，不通过电量或续航反推" icon="car-battery" tone="slate" />
     </section>
-
+    <p id="battery-capacity-source" class="drive-method">
+      <%= if capacity? do %>
+        优先使用车辆上报的满电能量；缺少该字段时，用同一采样的剩余能量和 SOC 估算，仅采用 20%～95% 电量样本。
+        至少 7 个有效采样日后比较初期与近期中位数的均值。温度、SOC 区间和 BMS 校准会影响结果。
+      <% else %>
+        当前缺少可用于容量趋势的官方电池历史采样，暂用归一化额定续航。新采样会逐步积累，历史行程不会使用当前电池读数重算。
+      <% end %>
+    </p>
     <section :if={@report.degradation} class="data-card degradation-card">
       <div class="data-card__header">
-        <div>
-          <p class="section-kicker">长期趋势</p>
-          <h2>归一化满电额定续航</h2>
-        </div>
-        <span>需结合温度、轮胎、软件版本解读</span>
+        <div><p class="section-kicker">长期趋势</p><h2><%= basis %></h2></div>
+        <span>比较所选时期，不等同于电池健康检测</span>
       </div>
       <div class="degradation-comparison">
-        <div>
-          <span>时间范围初期</span><strong><%= distance(@report.degradation.baseline_range) %></strong>
-        </div>
-        <i class="mdi mdi-arrow-right"></i>
-        <div>
-          <span>时间范围近期</span><strong><%= distance(@report.degradation.current_range) %></strong>
-        </div>
-        <div class="degradation-loss">
-          <span>估算变化</span><strong>-<%= percentage(@report.degradation.loss_percent) %></strong>
-        </div>
+        <div><span>时间范围初期</span><strong><%= if capacity?, do: energy(@report.degradation.baseline, 2), else: distance(@report.degradation.baseline) %></strong></div>
+        <i class="mdi mdi-arrow-right" aria-hidden="true"></i>
+        <div><span>时间范围近期</span><strong><%= if capacity?, do: energy(@report.degradation.current, 2), else: distance(@report.degradation.current) %></strong></div>
       </div>
     </section>
-
-    <.bar_chart
-      title="每日归一化满电额定续航"
-      rows={Enum.map(@report.history, &%{period: &1.period, value: &1.full_range})}
-      unit=" km"
-      empty="当前范围内缺少足够的电量与额定续航样本"
-    />
-
-    <div class="content-grid">
-      <section class="data-card">
-        <div class="data-card__header">
-          <h2>充电累计</h2>
-        </div>
-        <div class="detail-grid">
-          <div><span>充电会话</span><strong><%= @report.charge_stats.count %> 次</strong></div>
-          <div>
-            <span>充入电量</span><strong><%= energy(@report.charge_stats.energy_added) %></strong>
-          </div>
-          <div>
-            <span>电网取电</span><strong><%= energy(@report.charge_stats.energy_used) %></strong>
-          </div>
-          <div>
-            <span>累计费用</span><strong><%= if @report.charge_stats.cost_count > 0, do: money(@report.charge_stats.cost), else: "未填写" %></strong>
-          </div>
-          <div>
-            <span>平均结束电量</span><strong><%= percentage(@report.charge_stats.average_end_level) %></strong>
-          </div>
-          <div>
-            <span>累计充电时长</span><strong><%= duration(@report.charge_stats.duration_min) %></strong>
-          </div>
-        </div>
-      </section>
-
-      <section class="data-card">
-        <div class="data-card__header">
-          <h2>最近胎压</h2>
-          <span><%= date_time(Map.get(@report.pressures, :measured_at)) %></span>
-        </div>
-        <div class="tire-grid">
-          <div>
-            <span>左前</span><strong><%= pressure(Map.get(@report.pressures, :fl)) %></strong>
-          </div>
-          <div>
-            <span>右前</span><strong><%= pressure(Map.get(@report.pressures, :fr)) %></strong>
-          </div>
-          <div>
-            <span>左后</span><strong><%= pressure(Map.get(@report.pressures, :rl)) %></strong>
-          </div>
-          <div>
-            <span>右后</span><strong><%= pressure(Map.get(@report.pressures, :rr)) %></strong>
-          </div>
-        </div>
-      </section>
+    <.bar_chart title={if capacity?, do: "每日满电能量估算", else: "每日归一化满电额定续航"}
+      rows={@report.history} unit={if capacity?, do: " kWh", else: " km"}
+      empty="当前范围内缺少有效样本" />
+    <div class="drive-shortcuts">
+      <.link navigate={Routes.dashboard_path(@socket, :driving, car: @report.car.id)}>
+        <i class="mdi mdi-engine"></i> 驱动系统与座舱
+      </.link>
+      <.link navigate={Routes.dashboard_path(@socket, :charging, car: @report.car.id)}>
+        <i class="mdi mdi-ev-station"></i> 充电与损耗
+      </.link>
     </div>
   <% end %>
 </div>

@@ -11,7 +11,6 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
     {:ok,
      assign(socket,
        page_title: "充电",
-       battery_details_open: false,
        report: nil,
        editing_charge: nil,
        cost_changeset: nil,
@@ -48,10 +47,6 @@ defmodule TeslaMateWeb.DashboardLive.Charging do
 
     {:noreply,
      push_patch(socket, to: Routes.dashboard_path(socket, :charging, car: car_id, days: days))}
-  end
-
-  def handle_event("toggle_battery_details", _params, socket) do
-    {:noreply, assign(socket, battery_details_open: not socket.assigns.battery_details_open)}
   end
 
   def handle_event("edit_cost", %{"id" => id}, socket) do

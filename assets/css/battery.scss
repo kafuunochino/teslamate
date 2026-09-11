@@ -108,3 +108,14 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.energy-source {
+  display: block;
+  margin-top: 4px;
+  color: var(--platform-muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.battery-extra .battery-panels { min-width: 0; }
+.battery-details-toggle { overflow-wrap: anywhere; }

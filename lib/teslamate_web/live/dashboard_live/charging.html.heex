@@ -25,30 +25,6 @@
       </button>
     </div>
     <.battery_panel data={@report.battery_data} mode="charging" />
-    <section class="battery-extra">
-      <button
-        id="battery-details-toggle"
-        type="button"
-        class="battery-details-toggle"
-        phx-click="toggle_battery_details"
-        aria-expanded={to_string(@battery_details_open)}
-        aria-controls="battery-charging-details"
-      >
-        <i
-          class={"mdi mdi-chevron-#{if @battery_details_open, do: "up", else: "down"}"}
-          aria-hidden="true"
-        >
-        </i>
-        电压、电流、充电接口与更多状态
-      </button>
-      <div
-        :if={@battery_details_open}
-        id="battery-charging-details"
-        class="battery-details-content"
-      >
-        <.battery_panel data={@report.battery_data} mode="charging-extra" />
-      </div>
-    </section>
     <.range_picker days={@report.days} />
 
     <p
@@ -71,12 +47,14 @@
       <.metric_card
         title="充入电量"
         value={energy(@report.stats.energy_added)}
+        hint={"#{@report.stats.official_count} 次使用官方遥测，其他使用原有会话记录"}
         icon="lightning-bolt"
         tone="green"
       />
       <.metric_card
-        title="电网取电"
+        title="充电侧输入"
         value={energy(@report.stats.energy_used)}
+        hint="包含旧版功率积分估算；直流读数不代表电网侧"
         icon="transmission-tower"
         tone="violet"
       />
@@ -102,6 +80,15 @@
       />
     </section>
 
+    <section class="metrics-grid">
+      <.metric_card title="交流充电输入与入电池差额"
+        value={energy(@report.stats.loss_kwh, 2)} icon="lightning-bolt-circle" tone="amber"
+        hint={"仅统计 #{@report.stats.loss_count} 次两侧时间对齐的官方采样；包含充电转换与辅助耗电"} />
+    </section>
+    <p class="trip-energy-note">
+      能量优先采用本次会话的官方遥测。两侧完整采样不足、计数器重置或时间不一致时不计算损耗；原有会话数据作为补充并注明来源。
+      该差额不等同于电池容量衰减。
+    </p>
     <.bar_chart title="每日充入电量" rows={@report.daily_energy} unit=" kWh" />
 
     <div class="content-grid content-grid--wide">
@@ -121,7 +108,8 @@
                 <th>位置</th>
                 <th>电量变化</th>
                 <th>充入</th>
-                <th>电网取电</th>
+                <th>充电侧输入</th>
+                <th>输入差额 / 比例</th>
                 <th>时长</th>
                 <th>费用</th>
                 <th>操作</th>
@@ -138,8 +126,18 @@
                     <%= session.start_battery_level || "—" %>% → <%= session.end_battery_level ||
                       "—" %>%
                   </td>
-                  <td data-label="充入"><%= energy(session.charge_energy_added) %></td>
-                  <td data-label="电网取电"><%= energy(session.charge_energy_used) %></td>
+                  <td data-label="充入">
+                    <%= energy(session.charge_energy_added, 2) %>
+                    <small class="energy-source"><%= if session.energy.battery_source == :fleet_battery, do: "官方电池侧遥测", else: "车辆会话记录" %></small>
+                  </td>
+                  <td data-label="充电侧输入">
+                    <%= energy(session.charge_energy_used, 2) %>
+                    <small class="energy-source"><%= if session.energy.input_source == :fleet_ac, do: "官方交流输入遥测", else: "原有功率积分估算" %></small>
+                  </td>
+                  <td data-label="输入差额 / 比例">
+                    <%= energy(session.energy.loss_kwh, 2) %> / <%= percentage(session.energy.loss_percent) %>
+                    <small :if={is_nil(session.energy.loss_kwh)} class="energy-source">缺少可比的交流两侧数据</small>
+                  </td>
                   <td data-label="时长"><%= duration(session.duration_min) %></td>
                   <td data-label="费用">
                     <span id={"charge-cost-value-#{session.id}"}>
@@ -170,7 +168,7 @@
                   :if={@editing_charge && @editing_charge.id == session.id}
                   class="charge-cost-editor-row"
                 >
-                  <td colspan="8">
+                  <td colspan="9">
                     <.form
                       :let={f}
                       for={@cost_changeset}

@@ -77,11 +77,37 @@ defmodule TeslaMate.Fleet do
         state: current_state(car.id),
         drive: drive,
         driving_stats: stats,
-        metrics: TeslaMate.DrivingStats.metrics(stats)
+        metrics: driving_energy(drive, car, stats),
+        pressures: latest_pressures(car.id)
       }
     else
       empty_report(cars)
       |> Map.merge(%{state: nil, drive: nil, driving_stats: nil, metrics: %{}})
+    end
+  end
+
+  defp driving_energy(drive, car, stats) do
+    metrics = TeslaMate.DrivingStats.metrics(stats)
+
+    result =
+      cond do
+        is_nil(drive) -> nil
+        not is_nil(drive.end_date) -> drive_energy([drive], car)[drive.id]
+        stats.first && stats.last ->
+          interval = %{id: drive.id, car_id: car.id, start_date: stats.first.date,
+            end_date: stats.last.date, distance: metrics.distance}
+          official = TeslaMate.TeslaFleet.Energy.drive_energy([interval])[drive.id]
+          if official, do: TeslaMate.TripEnergy.calculate(interval, nil, nil, official)
+        true -> nil
+      end
+
+    if result do
+      Map.merge(metrics, %{
+        net_energy: result.energy_kwh, consumption: result.consumption_wh_km,
+        energy_source: result.source
+      })
+    else
+      Map.put(metrics, :energy_source, :power_estimate)
     end
   end
 
@@ -197,7 +223,7 @@ defmodule TeslaMate.Fleet do
     {cars, car} = resolve_vehicle(user, requested_car_id)
 
     if car do
-      history = battery_history(car.id, days)
+      history = capacity_history(car.id, days)
       live = driving_summary(car.id)
       position = latest_position(car.id)
 
@@ -208,11 +234,9 @@ defmodule TeslaMate.Fleet do
         position: position,
         live: live,
         battery_data: battery_readings(car.id, live, position),
-        history: history,
-        degradation: degradation(history),
-        charge_stats: charge_stats(car.id, days),
-        daily_energy: daily_charge_energy(car.id, days),
-        pressures: latest_pressures(car.id)
+        history: history.rows,
+        history_source: history.source,
+        degradation: degradation(history.rows)
       }
     else
       empty_report(cars)
@@ -225,15 +249,17 @@ defmodule TeslaMate.Fleet do
     {cars, car} = resolve_vehicle(user, requested_car_id)
 
     if car do
+      sessions = resolved_charges(car.id, days)
+
       %{
         cars: cars,
         car: car,
         days: days,
         battery_data: battery_readings(car.id, driving_summary(car.id), latest_position(car.id)),
-        stats: charge_stats(car.id, days),
-        sessions: recent_charges(car.id, 100, days),
-        daily_energy: daily_charge_energy(car.id, days),
-        stations: top_charging_stations(car.id, days, 10)
+        stats: summarize_charges(sessions),
+        sessions: Enum.take(sessions, 100),
+        daily_energy: daily_charge_energy(sessions),
+        stations: charging_stations(sessions, 10)
       }
     else
       empty_report(cars)
@@ -372,7 +398,8 @@ defmodule TeslaMate.Fleet do
 
   defp drive_energy(drives, car) do
     range = TeslaMate.Settings.get_global_settings!().preferred_range
-    Map.new(drives, &{&1.id, TeslaMate.TripEnergy.calculate(&1, car.efficiency, range)})
+    official = TeslaMate.TeslaFleet.Energy.drive_energy(drives)
+    Map.new(drives, &{&1.id, TeslaMate.TripEnergy.calculate(&1, car.efficiency, range, official[&1.id])})
   end
 
   ## Query helpers
@@ -467,25 +494,64 @@ defmodule TeslaMate.Fleet do
     |> Repo.one()
   end
 
-  defp charge_stats(car_id, days) do
-    ChargingProcess
-    |> where([c], c.car_id == ^car_id and c.start_date >= ^since(days))
-    |> select([c], %{
-      count: count(c.id),
-      energy_added: fragment("COALESCE(SUM(?), 0)", c.charge_energy_added),
-      energy_used: fragment("COALESCE(SUM(?), 0)", c.charge_energy_used),
-      cost: fragment("COALESCE(SUM(?), 0)", c.cost),
-      cost_count: count(c.cost),
-      priced_energy_added:
-        fragment(
-          "COALESCE(SUM(?) FILTER (WHERE ? IS NOT NULL), 0)",
-          c.charge_energy_added,
-          c.cost
-        ),
-      duration_min: fragment("COALESCE(SUM(?), 0)", c.duration_min),
-      average_end_level: avg(c.end_battery_level)
-    })
-    |> Repo.one()
+  defp charge_stats(car_id, days), do: car_id |> resolved_charges(days) |> summarize_charges()
+
+  defp summarize_charges(sessions) do
+    priced = Enum.reject(sessions, &is_nil(&1.cost))
+    loss = Enum.filter(sessions, &is_number(&1.energy.loss_kwh))
+    %{
+      count: length(sessions), energy_added: sum_decimal(sessions, :charge_energy_added),
+      energy_used: sum_decimal(sessions, :charge_energy_used),
+      cost: sum_decimal(sessions, :cost), cost_count: length(priced),
+      priced_energy_added: sum_decimal(priced, :charge_energy_added),
+      duration_min: sum_field(sessions, :duration_min),
+      average_end_level: average_field(sessions, :end_battery_level),
+      official_count: Enum.count(sessions, &(&1.energy.battery_source == :fleet_battery)),
+      loss_kwh: if(loss != [], do: Enum.sum(Enum.map(loss, & &1.energy.loss_kwh))),
+      loss_count: length(loss)
+    }
+  end
+
+  defp sum_field(rows, key), do: rows |> Enum.map(&number(Map.get(&1, key))) |> Enum.sum()
+
+  defp sum_decimal(rows, key) do
+    Enum.reduce(rows, Decimal.new(0), fn row, total ->
+      value = case Map.get(row, key) do
+        %Decimal{} = decimal -> decimal
+        number when is_float(number) -> Decimal.from_float(number)
+        number when is_integer(number) -> Decimal.new(number)
+        _ -> Decimal.new(0)
+      end
+      Decimal.add(total, value)
+    end)
+  end
+
+  defp resolved_charges(car_id, days) do
+    sessions =
+      ChargingProcess
+      |> where([c], c.car_id == ^car_id)
+      |> maybe_since(days)
+      |> order_by([c], desc: c.start_date, desc: c.id)
+      |> preload([:address, :geofence])
+      |> Repo.all()
+
+    ids = Enum.map(sessions, & &1.id)
+    types =
+      Charge
+      |> where([c], c.charging_process_id in ^ids)
+      |> group_by([c], c.charging_process_id)
+      |> select([c], {c.charging_process_id, fragment("bool_or(?)", c.fast_charger_present)})
+      |> Repo.all()
+      |> Map.new()
+
+    sessions = Enum.map(sessions, &(Map.from_struct(&1) |> Map.put(:fast_charger, types[&1.id])))
+    energy = TeslaMate.TeslaFleet.Energy.charging_energy(sessions)
+
+    Enum.map(sessions, fn session ->
+      result = energy[session.id]
+      Map.merge(session, %{energy: result, charge_energy_added: result.energy_added,
+        charge_energy_used: result.energy_used})
+    end)
   end
 
   defp recent_drives(car_id, limit) do
@@ -497,15 +563,8 @@ defmodule TeslaMate.Fleet do
     |> Repo.all()
   end
 
-  defp recent_charges(car_id, limit, days \\ nil) do
-    ChargingProcess
-    |> where([c], c.car_id == ^car_id)
-    |> maybe_since(days)
-    |> order_by([c], desc: c.start_date, desc: c.id)
-    |> limit(^limit)
-    |> preload([:address, :geofence])
-    |> Repo.all()
-  end
+  defp recent_charges(car_id, limit, days \\ nil),
+    do: car_id |> resolved_charges(days) |> Enum.take(limit)
 
   defp maybe_since(query, nil), do: query
   defp maybe_since(query, days), do: where(query, [c], c.start_date >= ^since(days))
@@ -534,17 +593,25 @@ defmodule TeslaMate.Fleet do
     |> Repo.all()
   end
 
-  defp daily_charge_energy(car_id, days) do
-    ChargingProcess
-    |> where([c], c.car_id == ^car_id and c.start_date >= ^since(days))
-    |> group_by([c], fragment("?::date", beijing_timestamp(c.start_date)))
-    |> order_by([c], fragment("?::date", beijing_timestamp(c.start_date)))
-    |> select([c], %{
-      period: fragment("?::date", beijing_timestamp(c.start_date)),
-      value: fragment("COALESCE(SUM(?), 0)", c.charge_energy_added),
-      cost: fragment("COALESCE(SUM(?), 0)", c.cost)
-    })
-    |> Repo.all()
+  defp daily_charge_energy(sessions) do
+    sessions
+    |> Enum.group_by(&beijing_day(&1.start_date))
+    |> Enum.map(fn {period, rows} ->
+      %{period: period, value: sum_field(rows, :charge_energy_added), cost: sum_decimal(rows, :cost)}
+    end)
+    |> Enum.sort_by(& &1.period, Date)
+  end
+
+  defp beijing_day(date), do: date |> DateTime.add(8, :hour) |> DateTime.to_date()
+
+  defp capacity_history(car_id, days) do
+    official = TeslaMate.TeslaFleet.Energy.capacity_history(car_id, since(days))
+    if official.rows == [] do
+      %{source: :range_estimate,
+        rows: Enum.map(battery_history(car_id, days), &%{period: &1.period, value: &1.full_range})}
+    else
+      official
+    end
   end
 
   defp battery_history(car_id, days) do
@@ -567,14 +634,14 @@ defmodule TeslaMate.Fleet do
 
   defp degradation(history) when length(history) >= 7 do
     sample_size = min(14, max(div(length(history), 3), 3))
-    baseline = history |> Enum.take(sample_size) |> average_field(:full_range)
-    current = history |> Enum.take(-sample_size) |> average_field(:full_range)
+    baseline = history |> Enum.take(sample_size) |> average_field(:value)
+    current = history |> Enum.take(-sample_size) |> average_field(:value)
 
     if baseline && current && baseline > 0 do
       %{
-        baseline_range: baseline,
-        current_range: current,
-        loss_percent: max(0.0, (baseline - current) / baseline * 100)
+        baseline: baseline,
+        current: current,
+        loss_percent: (baseline - current) / baseline * 100
       }
     end
   end
@@ -600,32 +667,20 @@ defmodule TeslaMate.Fleet do
     |> Enum.map(&format_ranked_address/1)
   end
 
-  defp top_charging_stations(car_id, days, limit) do
-    ChargingProcess
-    |> join(:left, [c], a in Address, on: a.id == c.address_id)
-    |> join(:left, [c, a], g in GeoFence, on: g.id == c.geofence_id)
-    |> where([c], c.car_id == ^car_id and c.start_date >= ^since(days))
-    |> group_by([c, a, g], [g.id, g.name, a.id, a.name, a.road, a.city, a.display_name])
-    |> order_by([c], desc: count(c.id))
-    |> limit(^limit)
-    |> select([c, a, g], %{
-      geofence_name: g.name,
-      label:
-        fragment(
-          "COALESCE(?, ?, ?, ?, ?, '未知充电地点')",
-          g.name,
-          a.display_name,
-          a.name,
-          a.road,
-          a.city
-        ),
-      count: count(c.id),
-      energy: fragment("COALESCE(SUM(?), 0)", c.charge_energy_added),
-      cost: fragment("COALESCE(SUM(?), 0)", c.cost),
-      cost_count: count(c.cost)
-    })
-    |> Repo.all()
-    |> Enum.map(&format_ranked_address/1)
+  defp top_charging_stations(car_id, days, limit),
+    do: car_id |> resolved_charges(days) |> charging_stations(limit)
+
+  defp charging_stations(sessions, limit) do
+    sessions
+    |> Enum.group_by(&{&1.geofence_id, &1.address_id})
+    |> Enum.map(fn {_key, rows} ->
+      first = hd(rows)
+      %{label: address_label(first.geofence || first.address), count: length(rows),
+        energy: sum_field(rows, :charge_energy_added), cost: sum_decimal(rows, :cost),
+        cost_count: Enum.count(rows, &(not is_nil(&1.cost)))}
+    end)
+    |> Enum.sort_by(&{-&1.count, &1.label})
+    |> Enum.take(limit)
   end
 
   defp format_ranked_address(%{geofence_name: name} = row) when is_binary(name),
@@ -672,22 +727,26 @@ defmodule TeslaMate.Fleet do
     |> then(fn stats ->
       distance = number(stats.distance)
       duration = number(stats.duration_min)
-      range_used = number(stats.range_used)
+      drives = Repo.all(from d in Drive,
+        where: d.car_id == ^car.id and d.start_date >= ^since(days))
+      results = drive_energy(drives, car)
+      known = Enum.filter(drives, &is_number(results[&1.id].energy_kwh))
+      measured_distance = sum_field(known, :distance)
+      energy = Enum.sum(Enum.map(known, &results[&1.id].energy_kwh))
 
       stats
       |> Map.put(:average_speed, if(duration > 0, do: distance / duration * 60, else: nil))
       |> Map.put(:average_trip, if(stats.count > 0, do: distance / stats.count, else: nil))
-      |> Map.put(
-        :consumption_wh_km,
-        if(distance > 0 and is_number(car.efficiency),
-          do: range_used * car.efficiency / distance * 1000,
-          else: nil
-        )
-      )
+      |> Map.put(:official_count, Enum.count(known, &(results[&1.id].source == :fleet_battery)))
+      |> Map.put(:energy_count, length(known))
+      |> Map.put(:energy_kwh, if(known != [], do: energy))
+      |> Map.put(:consumption_wh_km,
+        if(measured_distance > 0, do: energy / measured_distance * 1000))
     end)
   end
 
   defp analysis_charge_metrics(car_id, days) do
+    energy = charge_stats(car_id, days).energy_added
     ChargingProcess
     |> where([c], c.car_id == ^car_id and c.start_date >= ^since(days))
     |> select([c], %{
@@ -708,6 +767,7 @@ defmodule TeslaMate.Fleet do
         )
     })
     |> Repo.one()
+    |> Map.put(:energy, energy)
   end
 
   defp scores(drive, charging) do

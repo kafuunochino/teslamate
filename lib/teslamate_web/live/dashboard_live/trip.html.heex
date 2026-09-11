@@ -68,7 +68,12 @@
   </section>
 
   <p class="trip-energy-note">
-    按行程前后续航变化与车辆能耗系数估算。短行程受续航精度影响较大，负值可能来自能量回收或续航校准；数据不足时显示“—”。
+    <strong><%= TeslaMate.TripEnergy.source_label(trip_energy.source) %></strong> ·
+    <%= TeslaMate.TripEnergy.source_note(trip_energy.source) %>
+    <span :if={trip_energy.source == :fleet_battery}>
+      电池采样：<%= date_time(trip_energy.start_sample_at) %> → <%= date_time(trip_energy.end_sample_at) %>
+      · <%= energy(trip_energy.start_energy, 2) %> → <%= energy(trip_energy.end_energy, 2) %>
+    </span>
   </p>
 
   <section class="data-card">

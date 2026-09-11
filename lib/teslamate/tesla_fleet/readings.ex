@@ -90,6 +90,7 @@ defmodule TeslaMate.TeslaFleet.Readings do
            Repo.one(from c in TeslaMate.Log.Car, where: c.vin == ^vin, select: c.id) do
       data = %{"value" => value, "invalid" => is_nil(value)}
 
+      Repo.transaction(fn ->
       Ecto.Adapters.SQL.query!(
         Repo,
         """
@@ -101,6 +102,9 @@ defmodule TeslaMate.TeslaFleet.Readings do
         """,
         [car_id, field, data, date, DateTime.utc_now()]
       )
+
+      TeslaMate.TeslaFleet.Energy.record(car_id, field, value, date)
+      end)
 
       :ok
     else

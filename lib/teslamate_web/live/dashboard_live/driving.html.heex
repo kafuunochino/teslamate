@@ -173,14 +173,14 @@
           value={scalar(metrics.consumption, " Wh/km", 0)}
           icon="lightning-bolt"
           tone="blue"
-          hint="净耗电 ÷ 实际里程，至少 1 km"
+          hint={TeslaMate.TripEnergy.source_label(metrics.energy_source)}
         />
         <.metric_card
           title="净耗电量"
           value={energy(metrics.net_energy)}
           icon="battery-arrow-down-outline"
           tone="violet"
-          hint="耗电减去回收，按功率采样估算"
+          hint={TeslaMate.TripEnergy.source_label(metrics.energy_source)}
         />
         <.metric_card
           title="回收电量"
@@ -217,7 +217,12 @@
         <span>平均速度 <b><%= scalar(metrics.average_speed, " km/h", 1) %></b></span>
         <span>功率采样覆盖 <b><%= percentage(metrics.coverage) %></b></span>
       </div>
-      <p class="drive-method">能耗按功率采样积分；超过 30 秒的缺失时段不外推。高程和能耗为估算值，覆盖率低时仅供参考。</p>
+      <p id="drive-energy-source" class="drive-method">
+        <%= TeslaMate.TripEnergy.source_label(metrics.energy_source) %>。
+        <%= if metrics.energy_source == :fleet_battery, do: TeslaMate.TripEnergy.source_note(:fleet_battery),
+          else: "已结束行程与行程轨迹使用相同口径；行驶中缺少电池起止采样时使用功率积分，超过 30 秒的缺失时段不外推。" %>
+        回收电量单独按原有功率采样估算，不能作为官方电池净耗电的拆分明细。
+      </p>
     </section>
 
     <div class="content-grid">
@@ -255,27 +260,18 @@
       </section>
       <section class="data-card drive-support">
         <div class="data-card__header">
-          <h2>车辆辅助状态</h2>
+          <h2>轮胎状态</h2>
           <.link navigate={Routes.dashboard_path(@socket, :battery, car: @report.car.id)}>
             电池详情
           </.link>
         </div>
         <dl class="drive-support-grid">
-          <div>
-            <dt>车速</dt>
-            <dd class="drive-current-value">
-              <%= scalar(current_reading(@report, :speed, fresh), " km/h", 0) %>
-            </dd>
-          </div>
-          <div>
-            <dt>电量 / 额定续航</dt>
-            <dd>
-              <%= scalar(reading(@report, :battery_level), "%", 0) %> · <%= distance(
-                reading(@report, :rated_battery_range_km)
-              ) %>
-            </dd>
-          </div>
+          <div><dt>左前胎压</dt><dd><%= pressure(Map.get(@report.pressures, :fl)) %></dd></div>
+          <div><dt>右前胎压</dt><dd><%= pressure(Map.get(@report.pressures, :fr)) %></dd></div>
+          <div><dt>左后胎压</dt><dd><%= pressure(Map.get(@report.pressures, :rl)) %></dd></div>
+          <div><dt>右后胎压</dt><dd><%= pressure(Map.get(@report.pressures, :rr)) %></dd></div>
         </dl>
+        <p class="drive-method">最近胎压采样：<%= date_time(Map.get(@report.pressures, :measured_at)) %></p>
         <div class="drive-shortcuts">
           <.link navigate={Routes.dashboard_path(@socket, :trips, car: @report.car.id)}>
             <i class="mdi mdi-map-marker-path"></i> 行程轨迹

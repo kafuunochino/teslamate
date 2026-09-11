@@ -100,3 +100,15 @@ not activate the vehicle feed. Temperature fields are requested no more frequent
 than every 10 seconds, even when the page refresh interval is shorter.
 
 Field definitions: https://developer.tesla.com/docs/fleet-api/fleet-telemetry/available-data
+
+## Energy history and page ownership
+
+EnergyRemaining, Soc, NominalFullPackEnergyKwh and the AC/DC session energy counters are stored in the additive fleet_energy_samples table. Retained messages preserve vehicle timestamps, duplicates do not create new samples, and invalid values remain null. Existing drives, charges and user-entered prices are never overwritten.
+
+Completed trips share one calculation in list, route detail, home, driving and analysis. Official battery energy differences take precedence only with valid samples inside both boundaries (at most 30 seconds from each boundary and at least 90% time coverage). Missing historical coverage uses the selected legacy range coefficient. A paired key alone does not make historical estimates official measurements. EnergyRemaining is a nominal battery estimate and can change with BMS recalibration; LifetimeEnergyUsed is not treated as net trip consumption.
+
+DCChargingEnergyIn is battery-side energy for both AC and DC sessions. ACChargingEnergyIn is used only for confirmed AC sessions. Session counters must start near zero, cover both boundaries and never reset or become invalid. Input losses require both counters to describe the same interval, within one second at each boundary; missing or inconsistent measurements remain unknown. The AC input/battery difference includes conversion and auxiliary loads, and is not battery degradation or a complete wall-meter measurement.
+
+Battery trends prefer reported nominal full-pack energy, then same-timestamp EnergyRemaining/Soc estimates at 20–95% SOC, then normalized rated range. Sources are never mixed in a curve or baseline. Seven distinct sample days are required to compare the early and recent periods; results are not factory-relative degradation or official SOH.
+
+Battery diagnostics belong to the battery page, drivetrain and cabin readings to driving, and charging parameters/costs to charging. Valid ordinary readings remain visible. Diagnostics and unavailable optional readings are expandable with state retained across LiveView refreshes.
