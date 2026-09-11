@@ -133,6 +133,7 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
     assert {:error, :invalid_state} = TeslaFleet.consume_state(state, state, token)
   end
 
+  @tag platform_role: :member
   test "disabled users cannot finish an already started authorization", %{
     conn: conn,
     current_user: user

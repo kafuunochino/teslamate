@@ -145,7 +145,7 @@ defmodule TeslaMate.Accounts.Lifecycle do
           where: b.user_id == ^user.id,
           select: c,
           order_by: c.id,
-          lock: "FOR UPDATE OF c"
+          lock: "FOR UPDATE"
       )
 
     ids = Enum.map(cars, & &1.id)

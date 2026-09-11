@@ -102,10 +102,7 @@ defmodule TeslaMate.AccountLifecycleTest do
     ]
 
     for {sql, id} <- statements do
-      Repo.query!("SAVEPOINT admin_invariant")
-      assert_raise Postgrex.Error, fn -> Repo.query!(sql, [id]) end
-      Repo.query!("ROLLBACK TO SAVEPOINT admin_invariant")
-      Repo.query!("RELEASE SAVEPOINT admin_invariant")
+      assert_raise Postgrex.Error, fn -> Repo.query!(sql, [id], mode: :savepoint) end
     end
 
     assert Accounts.get_user!(c.admin.id).is_system_admin

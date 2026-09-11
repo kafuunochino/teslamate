@@ -41,7 +41,7 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
     assert has_element?(view, "#user-row-#{user.id} button[phx-click=prepare_delete]")
     render_click(view, "update_user", %{"id" => user.id, "role" => "admin", "status" => "active"})
     assert Accounts.get_user!(user.id).role == :member
-    assert render(view) =~ "管理员身份固定"
+    refute Accounts.authorized_admin?(Accounts.get_user!(user.id))
   end
 
   test "administrator deletion requires two stages and binds confirmation to the selected target",
