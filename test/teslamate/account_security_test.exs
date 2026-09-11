@@ -42,7 +42,8 @@ defmodule TeslaMate.AccountSecurityTest do
   end
 
   test "registration defaults closed and only a current administrator can change it", %{
-    user: user, admin: admin
+    user: user,
+    admin: admin
   } do
     refute Accounts.sign_up_allowed?()
     assert {:error, :forbidden} = Accounts.set_registration(user, true)

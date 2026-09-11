@@ -155,7 +155,9 @@ defmodule TeslaMate.Accounts do
   def system_admin?(_), do: false
 
   def deletion_due?(%User{deletion_scheduled_at: nil}), do: false
-  def deletion_due?(%User{deletion_scheduled_at: deadline}), do: DateTime.compare(deadline, now()) != :gt
+
+  def deletion_due?(%User{deletion_scheduled_at: deadline}),
+    do: DateTime.compare(deadline, now()) != :gt
 
   def active?(%User{id: id}), do: active_user_id?(id)
   def active?(_), do: false
@@ -177,7 +179,7 @@ defmodule TeslaMate.Accounts do
 
       if is_nil(current) or current.status != :active or current.auth_version != user.auth_version or
            deletion_due?(current) or (not login? and not is_nil(current.deletion_scheduled_at)),
-        do: Repo.rollback(:account_disabled)
+         do: Repo.rollback(:account_disabled)
 
       if login? and current.deletion_scheduled_at do
         current
@@ -382,7 +384,10 @@ defmodule TeslaMate.Accounts do
       changeset =
         (primary || %User{})
         |> User.bootstrap_admin_changeset(attrs)
-        |> Ecto.Changeset.put_change(:auth_version, if(primary, do: primary.auth_version + 1, else: 1))
+        |> Ecto.Changeset.put_change(
+          :auth_version,
+          if(primary, do: primary.auth_version + 1, else: 1)
+        )
 
       case Repo.insert_or_update(changeset) do
         {:ok, user} ->
@@ -414,10 +419,12 @@ defmodule TeslaMate.Accounts do
       case Repo.update(changeset) do
         {:ok, user} ->
           delete_user_sessions(user)
+
           audit(:user_access_updated, actor,
             target_user: user,
             metadata: %{"status" => Atom.to_string(user.status)}
           )
+
           user
 
         {:error, changeset} ->
@@ -476,7 +483,9 @@ defmodule TeslaMate.Accounts do
 
       target =
         Repo.one(
-          from u in User, where: u.id == ^target.id and u.status == :active and is_nil(u.deletion_scheduled_at), lock: "FOR UPDATE"
+          from u in User,
+            where: u.id == ^target.id and u.status == :active and is_nil(u.deletion_scheduled_at),
+            lock: "FOR UPDATE"
         )
 
       if is_nil(target), do: Repo.rollback(:forbidden)

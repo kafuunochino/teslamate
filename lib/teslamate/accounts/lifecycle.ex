@@ -2,7 +2,17 @@ defmodule TeslaMate.Accounts.Lifecycle do
   @moduledoc "Protected administrator identity and verified, data-preserving account deletion."
   import Ecto.Query
   alias TeslaMate.{Accounts, Locations, Repo, Vehicles}
-  alias TeslaMate.Accounts.{AuditEvent, LoginChallenge, Security, User, UserCar, UserSession, VehicleClaim}
+
+  alias TeslaMate.Accounts.{
+    AuditEvent,
+    LoginChallenge,
+    Security,
+    User,
+    UserCar,
+    UserSession,
+    VehicleClaim
+  }
+
   alias TeslaMate.Locations.GeoFence
   alias TeslaMate.Log.Car
   alias TeslaMate.TeslaFleet.Connection
@@ -14,15 +24,26 @@ defmodule TeslaMate.Accounts.Lifecycle do
       current = lock_user(user.id)
 
       cond do
-        is_nil(current) -> {:error, :not_found}
-        current.is_system_admin -> {:error, :system_admin_protected}
-        not confirmed?(current, params) -> {:error, :invalid_confirmation}
+        is_nil(current) ->
+          {:error, :not_found}
+
+        current.is_system_admin ->
+          {:error, :system_admin_protected}
+
+        not confirmed?(current, params) ->
+          {:error, :invalid_confirmation}
+
         true ->
           # Return verification failures normally so the rate-limit counter commits.
-          with :ok <- Security.authorize_account_deletion(
-                 current, token, params["password"], params["code"]
-               ) do
+          with :ok <-
+                 Security.authorize_account_deletion(
+                   current,
+                   token,
+                   params["password"],
+                   params["code"]
+                 ) do
             time = now()
+
             updated =
               current
               |> Ecto.Changeset.change(
@@ -33,9 +54,11 @@ defmodule TeslaMate.Accounts.Lifecycle do
               |> Repo.update!()
 
             revoke_identity_sessions(current)
+
             record("account_deletion_requested", current.id, current.id, %{
               "scheduled_at" => DateTime.to_iso8601(updated.deletion_scheduled_at)
             })
+
             {:ok, updated}
           end
       end
@@ -54,9 +77,13 @@ defmodule TeslaMate.Accounts.Lifecycle do
              %User{} = target <- lock_user(target_id),
              false <- target.is_system_admin,
              true <- confirmed?(target, params),
-             :ok <- Security.authorize_account_deletion(
-               actor, token, params["password"], params["code"]
-             ) do
+             :ok <-
+               Security.authorize_account_deletion(
+                 actor,
+                 token,
+                 params["password"],
+                 params["code"]
+               ) do
           {:ok, delete_locked!(target, actor.id, "administrator")}
         else
           nil -> {:error, :not_found}
@@ -113,12 +140,14 @@ defmodule TeslaMate.Accounts.Lifecycle do
     cars =
       Repo.all(
         from c in Car,
-          join: b in UserCar, on: b.car_id == c.id,
+          join: b in UserCar,
+          on: b.car_id == c.id,
           where: b.user_id == ^user.id,
           select: c,
           order_by: c.id,
           lock: "FOR UPDATE OF c"
       )
+
     ids = Enum.map(cars, & &1.id)
     time = now()
 
@@ -132,11 +161,13 @@ defmodule TeslaMate.Accounts.Lifecycle do
 
     revoke_identity_sessions(user)
     Repo.delete!(user)
+
     record("account_deleted", actor_id, nil, %{
       "deleted_user_id" => user.id,
       "reason" => reason,
       "retained_car_ids" => ids
     })
+
     ids
   end
 
@@ -148,12 +179,14 @@ defmodule TeslaMate.Accounts.Lifecycle do
         prefix: "private",
         where: s.session_hash in subquery(hashes)
     )
+
     Repo.delete_all(from c in LoginChallenge, where: c.user_id == ^user.id)
     Accounts.delete_user_sessions(user)
   end
 
   defp confirmed?(user, params) do
     email = params["email"]
+
     is_binary(email) and String.downcase(String.trim(email)) == String.downcase(user.email) and
       params["acknowledge"] == "true"
   end
@@ -162,7 +195,10 @@ defmodule TeslaMate.Accounts.Lifecycle do
 
   defp record(action, actor_id, target_id, metadata) do
     Repo.insert!(%AuditEvent{
-      action: action, actor_user_id: actor_id, target_user_id: target_id, metadata: metadata
+      action: action,
+      actor_user_id: actor_id,
+      target_user_id: target_id,
+      metadata: metadata
     })
   end
 

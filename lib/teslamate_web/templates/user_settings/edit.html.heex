@@ -249,19 +249,56 @@
     <p>到期后删除账号、Tesla 授权和个人地理围栏，解除车辆绑定。车辆历史保留，仅管理员可见；同邮箱重新注册不会自动继承。</p>
     <%= if @system_admin do %>
       <p class="help">此账号是系统创建的第一个账号，也是唯一管理员。为保证系统可管理，不能注销、删除或停用。</p>
-      <button id="system-admin-deletion-disabled" class="button is-danger is-light" disabled type="button">注销账号</button>
+      <button
+        id="system-admin-deletion-disabled"
+        class="button is-danger is-light"
+        disabled
+        type="button"
+      >
+        注销账号
+      </button>
     <% else %>
       <details class="security-details">
         <summary class="button is-danger is-light">注销账号</summary>
-        <.form for={%{}} action="/account/deletion" method="post" class="platform-form" id="account-deletion-form">
+        <.form
+          for={%{}}
+          action="/account/deletion"
+          method="post"
+          class="platform-form"
+          id="account-deletion-form"
+        >
           <h3>确认申请注销</h3>
           <label class="label" for="deletion-email">输入当前账号邮箱确认</label>
-          <input id="deletion-email" name="confirmation[email]" type="email" class="input" autocomplete="off" maxlength="254" required />
+          <input
+            id="deletion-email"
+            name="confirmation[email]"
+            type="email"
+            class="input"
+            autocomplete="off"
+            maxlength="254"
+            required
+          />
           <label class="label" for="deletion-password">当前密码</label>
-          <input id="deletion-password" name="confirmation[password]" type="password" class="input" autocomplete="current-password" maxlength="128" required />
+          <input
+            id="deletion-password"
+            name="confirmation[password]"
+            type="password"
+            class="input"
+            autocomplete="current-password"
+            maxlength="128"
+            required
+          />
           <div :if={@security.enabled?} class="field">
             <label class="label" for="deletion-code">动态码或恢复码</label>
-            <input id="deletion-code" name="confirmation[code]" type="text" class="input" autocomplete="one-time-code" maxlength="64" required />
+            <input
+              id="deletion-code"
+              name="confirmation[code]"
+              type="text"
+              class="input"
+              autocomplete="one-time-code"
+              maxlength="64"
+              required
+            />
           </div>
           <label class="checkbox">
             <input name="confirmation[acknowledge]" type="checkbox" value="true" required />

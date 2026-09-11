@@ -7,9 +7,14 @@ defmodule TeslaMateWeb.UserSettingsController do
   def edit(conn, _params), do: render_settings(conn)
 
   def request_deletion(conn, %{"confirmation" => params}) when is_map(params) do
-    case Accounts.Lifecycle.request_deletion(conn.assigns.current_user, session_token(conn), params) do
+    case Accounts.Lifecycle.request_deletion(
+           conn.assigns.current_user,
+           session_token(conn),
+           params
+         ) do
       {:ok, user} ->
         deadline = TeslaMateWeb.PlatformComponents.date_time(user.deletion_scheduled_at)
+
         conn
         |> configure_session(renew: true)
         |> clear_session()

@@ -96,7 +96,11 @@ defmodule TeslaMateWeb.DrivingLiveTest do
   end
 
   @tag platform_role: :member
-  test "refresh removes telemetry after access is revoked", %{conn: conn, current_user: user, car: car} do
+  test "refresh removes telemetry after access is revoked", %{
+    conn: conn,
+    current_user: user,
+    car: car
+  } do
     {:ok, _} = TeslaMate.AccountFixtures.grant(user, car)
     {:ok, view, _html} = live(conn, "/driving")
     assert has_element?(view, "#drive-altitude")

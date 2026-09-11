@@ -81,6 +81,7 @@ defmodule TeslaMateWeb.UserAuth do
 
   def finish_login(conn, user, token) do
     conn = put_authenticated_session(conn, token)
+
     conn =
       if user.deletion_scheduled_at,
         do: put_flash(conn, :success, "已取消账号注销，账号恢复正常使用"),

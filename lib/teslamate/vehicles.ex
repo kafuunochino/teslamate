@@ -50,6 +50,7 @@ defmodule TeslaMate.Vehicles do
       Supervisor.terminate_child(pid, child)
       Supervisor.delete_child(pid, child)
     end
+
     :ok
   catch
     :exit, _ -> :ok

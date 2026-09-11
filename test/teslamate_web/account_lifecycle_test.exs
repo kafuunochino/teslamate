@@ -5,15 +5,24 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
 
   setup %{current_user: user} do
     start_supervised!(TeslaMate.Vault)
-    current = user |> Ecto.Changeset.change(password_hash: Accounts.Password.hash(@password)) |> Repo.update!()
+
+    current =
+      user
+      |> Ecto.Changeset.change(password_hash: Accounts.Password.hash(@password))
+      |> Repo.update!()
+
     %{current_user: current}
   end
 
   defp member do
-    {:ok, user} = Accounts.register_user(%{
-      email: "delete-#{System.unique_integer([:positive])}@example.com",
-      name: "Delete Test", password: @password, password_confirmation: @password
-    })
+    {:ok, user} =
+      Accounts.register_user(%{
+        email: "delete-#{System.unique_integer([:positive])}@example.com",
+        name: "Delete Test",
+        password: @password,
+        password_confirmation: @password
+      })
+
     user
   end
 
@@ -35,19 +44,34 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
     assert render(view) =~ "管理员身份固定"
   end
 
-  test "administrator deletion requires two stages and binds confirmation to the selected target", c do
+  test "administrator deletion requires two stages and binds confirmation to the selected target",
+       c do
     target = member()
     other = member()
     {:ok, view, _} = live(c.conn, "/admin/users")
-    render_submit(view, "confirm_delete", %{"id" => target.id, "confirmation" => confirmation(target)})
+
+    render_submit(view, "confirm_delete", %{
+      "id" => target.id,
+      "confirmation" => confirmation(target)
+    })
+
     assert Accounts.get_user(target.id)
     refute has_element?(view, "#admin-delete-form")
     view |> element("#user-row-#{target.id} button[phx-click=prepare_delete]") |> render_click()
     assert has_element?(view, "#admin-delete-form")
-    render_submit(view, "confirm_delete", %{"id" => other.id, "confirmation" => confirmation(other)})
+
+    render_submit(view, "confirm_delete", %{
+      "id" => other.id,
+      "confirmation" => confirmation(other)
+    })
+
     assert Accounts.get_user(target.id)
     assert Accounts.get_user(other.id)
-    view |> form("#admin-delete-form", confirmation: confirmation(target, %{"password" => "wrong"})) |> render_submit()
+
+    view
+    |> form("#admin-delete-form", confirmation: confirmation(target, %{"password" => "wrong"}))
+    |> render_submit()
+
     assert Accounts.get_user(target.id)
     view |> form("#admin-delete-form", confirmation: confirmation(target)) |> render_submit()
     refute Accounts.get_user(target.id)
@@ -73,7 +97,10 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
     assert html =~ ~s(id="account-deletion-form")
     assert html =~ "七天冷静期"
     refute html =~ ~s(id="system-admin-deletion-disabled")
-    response = post(c.conn, "/account/deletion", %{confirmation: confirmation(other), id: other.id})
+
+    response =
+      post(c.conn, "/account/deletion", %{confirmation: confirmation(other), id: other.id})
+
     assert redirected_to(response) == "/account#account-deletion"
     refute Accounts.get_user!(c.current_user.id).deletion_scheduled_at
     response = post(c.conn, "/account/deletion", %{confirmation: confirmation(c.current_user)})
@@ -83,7 +110,10 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
     assert redirected_to(get(c.conn, "/account")) == "/sign_in"
     post(build_conn(), "/sign_in", %{user: %{email: c.current_user.email, password: "wrong"}})
     assert Accounts.get_user!(c.current_user.id).deletion_scheduled_at
-    login = post(build_conn(), "/sign_in", %{user: %{email: c.current_user.email, password: @password}})
+
+    login =
+      post(build_conn(), "/sign_in", %{user: %{email: c.current_user.email, password: @password}})
+
     assert redirected_to(login) == "/"
     assert Phoenix.Flash.get(login.assigns.flash, :success) =~ "已取消账号注销"
     refute Accounts.get_user!(c.current_user.id).deletion_scheduled_at
@@ -93,10 +123,13 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
   @tag platform_role: :member
   test "members cannot reach administrator deletion UI", c do
     assert get(c.conn, "/admin/users").status == 404
-    assert {:error, :forbidden} = Accounts.Lifecycle.delete_account(
-      c.current_user, get_session(c.conn, :user_session_token),
-      TeslaMate.AccountFixtures.system_admin().id,
-      confirmation(c.current_user)
-    )
+
+    assert {:error, :forbidden} =
+             Accounts.Lifecycle.delete_account(
+               c.current_user,
+               get_session(c.conn, :user_session_token),
+               TeslaMate.AccountFixtures.system_admin().id,
+               confirmation(c.current_user)
+             )
   end
 end

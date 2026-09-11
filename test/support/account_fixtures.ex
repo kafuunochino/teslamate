@@ -15,6 +15,7 @@ defmodule TeslaMate.AccountFixtures do
 
   def member do
     system_admin()
+
     Repo.insert!(%User{
       email: "member-#{System.unique_integer([:positive])}@example.com",
       name: "Test Member",

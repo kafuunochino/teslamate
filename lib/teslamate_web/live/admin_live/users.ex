@@ -37,7 +37,11 @@ defmodule TeslaMateWeb.AdminLive.Users do
 
   def handle_event("update_user", %{"id" => id} = params, socket) do
     with %Accounts.User{} = target <- Accounts.get_user(id) do
-      case Accounts.update_user_access(socket.assigns.current_user, target, Map.take(params, ["role", "status"])) do
+      case Accounts.update_user_access(
+             socket.assigns.current_user,
+             target,
+             Map.take(params, ["role", "status"])
+           ) do
         {:ok, _user} ->
           {:noreply, socket |> put_flash(:success, "账号状态已更新") |> load(new_claim: nil)}
 
@@ -55,7 +59,8 @@ defmodule TeslaMateWeb.AdminLive.Users do
         {:noreply, assign(socket, :deletion_target, %{id: user.id, email: user.email})}
 
       {true, %Accounts.User{is_system_admin: true}} ->
-        {:noreply, put_flash(socket, :error, Accounts.Lifecycle.error_message(:system_admin_protected))}
+        {:noreply,
+         put_flash(socket, :error, Accounts.Lifecycle.error_message(:system_admin_protected))}
 
       _ ->
         {:noreply, put_flash(socket, :error, "没有删除该账号的权限")}
@@ -69,11 +74,15 @@ defmodule TeslaMateWeb.AdminLive.Users do
     case socket.assigns.deletion_target do
       %{id: id} ->
         case Accounts.Lifecycle.delete_account(
-          socket.assigns.current_user, socket.assigns.current_user_session_token, id, params
-        ) do
+               socket.assigns.current_user,
+               socket.assigns.current_user_session_token,
+               id,
+               params
+             ) do
           {:ok, _} ->
             {:noreply,
-             socket |> put_flash(:success, "账号已删除，车辆历史已保留，仅管理员可见")
+             socket
+             |> put_flash(:success, "账号已删除，车辆历史已保留，仅管理员可见")
              |> load(new_claim: nil, deletion_target: nil)}
 
           {:error, reason} ->

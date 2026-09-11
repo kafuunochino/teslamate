@@ -202,28 +202,68 @@
             <td data-label="操作">
               <p :if={user.is_system_admin} class="help">固定管理员，不能停用或删除</p>
               <div :if={!user.is_system_admin} class="table-buttons">
-                <button type="button"
+                <button
+                  type="button"
                   class={"button is-small #{if user.status == :active, do: "is-danger is-light", else: "is-success is-light"}"}
-                  phx-click="update_user" phx-value-id={user.id}
-                  phx-value-status={if user.status == :active, do: "disabled", else: "active"}>
+                  phx-click="update_user"
+                  phx-value-id={user.id}
+                  phx-value-status={if user.status == :active, do: "disabled", else: "active"}
+                >
                   <%= if user.status == :active, do: "停用", else: "启用" %>
                 </button>
-                <button type="button" class="button is-small is-danger is-light"
-                  phx-click="prepare_delete" phx-value-id={user.id}>删除账号</button>
+                <button
+                  type="button"
+                  class="button is-small is-danger is-light"
+                  phx-click="prepare_delete"
+                  phx-value-id={user.id}
+                >
+                  删除账号
+                </button>
               </div>
-              <div :if={@deletion_target && @deletion_target.id == user.id}
-                id="admin-delete-confirmation" class="account-deletion delete-confirmation" role="region" aria-label="删除账号二次确认">
+              <div
+                :if={@deletion_target && @deletion_target.id == user.id}
+                id="admin-delete-confirmation"
+                class="account-deletion delete-confirmation"
+                role="region"
+                aria-label="删除账号二次确认"
+              >
                 <h3>二次确认：删除账号</h3>
-                <p>将立即删除 <strong><%= @deletion_target.email %></strong>，并退出其全部设备、清除 Tesla 授权和个人围栏。</p>
+                <p>
+                  将立即删除 <strong><%= @deletion_target.email %></strong>，并退出其全部设备、清除 Tesla 授权和个人围栏。
+                </p>
                 <p>车辆历史保留，仅管理员可见。此操作没有冷静期，无法撤销。</p>
                 <form phx-submit="confirm_delete" id="admin-delete-form" class="platform-form">
                   <label class="label" for="admin-delete-email">输入待删除账号的完整邮箱</label>
-                  <input id="admin-delete-email" name="confirmation[email]" type="email" class="input" autocomplete="off" maxlength="254" required />
+                  <input
+                    id="admin-delete-email"
+                    name="confirmation[email]"
+                    type="email"
+                    class="input"
+                    autocomplete="off"
+                    maxlength="254"
+                    required
+                  />
                   <label class="label" for="admin-delete-password">管理员当前密码</label>
-                  <input id="admin-delete-password" name="confirmation[password]" type="password" class="input" autocomplete="current-password" maxlength="128" required />
+                  <input
+                    id="admin-delete-password"
+                    name="confirmation[password]"
+                    type="password"
+                    class="input"
+                    autocomplete="current-password"
+                    maxlength="128"
+                    required
+                  />
                   <div :if={@deletion_requires_code} class="field">
                     <label class="label" for="admin-delete-code">管理员动态码或恢复码</label>
-                    <input id="admin-delete-code" name="confirmation[code]" type="text" class="input" autocomplete="one-time-code" maxlength="64" required />
+                    <input
+                      id="admin-delete-code"
+                      name="confirmation[code]"
+                      type="text"
+                      class="input"
+                      autocomplete="one-time-code"
+                      maxlength="64"
+                      required
+                    />
                   </div>
                   <label class="checkbox">
                     <input name="confirmation[acknowledge]" type="checkbox" value="true" required />
@@ -231,7 +271,13 @@
                   </label>
                   <div class="table-buttons">
                     <button type="button" class="button" phx-click="cancel_delete">取消</button>
-                    <button type="submit" class="button is-danger" phx-disable-with="正在删除…">确认删除账号</button>
+                    <button
+                      type="submit"
+                      class="button is-danger"
+                      phx-disable-with="正在删除…"
+                    >
+                      确认删除账号
+                    </button>
                   </div>
                 </form>
               </div>

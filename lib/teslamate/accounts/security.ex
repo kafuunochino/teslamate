@@ -191,7 +191,8 @@ defmodule TeslaMate.Accounts.Security do
     transaction(fn ->
       current = lock_user(user)
 
-      if current.auth_version != user.auth_version or Accounts.deletion_due?(current) or not enabled?(current) do
+      if current.auth_version != user.auth_version or Accounts.deletion_due?(current) or
+           not enabled?(current) do
         {:error, :invalid_challenge}
       else
         token = random_token()
@@ -237,7 +238,8 @@ defmodule TeslaMate.Accounts.Security do
           a = lock_authenticator(current)
 
           cond do
-            Accounts.deletion_due?(current) or is_nil(challenge) or challenge.auth_version != current.auth_version or
+            Accounts.deletion_due?(current) or is_nil(challenge) or
+              challenge.auth_version != current.auth_version or
               DateTime.compare(challenge.expires_at, now()) != :gt or
                 challenge.attempts >= @attempt_limit ->
               {:error, :invalid_challenge}
