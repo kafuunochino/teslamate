@@ -25,7 +25,9 @@ defmodule TeslaMate.TeslaFleet do
             session_hash: hash(session_token),
             expires_at: DateTime.add(now, 600)
           }
-        ], prefix: "private")
+        ],
+        prefix: "private"
+      )
 
       url =
         c["auth"] <>

@@ -176,4 +176,28 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
     assert TeslaFleet.connection().access == "existing-fleet"
     assert Auth.get_tokens().access == "legacy-access"
   end
+
+  test "admin integration page renders before and after authorization without exposing credentials",
+       %{conn: conn} do
+    html = conn |> get("/admin/tesla-account/fleet") |> html_response(200)
+    assert html =~ "Tesla 官方接入"
+    assert html =~ "/auth/tesla/start"
+    refute html =~ "test-secret"
+    id = System.unique_integer([:positive])
+    {:ok, car} = TeslaMate.Log.create_car(%{eid: id, vid: id, vin: @vin, model: "3"})
+
+    Repo.insert!(%Connection{
+      id: 1,
+      access: "private-fleet-token",
+      refresh: "private-refresh",
+      expires_at: DateTime.add(DateTime.utc_now(), 3600),
+      vehicles: %{@vin => %{}}
+    })
+
+    html = conn |> get("/admin/tesla-account/fleet") |> html_response(200)
+    assert html =~ "fleet-interval-#{car.id}"
+    assert html =~ "/admin/tesla-account/fleet/configure"
+    refute html =~ "private-fleet-token"
+    refute html =~ "private-refresh"
+  end
 end

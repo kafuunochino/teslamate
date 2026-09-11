@@ -4,6 +4,7 @@ defmodule TeslaMateWeb.TeslaFleetController do
   alias TeslaMate.{Repo, TeslaFleet}
   alias TeslaMate.TeslaFleet.Config
   @cookie "_teslamate_fleet_oauth"
+  @secure_cookie Mix.env() == :prod
   @page "/admin/tesla-account/fleet"
 
   def index(conn, _params) do
@@ -45,7 +46,7 @@ defmodule TeslaMateWeb.TeslaFleetController do
         conn
         |> put_resp_cookie(@cookie, cookie,
           encrypt: true,
-          secure: conn.scheme == :https or Mix.env() == :prod,
+          secure: conn.scheme == :https or @secure_cookie,
           http_only: true,
           same_site: "Lax",
           max_age: 600,

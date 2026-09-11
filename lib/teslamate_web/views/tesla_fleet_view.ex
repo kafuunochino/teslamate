@@ -1,5 +1,6 @@
 defmodule TeslaMateWeb.TeslaFleetView do
   use TeslaMateWeb, :view
+  import Phoenix.Component, only: [form: 1]
   import TeslaMateWeb.PlatformComponents
 
   def result_message(result) do

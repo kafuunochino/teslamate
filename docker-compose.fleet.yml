@@ -71,6 +71,12 @@ services:
     tmpfs: [/tmp]
     environment:
       SUPPRESS_TLS_HANDSHAKE_ERROR_LOGGING: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/status"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
