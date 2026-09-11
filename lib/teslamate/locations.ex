@@ -235,7 +235,7 @@ defmodule TeslaMate.Locations do
     Repo.transaction(fn ->
       current =
         Repo.one(
-          from u in User, where: u.id == ^user.id and u.status == :active, lock: "FOR SHARE"
+          from u in User, where: u.id == ^user.id and u.status == :active, lock: "FOR UPDATE"
         )
 
       if is_nil(current), do: Repo.rollback(:forbidden)
@@ -255,7 +255,8 @@ defmodule TeslaMate.Locations do
   defp safe_id(_), do: -1
 
   def latest_owned_position(user) do
-    ids = from b in UserCar, where: b.user_id == ^user.id, select: b.car_id
+    ids = from b in UserCar, join: u in User, on: u.id == b.user_id,
+        where: b.user_id == ^user.id and u.status == :active, select: b.car_id
 
     Repo.one(
       from p in TeslaMate.Log.Position,

@@ -45,7 +45,7 @@ defmodule TeslaMate.Accounts.Security do
 
         true ->
           a =
-            update(a, %{
+            save_authenticator(a, %{
               pending_secret: NimbleTOTP.secret(),
               pending_session_hash: hash(token),
               pending_expires_at: DateTime.add(now(), @window),
@@ -81,7 +81,7 @@ defmodule TeslaMate.Accounts.Security do
             step ->
               codes = recovery_codes()
 
-              update(a, %{
+              save_authenticator(a, %{
                 secret: a.pending_secret,
                 enabled_at: now(),
                 last_used_step: step,
@@ -146,7 +146,7 @@ defmodule TeslaMate.Accounts.Security do
                   %{recovery_hashes: Enum.map(codes, &recovery_hash/1)}
                 end
 
-              update(a, changes)
+              save_authenticator(a, changes)
               {:ok, new_token} = rotate_sessions(current, metadata)
               {:ok, codes, new_token}
 
@@ -266,7 +266,7 @@ defmodule TeslaMate.Accounts.Security do
   defp consume_factor(a, code) do
     case matching_step(a.secret, code, a.last_used_step) do
       step when is_integer(step) ->
-        {:ok, update(a, %{last_used_step: step, failed_attempts: 0, attempt_window_at: now()})}
+        {:ok, save_authenticator(a, %{last_used_step: step, failed_attempts: 0, attempt_window_at: now()})}
 
       nil ->
         value = if is_binary(code), do: recovery_hash(code), else: <<>>
@@ -274,7 +274,7 @@ defmodule TeslaMate.Accounts.Security do
 
         if used do
           {:ok,
-           update(a, %{
+           save_authenticator(a, %{
              recovery_hashes: List.delete(a.recovery_hashes, used),
              failed_attempts: 0,
              attempt_window_at: now()
@@ -308,7 +308,7 @@ defmodule TeslaMate.Accounts.Security do
         do: %{failed_attempts: 1, attempt_window_at: now()},
         else: %{failed_attempts: a.failed_attempts + 1}
 
-    update(a, changes)
+    save_authenticator(a, changes)
     {:error, :invalid_verification}
   end
 
@@ -355,7 +355,7 @@ defmodule TeslaMate.Accounts.Security do
   defp random_token, do: :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
   defp hash(value), do: :crypto.hash(:sha256, value)
   defp now, do: DateTime.utc_now() |> DateTime.truncate(:microsecond)
-  defp update(record, attrs), do: record |> Ecto.Changeset.change(attrs) |> Repo.update!()
+  defp save_authenticator(record, attrs), do: record |> Ecto.Changeset.change(attrs) |> Repo.update!()
 
   defp transaction(fun) do
     case Repo.transaction(fun) do
