@@ -25,10 +25,30 @@
       </button>
     </div>
     <.battery_panel data={@report.battery_data} mode="charging" />
-    <details class="battery-extra">
-      <summary>电压、电流、充电接口与更多状态</summary>
-      <.battery_panel data={@report.battery_data} mode="charging-extra" />
-    </details>
+    <section class="battery-extra">
+      <button
+        id="battery-details-toggle"
+        type="button"
+        class="battery-details-toggle"
+        phx-click="toggle_battery_details"
+        aria-expanded={to_string(@battery_details_open)}
+        aria-controls="battery-charging-details"
+      >
+        <i
+          class={"mdi mdi-chevron-#{if @battery_details_open, do: "up", else: "down"}"}
+          aria-hidden="true"
+        >
+        </i>
+        电压、电流、充电接口与更多状态
+      </button>
+      <div
+        :if={@battery_details_open}
+        id="battery-charging-details"
+        class="battery-details-content"
+      >
+        <.battery_panel data={@report.battery_data} mode="charging-extra" />
+      </div>
+    </section>
     <.range_picker days={@report.days} />
 
     <p

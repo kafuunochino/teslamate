@@ -12,7 +12,7 @@
 }
 .battery-readings {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
   padding: 0 20px 20px;
@@ -60,20 +60,38 @@
   border-radius: 16px;
   background: var(--platform-surface);
 }
-.battery-extra summary {
+.battery-details-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
   padding: 4px;
+  border: 0;
   color: var(--platform-text);
+  background: transparent;
   cursor: pointer;
+  font: inherit;
   font-weight: 600;
+  text-align: left;
 }
-.battery-extra[open] summary {
-  margin-bottom: 18px;
+.battery-details-toggle:focus-visible {
+  outline: 2px solid var(--platform-primary);
+  outline-offset: 4px;
+}
+.battery-details-content {
+  margin-top: 18px;
 }
 .battery-dashboard.is-disconnected .drive-disconnected {
   display: block;
 }
 .battery-dashboard.is-disconnected .battery-reading dd {
   opacity: 0.4;
+}
+@media (max-width: 900px) {
+  .battery-readings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 480px) {
   .battery-readings {

@@ -74,7 +74,22 @@ defmodule TeslaMate.Vehicles.VehicleSyncTest do
 
       assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :asleep} = summary}}
 
-      assert summary == %Summary{
+      assert %{
+               charge: %{
+                 measured_at: nil,
+                 values: %{
+                   battery_level: 64,
+                   usable_battery_level: 64,
+                   rated_battery_range_km: 315.06
+                 }
+               }
+             } = summary.battery_data
+
+      readings = TeslaMate.BatteryData.readings(summary, [])
+      assert readings.battery_level.value == 64
+      refute readings.battery_level.fresh?
+
+      assert %{summary | battery_data: nil} == %Summary{
                battery_level: 64,
                car: car,
                charge_energy_added: :unknown,

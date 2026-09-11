@@ -116,13 +116,13 @@ defmodule TeslaMateWeb.BatteryComponents do
       },
       thermal_group(),
       %{
-        title: "当前补能",
+        title: "充电读数",
         icon: "ev-station",
         hint: "完整参数在充电页查看。功率、电压和电流均为充电接口数据。",
         fields: [
           {:charging_state, "充电状态", :state},
           {:charger_power, "充电功率", {:unit, " kW", 1}},
-          {:charge_energy_added, "本次已充入", :energy},
+          {:charge_energy_added, "会话已充入", :energy},
           {:charge_rate_km_h, "续航补充速率", {:unit, " km/h", 1}},
           {:time_to_full_charge, "距充电目标", :hours},
           {:fast_charger_present, "快充连接", :yes_no}
@@ -146,7 +146,7 @@ defmodule TeslaMateWeb.BatteryComponents do
           {:charger_voltage, "充电侧电压", {:unit, " V", 0}},
           {:charger_actual_current, "充电侧电流", {:unit, " A", 0}},
           {:charger_phases, "充电相数", {:unit, " 相", 0}},
-          {:charge_energy_added, "本次已充入", :energy},
+          {:charge_energy_added, "会话已充入", :energy},
           {:time_to_full_charge, "距充电目标", :hours},
           {:charge_rate_km_h, "续航补充速率", {:unit, " km/h", 1}},
           {:charge_range_added_rated_km, "本次增加额定续航", :distance},

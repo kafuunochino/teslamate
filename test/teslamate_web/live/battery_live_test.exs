@@ -126,6 +126,7 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     {:ok, view, _} = live(conn, "/charging")
     view |> element("#charge-cost-edit-#{charge.id}") |> render_click()
     view |> form("#charge-cost-form", charge_cost: %{cost: "0.001"}) |> render_submit()
+    view |> element("#battery-details-toggle") |> render_click()
     before = :sys.get_state(view.pid).socket.assigns.cost_changeset
     token = :sys.get_state(view.pid).socket.assigns.battery_token
     send(view.pid, {:battery_refresh, token})
@@ -135,5 +136,30 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     assert has_element?(view, "#charging-extra-charger_voltage dd", "220 V")
     assert has_element?(view, "#charging-charger_power dd", "0.0 kW")
     assert render(view) =~ "并非电池包电压"
+  end
+
+  test "charging details stay open across new samples and full refreshes", %{conn: conn, car: car} do
+    {:ok, view, _} = live(conn, "/charging")
+    refute has_element?(view, "#battery-charging-details")
+    view |> element("#battery-details-toggle") |> render_click()
+
+    Repo.insert!(%Position{
+      car_id: car.id,
+      date: DateTime.utc_now(),
+      latitude: Decimal.new("30"),
+      longitude: Decimal.new("100"),
+      battery_level: 52,
+      usable_battery_level: 51
+    })
+
+    token = :sys.get_state(view.pid).socket.assigns.battery_token
+    send(view.pid, {:battery_refresh, token})
+    assert has_element?(view, "#charging-battery_level dd", "52.0%")
+    assert has_element?(view, "#battery-details-toggle[aria-expanded=true]")
+    assert has_element?(view, "#battery-charging-details")
+    view |> element("#battery-refresh-now") |> render_click()
+    assert has_element?(view, "#battery-charging-details")
+    view |> element("#battery-details-toggle") |> render_click()
+    refute has_element?(view, "#battery-charging-details")
   end
 end
