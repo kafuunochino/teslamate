@@ -142,7 +142,8 @@ defmodule TeslaMateWeb.PlatformComponents do
   def format_number(_, _), do: "—"
 
   def distance(value), do: unit(value, 1, " km")
-  def energy(value), do: unit(value, 1, " kWh")
+  def energy(value, precision \\ 1), do: unit(value, precision, " kWh")
+  def consumption(value), do: unit(value, 1, " Wh/km")
   def money(value), do: if(value in [nil, ""], do: "—", else: "¥#{format_number(value, 2)}")
   def percentage(value), do: unit(value, 1, "%")
   def temperature(value), do: unit(value, 1, " °C")

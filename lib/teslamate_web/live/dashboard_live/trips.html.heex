@@ -3,7 +3,7 @@
     <div>
       <p class="page-kicker">出行记录</p>
       <h1>行程轨迹</h1>
-      <p>查看路线、里程、时长、速度、海拔变化和常去地点。</p>
+      <p>查看详细路线、每程能耗与耗电、里程、时长和海拔变化。</p>
     </div>
     <.vehicle_picker :if={@report.cars != []} cars={@report.cars} current_car={@report.car} />
   </header>
@@ -54,6 +54,9 @@
           <h2>行程明细</h2>
           <span><%= length(@report.drives) %> 条</span>
         </div>
+        <p class="trip-energy-note">
+          平均能耗、净耗电量按续航变化估算；“—”表示数据不足或行程未结束。
+        </p>
         <div :if={@report.drives == []} class="empty-inline">该时间范围没有完整行程</div>
         <div :if={@report.drives != []} class="responsive-table">
           <table>
@@ -62,6 +65,8 @@
                 <th>开始时间</th>
                 <th>路线</th>
                 <th>里程</th>
+                <th>平均能耗（估算）</th>
+                <th>净耗电量（估算）</th>
                 <th>时长</th>
                 <th>最高速度</th>
                 <th>海拔变化</th>
@@ -69,7 +74,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr :for={drive <- @report.drives}>
+              <tr :for={drive <- @report.drives} id={"trip-row-#{drive.id}"}>
+                <% trip_energy = @report.drive_energy[drive.id] %>
                 <td data-label="开始时间"><%= date_time(drive.start_date) %></td>
                 <td data-label="路线" class="route-cell">
                   <span><%= location_label(drive.start_geofence || drive.start_address) %></span>
@@ -77,6 +83,12 @@
                   <span><%= location_label(drive.end_geofence || drive.end_address) %></span>
                 </td>
                 <td data-label="里程"><%= distance(drive.distance) %></td>
+                <td data-label="平均能耗（估算）">
+                  <%= consumption(trip_energy.consumption_wh_km) %>
+                </td>
+                <td data-label="净耗电量（估算）">
+                  <%= energy(trip_energy.energy_kwh, 2) %>
+                </td>
                 <td data-label="时长"><%= duration(drive.duration_min) %></td>
                 <td data-label="最高速度">
                   <%= if drive.speed_max, do: "#{drive.speed_max} km/h", else: "—" %>

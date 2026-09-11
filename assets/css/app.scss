@@ -1109,9 +1109,8 @@ body.auth-body {
   strong,
   small {
     display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   strong {
@@ -1156,11 +1155,26 @@ body.auth-body {
   }
 }
 
+.trip-energy-note {
+  margin: 0;
+  padding: 0 20px 16px;
+  color: var(--platform-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
 .route-cell {
   min-width: 240px;
+  max-width: 360px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+
+  > span {
+    display: block;
+  }
 
   i {
-    margin: 0 5px;
+    margin: 3px 0;
     color: var(--platform-muted);
   }
 }

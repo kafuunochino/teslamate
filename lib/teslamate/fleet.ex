@@ -31,6 +31,7 @@ defmodule TeslaMate.Fleet do
     if car do
       position = latest_position(car.id)
       live = live_summary(car.id)
+      recent_drives = recent_drives(car.id, 5)
 
       %{
         cars: cars,
@@ -42,7 +43,8 @@ defmodule TeslaMate.Fleet do
         location: latest_location(car.id),
         drive_stats: drive_stats(car.id, 30),
         charge_stats: charge_stats(car.id, 30),
-        recent_drives: recent_drives(car.id, 5),
+        recent_drives: recent_drives,
+        recent_drive_energy: drive_energy(recent_drives, car),
         recent_charges: recent_charges(car.id, 5),
         daily_distance: daily_distance(car.id, 14)
       }
@@ -140,6 +142,7 @@ defmodule TeslaMate.Fleet do
         car: car,
         days: days,
         drives: drives,
+        drive_energy: drive_energy(drives, car),
         stats: drive_stats(car.id, days),
         daily_distance: daily_distance(car.id, days),
         destinations: top_destinations(car.id, days, 8)
@@ -178,7 +181,11 @@ defmodule TeslaMate.Fleet do
           })
           |> Repo.all()
 
-        %{drive: drive, positions: positions}
+        %{
+          drive: drive,
+          positions: positions,
+          energy: drive_energy([drive], drive.car)[drive.id]
+        }
     end
   end
 
@@ -278,11 +285,14 @@ defmodule TeslaMate.Fleet do
 
   def address_label(nil), do: "未知位置"
 
-  def address_label(%Address{} = address) do
-    address.name || address.road || address.city || address.display_name || "未知位置"
-  end
+  def address_label(%Address{} = address), do: Address.display_label(address)
 
   def address_label(%GeoFence{name: name}), do: name
+
+  defp drive_energy(drives, car) do
+    range = TeslaMate.Settings.get_global_settings!().preferred_range
+    Map.new(drives, &{&1.id, TeslaMate.TripEnergy.calculate(&1, car.efficiency, range)})
+  end
 
   ## Query helpers
 
@@ -500,11 +510,13 @@ defmodule TeslaMate.Fleet do
     |> order_by([d], desc: count(d.id))
     |> limit(^limit)
     |> select([d, a, g], %{
-      label: fragment("COALESCE(?, ?, ?, ?, ?)", g.name, a.name, a.road, a.city, a.display_name),
+      geofence_name: g.name,
+      label: fragment("COALESCE(?, ?, ?, ?, ?)", g.name, a.display_name, a.name, a.road, a.city),
       count: count(d.id),
       distance: fragment("COALESCE(SUM(?), 0)", d.distance)
     })
     |> Repo.all()
+    |> Enum.map(&format_ranked_address/1)
   end
 
   defp top_charging_stations(car_id, days, limit) do
@@ -516,14 +528,15 @@ defmodule TeslaMate.Fleet do
     |> order_by([c], desc: count(c.id))
     |> limit(^limit)
     |> select([c, a, g], %{
+      geofence_name: g.name,
       label:
         fragment(
           "COALESCE(?, ?, ?, ?, ?, '未知充电地点')",
           g.name,
+          a.display_name,
           a.name,
           a.road,
-          a.city,
-          a.display_name
+          a.city
         ),
       count: count(c.id),
       energy: fragment("COALESCE(SUM(?), 0)", c.charge_energy_added),
@@ -531,6 +544,16 @@ defmodule TeslaMate.Fleet do
       cost_count: count(c.cost)
     })
     |> Repo.all()
+    |> Enum.map(&format_ranked_address/1)
+  end
+
+  defp format_ranked_address(%{geofence_name: name} = row) when is_binary(name),
+    do: Map.delete(row, :geofence_name)
+
+  defp format_ranked_address(row) do
+    row
+    |> Map.update!(:label, &Address.format_display_name/1)
+    |> Map.delete(:geofence_name)
   end
 
   defp analysis_drive_metrics(%Car{} = car, days) do

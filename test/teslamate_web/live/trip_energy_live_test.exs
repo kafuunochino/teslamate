@@ -1,0 +1,122 @@
+defmodule TeslaMateWeb.TripEnergyLiveTest do
+  use TeslaMateWeb.ConnCase, async: false
+
+  alias TeslaMate.{Accounts, Fleet, Log, Repo, Settings}
+  alias TeslaMate.Locations.Address
+  alias TeslaMate.Log.Drive
+
+  setup do
+    Settings.get_global_settings!()
+    |> Ecto.Changeset.change(preferred_range: :rated)
+    |> Repo.update!()
+
+    {:ok, car} =
+      Log.create_car(%{
+        efficiency: 0.153,
+        eid: System.unique_integer([:positive]),
+        vid: System.unique_integer([:positive]),
+        vin: "ENERGY#{System.unique_integer([:positive])}",
+        model: "3"
+      })
+
+    address =
+      Repo.insert!(%Address{
+        osm_id: System.unique_integer([:positive]),
+        osm_type: "node",
+        latitude: Decimal.new("30"),
+        longitude: Decimal.new("100"),
+        raw: %{},
+        city: "测试区",
+        display_name: "测试街道, 测试区, 测试市, 中国"
+      })
+
+    date = DateTime.utc_now() |> DateTime.add(-3600)
+
+    drive =
+      Repo.insert!(%Drive{
+        car_id: car.id,
+        start_date: date,
+        end_date: DateTime.add(date, 900),
+        start_address_id: address.id,
+        end_address_id: address.id,
+        distance: 5.0,
+        duration_min: 15,
+        start_rated_range_km: Decimal.new("300"),
+        end_rated_range_km: Decimal.new("290")
+      })
+
+    %{car: car, drive: drive}
+  end
+
+  test "list, detail and homepage show consistent energy with detailed addresses", %{
+    conn: conn,
+    current_user: user,
+    car: car,
+    drive: drive
+  } do
+    {:ok, list, html} = live(conn, "/trips?car=#{car.id}")
+    assert has_element?(list, "#trip-row-#{drive.id}", "306.0 Wh/km")
+    assert has_element?(list, "#trip-row-#{drive.id}", "1.53 kWh")
+    assert html =~ "测试市 · 测试区 · 测试街道"
+    assert hd(Fleet.trips(user, car.id).destinations).label == "测试市 · 测试区 · 测试街道"
+
+    {:ok, detail, _html} = live(conn, "/trips/#{drive.id}")
+    assert has_element?(detail, "#trip-energy-summary", "306.0 Wh/km")
+    assert has_element?(detail, "#trip-energy-summary", "1.53 kWh")
+    assert render(detail) =~ "估算"
+
+    {:ok, home, _html} = live(conn, "/")
+    assert has_element?(home, ".activity-list", "1.53 kWh")
+    assert has_element?(home, ".activity-list", "306.0 Wh/km")
+  end
+
+  test "missing range readings show unknown rather than fabricated zero energy", %{
+    conn: conn,
+    drive: drive
+  } do
+    drive |> Ecto.Changeset.change(end_rated_range_km: nil) |> Repo.update!()
+
+    {:ok, view, _html} = live(conn, "/trips")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='平均能耗（估算）']", "—")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='净耗电量（估算）']", "—")
+    refute has_element?(view, "#trip-row-#{drive.id}", "0.00 kWh")
+  end
+
+  test "a zero-distance trip keeps its energy but has no Wh/km value", %{
+    conn: conn,
+    drive: drive
+  } do
+    drive |> Ecto.Changeset.change(distance: 0.0) |> Repo.update!()
+
+    {:ok, view, _html} = live(conn, "/trips")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='平均能耗（估算）']", "—")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='净耗电量（估算）']", "1.53 kWh")
+  end
+
+  test "members only see energy and addresses for vehicles granted to them", %{
+    conn: conn,
+    current_user: user,
+    car: car,
+    drive: drive
+  } do
+    {:ok, _binding} = Accounts.grant_car(user, user, car.id)
+    member = user |> Ecto.Changeset.change(role: :member) |> Repo.update!()
+
+    {:ok, other_car} =
+      Log.create_car(%{
+        eid: System.unique_integer([:positive]),
+        vid: System.unique_integer([:positive]),
+        vin: "OTHER#{System.unique_integer([:positive])}"
+      })
+
+    other_drive =
+      Repo.insert!(%Drive{car_id: other_car.id, start_date: DateTime.utc_now()})
+
+    {:ok, view, _html} = live(conn, "/trips?car=#{other_car.id}")
+    assert has_element?(view, "#trip-row-#{drive.id}", "1.53 kWh")
+    refute has_element?(view, "#trip-row-#{other_drive.id}")
+    assert Fleet.trip(member, other_drive.id) == nil
+
+    assert {:error, {:redirect, %{to: "/trips"}}} = live(conn, "/trips/#{other_drive.id}")
+  end
+end

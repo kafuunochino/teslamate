@@ -1,5 +1,6 @@
 <div class="platform-page">
   <% drive = @report.drive %>
+  <% trip_energy = @report.energy %>
   <header class="page-heading">
     <div>
       <.link
@@ -21,12 +22,24 @@
     </a>
   </header>
 
-  <section class="metrics-grid">
+  <section id="trip-energy-summary" class="metrics-grid">
     <.metric_card
       title="行驶距离"
       value={distance(drive.distance)}
       icon="map-marker-distance"
       tone="blue"
+    />
+    <.metric_card
+      title="平均能耗（估算）"
+      value={consumption(trip_energy.consumption_wh_km)}
+      icon="flash-outline"
+      tone="amber"
+    />
+    <.metric_card
+      title="净耗电量（估算）"
+      value={energy(trip_energy.energy_kwh, 2)}
+      icon="battery-minus-outline"
+      tone="cyan"
     />
     <.metric_card
       title="驾驶时长"
@@ -53,6 +66,10 @@
       tone="cyan"
     />
   </section>
+
+  <p class="trip-energy-note">
+    按行程前后续航变化与车辆能耗系数估算。短行程受续航精度影响较大，负值可能来自能量回收或续航校准；数据不足时显示“—”。
+  </p>
 
   <section class="data-card">
     <div class="data-card__header">

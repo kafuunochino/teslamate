@@ -165,6 +165,10 @@
               <small>
                 <%= date_time(drive.start_date) %> · <%= duration(drive.duration_min) %>
               </small>
+              <small>
+                估算：<%= consumption(@report.recent_drive_energy[drive.id].consumption_wh_km) %> ·
+                <%= energy(@report.recent_drive_energy[drive.id].energy_kwh, 2) %>
+              </small>
             </span>
             <b><%= distance(drive.distance) %></b>
           </.link>
