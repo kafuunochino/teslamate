@@ -31,7 +31,7 @@ defmodule TeslaMateWeb.AdminLive.Users do
         {:noreply, load(socket, new_claim: %{code: raw_token, claim: claim, car: car})}
 
       {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "无法创建认领码：#{inspect(reason)}")}
+        {:noreply, put_flash(socket, :error, "无法创建认领码：#{access_error(reason)}")}
     end
   end
 

@@ -16,7 +16,7 @@ defmodule TeslaMateWeb.UserRegistrationController do
     end
   end
 
-  def create(conn, %{"user" => user_params}) do
+  def create(conn, %{"user" => user_params}) when is_map(user_params) do
     if Accounts.sign_up_allowed?() do
       ip = conn.private[:client_ip] || "unknown"
       email_key = registration_key(Map.get(user_params, "email", ""))
@@ -59,10 +59,11 @@ defmodule TeslaMateWeb.UserRegistrationController do
     end
   end
 
-  defp registration_key(email) do
+  defp registration_key(email) when is_binary(email) do
     normalized =
       email |> to_string() |> String.trim() |> String.downcase() |> String.slice(0, 254)
 
     "registration:" <> normalized
   end
+  defp registration_key(_), do: "registration:invalid"
 end

@@ -1,5 +1,6 @@
 defmodule TeslaMateWeb.UserSettingsView do
   use TeslaMateWeb, :view
+  import Phoenix.Component, only: [form: 1]
 
   def device_label(nil), do: "已有登录设备"
 

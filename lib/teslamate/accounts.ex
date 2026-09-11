@@ -50,13 +50,6 @@ defmodule TeslaMate.Accounts do
         {:error, :invalid_credentials}
 
       true ->
-        now = now()
-
-        {1, _} =
-          Repo.update_all(from(u in User, where: u.id == ^user.id), set: [last_login_at: now])
-
-        user = %{user | last_login_at: now}
-        audit(:user_logged_in, user, target_user: user)
         {:ok, user}
     end
   end
@@ -181,6 +174,8 @@ defmodule TeslaMate.Accounts do
       }
 
       Repo.insert!(session)
+      Repo.update_all(from(u in User, where: u.id == ^current.id), set: [last_login_at: time])
+      audit(:user_logged_in, current, target_user: current)
       token
     end)
   end
@@ -296,9 +291,17 @@ defmodule TeslaMate.Accounts do
   defp remove_sessions(query) do
     {count, hashes} = Repo.delete_all(select(query, [s], s.token_hash))
 
-    if Process.whereis(TeslaMate.PubSub),
-      do:
-        Enum.each(hashes, &TeslaMateWeb.Endpoint.broadcast(session_topic(&1), "disconnect", %{}))
+    if Process.whereis(TeslaMate.PubSub) do
+      Enum.each(hashes, fn hash ->
+        topic = session_topic(hash)
+
+        Phoenix.PubSub.broadcast(TeslaMate.PubSub, topic, %Phoenix.Socket.Broadcast{
+          topic: topic,
+          event: "disconnect",
+          payload: %{}
+        })
+      end)
+    end
 
     count
   end
@@ -467,6 +470,8 @@ defmodule TeslaMate.Accounts do
     end)
   end
 
+  def grant_car(_, _, _), do: {:error, :forbidden}
+
   @doc false
   def bind_exclusive!(%User{} = user, %Car{} = car, granted_by_id) do
     # Call within a transaction while holding the car row lock.
@@ -489,8 +494,6 @@ defmodule TeslaMate.Accounts do
         Repo.rollback(:vehicle_already_bound)
     end
   end
-
-  def grant_car(_, _, _), do: {:error, :forbidden}
 
   def revoke_car(%User{} = actor, %User{} = target, car_id) do
     if active_admin_actor?(actor) do
@@ -519,6 +522,7 @@ defmodule TeslaMate.Accounts do
         Repo.delete_all(from uc in UserCar, where: uc.user_id == ^user.id and uc.car_id == ^id)
 
       if count > 0 do
+        delete_user_sessions(user)
         audit(:vehicle_access_relinquished, user, target_user: user, car_id: id)
       end
 
@@ -536,7 +540,8 @@ defmodule TeslaMate.Accounts do
     hours = opts |> Keyword.get(:hours, @default_claim_hours) |> clamp(1, @max_claim_hours)
 
     with true <- active_admin_actor?(actor),
-         %Car{} = car <- Repo.get(Car, parse_id(car_id)) do
+         %Car{} = car <- Repo.get(Car, parse_id(car_id)),
+         false <- Repo.exists?(from b in UserCar, where: b.car_id == ^car.id) do
       raw_token = @claim_bytes |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
 
       claim = %VehicleClaim{
@@ -559,6 +564,7 @@ defmodule TeslaMate.Accounts do
           {:error, changeset}
       end
     else
+      true -> {:error, :vehicle_already_bound}
       false -> {:error, :forbidden}
       nil -> {:error, :car_not_found}
     end

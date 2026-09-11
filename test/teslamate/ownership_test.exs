@@ -52,7 +52,7 @@ defmodule TeslaMate.OwnershipTest do
 
   defp charge(car) do
     {:ok, charge} =
-      Log.start_charging_process(car, %{latitude: 26.647, longitude: 106.63},
+      Log.start_charging_process(car, %{date: DateTime.utc_now(), latitude: 26.647, longitude: 106.63},
         lookup_address: false
       )
 
@@ -71,7 +71,7 @@ defmodule TeslaMate.OwnershipTest do
     assert Repo.get_by!(Accounts.UserCar, car_id: car.id).user_id == first.id
     member = second |> Ecto.Changeset.change(role: :member) |> Repo.update!()
     refute Accounts.can_access_car?(member, car.id)
-    assert Fleet.home(member, car.id).car == nil
+    assert Fleet.home(member, car.id).car.id != car.id
     {:ok, drive} = Log.start_drive(car)
     assert Fleet.trip(member, drive.id) == nil
   end

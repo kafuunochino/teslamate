@@ -1,24 +1,31 @@
-<section class="auth-card">
-  <div class="auth-brand"><i class="mdi mdi-shield-key-outline"></i><span>TeslaMate</span></div>
-  <h1>两步验证</h1>
-  <p>输入验证器中的 6 位动态码，或输入一枚未使用的恢复码。</p>
-  <p :if={@error} class="notification is-danger" role="alert"><%= @error %></p>
-  <.form for={%{}} action="/sign_in/verify" method="post" class="platform-form">
-    <div class="field">
-      <label class="label" for="verification-code">动态码或恢复码</label>
-      <input
-        id="verification-code"
-        name="verification[code]"
-        class="input"
-        type="text"
-        autocomplete="one-time-code"
-        maxlength="64"
-        required
-        autofocus
-      />
+<section class="auth-page" aria-labelledby="verification-title">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand-mark"><i class="mdi mdi-shield-key-outline"></i></span>
+      <div>
+        <p class="auth-eyebrow">TESLAMATE CN</p>
+        <h1 id="verification-title">两步验证</h1>
+        <p>输入验证器中的 6 位动态码，或输入一枚未使用的恢复码。</p>
+      </div>
     </div>
-    <button class="button is-primary is-fullwidth" type="submit">验证并登录</button>
-  </.form>
-  <p class="help">动态码每 30 秒更新，同一枚动态码只能使用一次。</p>
-  <a href="/sign_in">返回邮箱密码登录</a>
+    <p :if={@error} class="auth-alert" role="alert"><%= @error %></p>
+    <.form for={%{}} action="/sign_in/verify" method="post" class="auth-form">
+      <div class="field">
+        <label class="label" for="verification-code">动态码或恢复码</label>
+        <input
+          id="verification-code"
+          name="verification[code]"
+          class="input"
+          type="text"
+          autocomplete="one-time-code"
+          maxlength="64"
+          required
+          autofocus
+        />
+      </div>
+      <button class="button is-primary is-fullwidth auth-submit" type="submit">验证并登录</button>
+    </.form>
+    <p class="help">动态码每 30 秒更新，同一枚动态码只能使用一次。</p>
+    <p class="auth-switch"><a href="/sign_in">返回邮箱密码登录</a></p>
+  </div>
 </section>

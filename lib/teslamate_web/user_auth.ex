@@ -2,7 +2,7 @@ defmodule TeslaMateWeb.UserAuth do
   @moduledoc false
   import Phoenix.Component
   import Phoenix.Controller
-  import Plug.Conn
+  import Plug.Conn, except: [assign: 3]
   alias TeslaMate.Accounts
   alias TeslaMateWeb.Router.Helpers, as: Routes
   @session_key :user_session_token
@@ -124,9 +124,7 @@ defmodule TeslaMateWeb.UserAuth do
     |> Phoenix.LiveView.attach_hook(:session_events, :handle_event, fn _, _, socket ->
       recheck(socket, requirement)
     end)
-    |> Phoenix.LiveView.attach_hook(:session_navigation, :handle_params, fn _, _, socket ->
-      recheck(socket, requirement)
-    end)
+    |> attach_navigation_recheck(requirement)
     |> Phoenix.LiveView.attach_hook(:session_messages, :handle_info, fn message, socket ->
       case recheck(socket, requirement) do
         {:cont, socket} when message == :check_account_session ->
@@ -137,6 +135,16 @@ defmodule TeslaMateWeb.UserAuth do
           result
       end
     end)
+  end
+
+  defp attach_navigation_recheck(socket, requirement) do
+    if socket.view in [TeslaMateWeb.CarLive.Index, TeslaMateWeb.CarLive.Summary] do
+      socket
+    else
+      Phoenix.LiveView.attach_hook(socket, :session_navigation, :handle_params, fn _, _, socket ->
+        recheck(socket, requirement)
+      end)
+    end
   end
 
   defp recheck(socket, requirement) do

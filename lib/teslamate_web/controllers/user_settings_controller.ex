@@ -6,20 +6,22 @@ defmodule TeslaMateWeb.UserSettingsController do
 
   def edit(conn, _params), do: render_settings(conn)
 
-  def update_profile(conn, %{"user" => params}) do
+  def update_profile(conn, %{"user" => params}) when is_map(params) do
     case Accounts.update_profile(conn.assigns.current_user, params) do
       {:ok, _} ->
         conn |> put_flash(:success, "个人资料已更新") |> redirect(to: "/account")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render_settings(conn, profile_changeset: changeset)
+        render_settings(put_status(conn, :unprocessable_entity), profile_changeset: changeset)
 
       _ ->
         failed(conn, :forbidden)
     end
   end
 
-  def update_password(conn, %{"user" => params}) do
+  def update_profile(conn, _), do: bad_request(conn)
+
+  def update_password(conn, %{"user" => params}) when is_map(params) do
     user = conn.assigns.current_user
     password = params["current_password"] || ""
 
@@ -29,14 +31,16 @@ defmodule TeslaMateWeb.UserSettingsController do
       conn |> put_flash(:success, "密码已更新，所有设备已登出，请重新登录") |> UserAuth.log_out_user()
     else
       {:error, %Ecto.Changeset{} = changeset} ->
-        render_settings(conn, password_changeset: changeset)
+        render_settings(put_status(conn, :unprocessable_entity), password_changeset: changeset)
 
       {:error, reason} ->
         failed(conn, reason)
     end
   end
 
-  def begin_two_factor(conn, %{"security" => params}) do
+  def update_password(conn, _), do: bad_request(conn)
+
+  def begin_two_factor(conn, %{"security" => params}) when is_map(params) do
     case Security.begin_enrollment(
            conn.assigns.current_user,
            session_token(conn),
@@ -50,7 +54,9 @@ defmodule TeslaMateWeb.UserSettingsController do
     end
   end
 
-  def enable_two_factor(conn, %{"security" => params}) do
+  def begin_two_factor(conn, _), do: bad_request(conn)
+
+  def enable_two_factor(conn, %{"security" => params}) when is_map(params) do
     result =
       Security.enable(
         conn.assigns.current_user,
@@ -62,7 +68,9 @@ defmodule TeslaMateWeb.UserSettingsController do
     security_result(conn, result, "两步验证已启用，其他登录设备已登出")
   end
 
-  def disable_two_factor(conn, %{"security" => params}) do
+  def enable_two_factor(conn, _), do: bad_request(conn)
+
+  def disable_two_factor(conn, %{"security" => params}) when is_map(params) do
     result =
       Security.disable(
         conn.assigns.current_user,
@@ -75,7 +83,9 @@ defmodule TeslaMateWeb.UserSettingsController do
     security_result(conn, result, "两步验证已关闭，旧恢复码已失效，其他登录设备已登出")
   end
 
-  def recovery_codes(conn, %{"security" => params}) do
+  def disable_two_factor(conn, _), do: bad_request(conn)
+
+  def recovery_codes(conn, %{"security" => params}) when is_map(params) do
     result =
       Security.regenerate_recovery_codes(
         conn.assigns.current_user,
@@ -87,6 +97,8 @@ defmodule TeslaMateWeb.UserSettingsController do
 
     security_result(conn, result, "恢复码已重新生成，旧恢复码已失效，其他登录设备已登出")
   end
+
+  def recovery_codes(conn, _), do: bad_request(conn)
 
   def revoke_device(conn, %{"id" => id}) do
     case Accounts.revoke_session(conn.assigns.current_user, id) do
@@ -143,6 +155,8 @@ defmodule TeslaMateWeb.UserSettingsController do
   end
 
   defp session_token(conn), do: conn.assigns.current_user_session_token
+
+  defp bad_request(conn), do: conn |> send_resp(:bad_request, "Invalid request")
 
   defp failed(conn, reason) do
     message =
