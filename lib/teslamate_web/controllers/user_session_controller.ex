@@ -127,7 +127,11 @@ defmodule TeslaMateWeb.UserSessionController do
         |> redirect(to: "/sign_in")
 
       {:error, reason} ->
-        LoginRateLimit.record_login_failure(conn.private[:client_ip] || "unknown", challenge_user.email)
+        LoginRateLimit.record_login_failure(
+          conn.private[:client_ip] || "unknown",
+          challenge_user.email
+        )
+
         status = if reason == :rate_limited, do: :too_many_requests, else: :unprocessable_entity
 
         message =

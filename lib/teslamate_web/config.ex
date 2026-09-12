@@ -79,7 +79,9 @@ defmodule TeslaMateWeb.Config do
 
   def turnstile_enabled?, do: truthy?(System.get_env("TESLAMATE_TURNSTILE_ENABLED", "false"))
   def turnstile_site_key, do: System.get_env("TESLAMATE_TURNSTILE_SITE_KEY", "") |> String.trim()
-  def turnstile_secret_key, do: System.get_env("TESLAMATE_TURNSTILE_SECRET_KEY", "") |> String.trim()
+
+  def turnstile_secret_key,
+    do: System.get_env("TESLAMATE_TURNSTILE_SECRET_KEY", "") |> String.trim()
 
   def turnstile_hostnames do
     System.get_env("TESLAMATE_TURNSTILE_HOSTNAMES", "")

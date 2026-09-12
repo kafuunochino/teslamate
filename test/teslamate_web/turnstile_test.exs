@@ -52,7 +52,9 @@ defmodule TeslaMateWeb.TurnstileTest do
   end
 
   defp accepted(action, overrides \\ %{}) do
-    result = Map.merge(%{"success" => true, "hostname" => @hostname, "action" => action}, overrides)
+    result =
+      Map.merge(%{"success" => true, "hostname" => @hostname, "action" => action}, overrides)
+
     Process.put(:siteverify_result, {:ok, %{status: 200, body: Jason.encode!(result)}})
   end
 
@@ -173,7 +175,13 @@ defmodule TeslaMateWeb.TurnstileTest do
     assert :ok = Turnstile.verify("response", "2001:db8::42", "login")
     assert_received {:siteverify, url, body, opts}
     assert url == "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-    assert body == %{"secret" => "test-private-key", "response" => "response", "remoteip" => "2001:db8::42"}
+
+    assert body == %{
+             "secret" => "test-private-key",
+             "response" => "response",
+             "remoteip" => "2001:db8::42"
+           }
+
     assert opts[:receive_timeout] == 5000
     assert opts[:pool_timeout] == 1000
   end
@@ -187,13 +195,18 @@ defmodule TeslaMateWeb.TurnstileTest do
     refute_received {:siteverify, _, _, _}
   end
 
-  test "2FA remains mandatory and a failed code requires a new human verification", %{current_user: user} do
+  test "2FA remains mandatory and a failed code requires a new human verification", %{
+    current_user: user
+  } do
     secret = NimbleTOTP.secret()
     Repo.insert!(%Authenticator{user_id: user.id, secret: secret, enabled_at: DateTime.utc_now()})
     first = post(build_conn(), "/sign_in", credentials(user))
     assert redirected_to(first) == "/sign_in/verify"
     refute get_session(first, :user_session_token)
-    failed = first |> recycle() |> post("/sign_in/verify", %{"verification" => %{"code" => "invalid"}})
+
+    failed =
+      first |> recycle() |> post("/sign_in/verify", %{"verification" => %{"code" => "invalid"}})
+
     assert html_response(failed, 422) =~ "data-turnstile-widget"
     code = NimbleTOTP.verification_code(secret)
     params = %{"verification" => %{"code" => code}}
@@ -212,6 +225,7 @@ defmodule TeslaMateWeb.TurnstileTest do
     [account_policy] = get_resp_header(get(conn, "/account"), "content-security-policy")
     refute account_policy =~ "challenges.cloudflare.com"
     assert account_policy =~ "frame-src 'none'"
+
     assert Phoenix.Logger.filter_values(%{"cf-turnstile-response" => "response"}) ==
              %{"cf-turnstile-response" => "[FILTERED]"}
   end
