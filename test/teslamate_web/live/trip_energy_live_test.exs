@@ -157,7 +157,13 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     assert has_element?(view, ".metric-card", "1.00 kWh")
     refute html =~ "估算能耗"
 
-    older = %{drive | id: nil, start_date: DateTime.add(drive.start_date, -86_400), end_date: DateTime.add(drive.end_date, -86_400)}
+    older = %{
+      drive
+      | id: nil,
+        start_date: DateTime.add(drive.start_date, -86_400),
+        end_date: DateTime.add(drive.end_date, -86_400)
+    }
+
     Repo.insert!(older)
     {:ok, _, mixed} = live(conn, "/analysis")
     assert mixed =~ "1 程电池读数 · 1 程续航估算"

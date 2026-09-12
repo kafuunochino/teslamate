@@ -33,7 +33,9 @@
       end %>
     <section class="metrics-grid">
       <.metric_card
-        title={if @report.history_source == :fleet_capacity, do: "所选时期的满电能量变化", else: "所选时期的容量变化估算"}
+        title={
+          if @report.history_source == :fleet_capacity, do: "所选时期的满电能量变化", else: "所选时期的容量变化估算"
+        }
         value={
           if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"
         }
@@ -88,11 +90,13 @@
       </div>
     </section>
     <.bar_chart
-      title={case @report.history_source do
-        :fleet_capacity -> "每日电池包满电能量"
-        :fleet_normalized -> "每日满电能量估算"
-        _ -> "每日归一化满电额定续航"
-      end}
+      title={
+        case @report.history_source do
+          :fleet_capacity -> "每日电池包满电能量"
+          :fleet_normalized -> "每日满电能量估算"
+          _ -> "每日归一化满电额定续航"
+        end
+      }
       rows={@report.history}
       unit={if capacity?, do: " kWh", else: " km"}
       empty="当前范围内缺少有效样本"

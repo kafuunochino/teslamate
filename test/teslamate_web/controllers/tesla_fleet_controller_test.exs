@@ -233,18 +233,36 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
              "configuration" => %{"config" => nil, "key_paired" => true, "synced" => true}
            }) =~ "尚未启用"
   end
-  test "configuring telemetry checks owned vehicle capabilities before requesting new signals", %{current_user: user} do
+
+  test "configuring telemetry checks owned vehicle capabilities before requesting new signals", %{
+    current_user: user
+  } do
     assert {:ok, _} = TeslaFleet.connect("authorization-code", user)
-    Application.put_env(:teslamate, :tesla_fleet_config, Map.merge(@config, %{
-      "telemetry_host" => "telemetry.example.com", "telemetry_port" => 8444,
-      "telemetry_ca" => "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
-      "proxy_url" => "https://fleet-proxy:4443"
-    }))
+
+    Application.put_env(
+      :teslamate,
+      :tesla_fleet_config,
+      Map.merge(@config, %{
+        "telemetry_host" => "telemetry.example.com",
+        "telemetry_port" => 8444,
+        "telemetry_ca" => "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+        "proxy_url" => "https://fleet-proxy:4443"
+      })
+    )
 
     Application.put_env(:teslamate, :tesla_fleet_http, fn
       :post, "https://fleet-api.prd.cn.vn.cloud.tesla.cn/api/1/vehicles/fleet_status", _, body ->
         assert Jason.decode!(body)["vins"] == [@vin]
-        {:ok, %{"response" => %{"vehicle_info" => %{@vin => %{"firmware_version" => "2026.32.1", "fleet_telemetry_version" => "1.3.0"}}}}}
+
+        {:ok,
+         %{
+           "response" => %{
+             "vehicle_info" => %{
+               @vin => %{"firmware_version" => "2026.32.1", "fleet_telemetry_version" => "1.3.0"}
+             }
+           }
+         }}
+
       :post, "https://fleet-proxy:4443/api/1/vehicles/fleet_telemetry_config", _, body ->
         config = Jason.decode!(body)
         assert config["vins"] == [@vin]
@@ -252,11 +270,14 @@ defmodule TeslaMateWeb.TeslaFleetControllerTest do
         assert config["config"]["fields"]["EnergyRemaining"]["include_fields"] == ["Soc"]
         {:ok, %{"response" => %{"updated_vehicles" => 1}}}
     end)
+
     assert {:ok, _} = TeslaFleet.configure_vehicle(user, @vin, 5)
 
     Application.put_env(:teslamate, :tesla_fleet_http, fn
-      :post, "https://fleet-api.prd.cn.vn.cloud.tesla.cn/api/1/vehicles/fleet_status", _, _ -> {:error, :network_error}
+      :post, "https://fleet-api.prd.cn.vn.cloud.tesla.cn/api/1/vehicles/fleet_status", _, _ ->
+        {:error, :network_error}
     end)
+
     assert {:error, :network_error} = TeslaFleet.configure_vehicle(user, @vin, 5)
   end
 end

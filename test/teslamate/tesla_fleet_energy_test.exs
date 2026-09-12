@@ -117,7 +117,9 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     assert Energy.drive_energy([later]) == %{}
   end
 
-  test "a near-departure first snapshot is usable only with sufficient observed time", %{interval: i} do
+  test "a near-departure first snapshot is usable only with sufficient observed time", %{
+    interval: i
+  } do
     sample(i, "EnergyRemaining", 18, 50)
     sample(i, "EnergyRemaining", 534, 49)
     assert Energy.drive_energy([i])[i.id].energy_kwh == 1

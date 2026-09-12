@@ -340,8 +340,15 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     assert Decimal.equal?(TeslaMate.Fleet.home(user, car.id).charge_stats.energy_added, 19)
     assert Decimal.equal?(Repo.get!(ChargingProcess, charge.id).charge_energy_added, 20)
   end
+
   test "reported full-pack capacity is not labeled as a range estimate", %{conn: conn, car: car} do
-    TeslaMate.TeslaFleet.Energy.record(car.id, "NominalFullPackEnergyKwh", 78.5, DateTime.utc_now())
+    TeslaMate.TeslaFleet.Energy.record(
+      car.id,
+      "NominalFullPackEnergyKwh",
+      78.5,
+      DateTime.utc_now()
+    )
+
     {:ok, view, html} = live(conn, "/battery?car=#{car.id}")
     assert html =~ "每日电池包满电能量"
     assert html =~ "所选时期的满电能量变化"

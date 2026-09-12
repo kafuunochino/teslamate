@@ -65,7 +65,12 @@
       />
       <.metric_card
         title="平均能耗"
-        hint={TeslaMate.TripEnergy.summary_label(@report.drive.official_count, @report.drive.energy_count)}
+        hint={
+          TeslaMate.TripEnergy.summary_label(
+            @report.drive.official_count,
+            @report.drive.energy_count
+          )
+        }
         value={
           if @report.drive.consumption_wh_km,
             do: "#{format_number(@report.drive.consumption_wh_km, 0)} Wh/km",
@@ -77,7 +82,12 @@
       <.metric_card
         title="净耗电量"
         value={energy(@report.drive.energy_kwh, 2)}
-        hint={TeslaMate.TripEnergy.summary_label(@report.drive.official_count, @report.drive.energy_count)}
+        hint={
+          TeslaMate.TripEnergy.summary_label(
+            @report.drive.official_count,
+            @report.drive.energy_count
+          )
+        }
         icon="battery-minus-outline"
         tone="cyan"
       />

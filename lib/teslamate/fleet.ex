@@ -529,7 +529,10 @@ defmodule TeslaMate.Fleet do
       official_count: Enum.count(sessions, &(&1.energy.battery_source == :fleet_battery)),
       input_count: Enum.count(sessions, &(&1.energy.input_source == :fleet_ac)),
       input_estimate_count:
-        Enum.count(sessions, &(&1.energy.input_source == :power_estimate and is_number(&1.energy.energy_used))),
+        Enum.count(
+          sessions,
+          &(&1.energy.input_source == :power_estimate and is_number(&1.energy.energy_used))
+        ),
       loss_kwh: if(loss != [], do: Enum.sum(Enum.map(loss, & &1.energy.loss_kwh))),
       loss_count: length(loss)
     }

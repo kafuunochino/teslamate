@@ -73,10 +73,16 @@
     <span :if={trip_energy.source == :fleet_battery}>
       电池采样：<%= date_time(trip_energy.start_sample_at) %> → <%= date_time(
         trip_energy.end_sample_at
-      ) %> · <%= energy(trip_energy.start_energy, 2) %> → <%= energy(trip_energy.end_energy, 2) %>
-      （起点读数采集于出发<%= if trip_energy.start_offset_seconds <= 0, do: "前", else: "后" %>
-      <%= format_number(abs(trip_energy.start_offset_seconds), 1) %> 秒；终点读数采集于结束前
-      <%= format_number(abs(trip_energy.end_offset_seconds), 1) %> 秒）
+      ) %> · <%= energy(trip_energy.start_energy, 2) %> → <%= energy(trip_energy.end_energy, 2) %> （起点读数采集于出发<%= if trip_energy.start_offset_seconds <=
+                                                                                                                      0,
+                                                                                                                    do:
+                                                                                                                      "前",
+                                                                                                                    else:
+                                                                                                                      "后" %>
+      <%= format_number(abs(trip_energy.start_offset_seconds), 1) %> 秒；终点读数采集于结束前 <%= format_number(
+        abs(trip_energy.end_offset_seconds),
+        1
+      ) %> 秒）
     </span>
   </p>
 
