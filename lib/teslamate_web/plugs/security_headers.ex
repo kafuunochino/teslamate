@@ -4,8 +4,8 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
 
   Sets:
     * `Content-Security-Policy` — restricts scripts/styles/connections to the
-      unified TeslaMate origin. Frames are disabled because the platform does
-      not embed Grafana or any other privileged application.
+      unified TeslaMate origin. Only authentication pages may embed the
+      Cloudflare challenge when Turnstile is enabled.
       `frame-ancestors` is left configurable via
       `TESLAMATE_CSP_FRAME_ANCESTORS` (default `'none'`) so external webhooks
       cannot embed TeslaMate in an iframe.
@@ -51,6 +51,13 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
     sources = if amap?, do: " https://*.amap.com https://*.autonavi.com", else: ""
     geocoding_source = if amap?, do: "", else: " https://nominatim.openstreetmap.org"
 
+    turnstile? =
+      TeslaMateWeb.Config.turnstile_enabled?() and
+        conn.request_path in ["/register", "/sign_in", "/sign_in/verify"]
+
+    turnstile_script = if turnstile?, do: " https://challenges.cloudflare.com", else: ""
+    frames = if turnstile?, do: "https://challenges.cloudflare.com", else: "'none'"
+
     # JS API 2.0 loads its renderer from a separate official CDN and uses
     # dynamic functions. Keep this compatibility exception provider-specific;
     # only the fixed resize no-op can match a navigation hash. Other inline
@@ -80,11 +87,11 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
         "base-uri 'self'",
         "img-src 'self' data: blob: https://tile.openstreetmap.org#{sources}",
         "font-src 'self' data:",
-        "script-src #{script_src()} 'nonce-#{nonce}'#{amap_scripts}",
+        "script-src #{script_src()} 'nonce-#{nonce}'#{amap_scripts}#{turnstile_script}",
         "style-src #{style_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
         "connect-src 'self' ws: wss:#{sources}#{geocoding_source}",
         "worker-src 'self'#{if amap?, do: " blob:", else: ""}",
-        "frame-src 'none'",
+        "frame-src #{frames}",
         "frame-ancestors #{frame_ancestors()}",
         "form-action 'self'",
         "object-src 'none'"

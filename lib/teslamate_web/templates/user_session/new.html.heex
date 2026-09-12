@@ -43,6 +43,7 @@
         </div>
       </div>
 
+      <.turnstile conn={@conn} action="login" email={@email} />
       <%= submit("登录", class: "button is-primary is-fullwidth auth-submit") %>
     <% end %>
 

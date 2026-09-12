@@ -5,6 +5,9 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 
 import * as hooks from "./hooks";
+import { mountTurnstile } from "./turnstile.mjs";
+
+mountTurnstile(window, document);
 
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")

@@ -107,6 +107,7 @@ end
 
 config :phoenix,
   filter_parameters: [
+    "cf-turnstile-response",
     "client_secret",
     "code",
     "state",

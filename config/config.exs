@@ -22,7 +22,7 @@ config :logger, :console,
 
 config :phoenix,
   json_library: Jason,
-  filter_parameters: ["password", "token", "secret", "code", "access", "refresh"],
+  filter_parameters: ["password", "token", "secret", "code", "access", "refresh", "cf-turnstile-response"],
   static_compressors: [
     PhoenixBakery.Gzip,
     PhoenixBakery.Brotli,

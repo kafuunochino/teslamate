@@ -2,6 +2,7 @@ defmodule TeslaMateWeb.UserRegistrationController do
   use TeslaMateWeb, :controller
 
   alias TeslaMate.Accounts
+  alias TeslaMate.Auth.Turnstile
   alias TeslaMateWeb.Plugs.LoginRateLimit
   alias TeslaMateWeb.UserAuth
 
@@ -16,7 +17,7 @@ defmodule TeslaMateWeb.UserRegistrationController do
     end
   end
 
-  def create(conn, %{"user" => user_params}) when is_map(user_params) do
+  def create(conn, %{"user" => user_params} = params) when is_map(user_params) do
     if Accounts.sign_up_allowed?() do
       ip = conn.private[:client_ip] || "unknown"
       email_key = registration_key(Map.get(user_params, "email", ""))
@@ -26,7 +27,20 @@ defmodule TeslaMateWeb.UserRegistrationController do
           # Count every registration attempt before running the deliberately
           # expensive password hash. This bounds public CPU and database spam.
           LoginRateLimit.record_failure(ip, email_key)
-          register(conn, user_params)
+
+          case Turnstile.verify_if_required(params, ip, "register") do
+            :ok ->
+              register(conn, user_params)
+
+            {:error, reason} ->
+              conn
+              |> put_status(:unprocessable_entity)
+              |> put_flash(:error, Turnstile.message(reason))
+              |> render("new.html",
+                page_title: "注册",
+                changeset: Accounts.change_registration(Map.take(user_params, ["name", "email"]))
+              )
+          end
 
         {:error, :rate_limited, retry_after} ->
           conn

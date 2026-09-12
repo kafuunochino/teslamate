@@ -59,6 +59,7 @@
         <%= error_tag(f, :password_confirmation) %>
       </div>
 
+      <.turnstile conn={@conn} action="register" />
       <%= submit("创建账号", class: "button is-primary is-fullwidth auth-submit") %>
     <% end %>
 

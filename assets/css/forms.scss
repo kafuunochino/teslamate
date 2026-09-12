@@ -221,6 +221,28 @@ body.auth-body {
   box-shadow: var(--platform-shadow);
 }
 
+.auth-verification {
+  width: 100%;
+  min-width: 0;
+  margin: 16px 0;
+  color: var(--platform-muted);
+
+  [data-turnstile-widget] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .help {
+    margin: 8px 0;
+    color: inherit;
+    overflow-wrap: anywhere;
+  }
+
+  button[hidden] {
+    display: none;
+  }
+}
+
 .auth-brand h1 {
   color: var(--platform-text);
 }

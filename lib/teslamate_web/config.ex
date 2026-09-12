@@ -75,6 +75,20 @@ defmodule TeslaMateWeb.Config do
   def login_window_seconds, do: env_int("TESLAMATE_LOGIN_WINDOW_SECONDS", @default_window_seconds)
   def login_audit_capacity, do: env_int("TESLAMATE_LOGIN_AUDIT_CAPACITY", @default_audit_capacity)
 
+  # ---- Cloudflare Turnstile ---------------------------------------------
+
+  def turnstile_enabled?, do: truthy?(System.get_env("TESLAMATE_TURNSTILE_ENABLED", "false"))
+  def turnstile_site_key, do: System.get_env("TESLAMATE_TURNSTILE_SITE_KEY", "") |> String.trim()
+  def turnstile_secret_key, do: System.get_env("TESLAMATE_TURNSTILE_SECRET_KEY", "") |> String.trim()
+
+  def turnstile_hostnames do
+    System.get_env("TESLAMATE_TURNSTILE_HOSTNAMES", "")
+    |> String.downcase()
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+  end
+
   # ---- trusted proxies --------------------------------------------------
 
   @doc """

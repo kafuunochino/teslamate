@@ -23,6 +23,7 @@
           autofocus
         />
       </div>
+      <.turnstile conn={@conn} action="login_2fa" email={@email} />
       <button class="button is-primary is-fullwidth auth-submit" type="submit">验证并登录</button>
     </.form>
     <p class="help">动态码每 30 秒更新，同一枚动态码只能使用一次。</p>

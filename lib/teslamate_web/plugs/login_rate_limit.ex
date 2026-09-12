@@ -95,6 +95,23 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
     bump_count(ip, email)
   end
 
+  @doc "A failed login requires a challenge across browsers for the rate-limit window."
+  def record_login_failure(ip, email) do
+    record_failure(ip, email)
+    now = System.system_time(:second)
+    :ets.insert(@table, {{:challenge_ip, ip}, now})
+    if is_binary(email), do: :ets.insert(@table, {{:challenge_email, email}, now})
+    :ok
+  end
+
+  def challenge_required?(ip, email \\ nil) do
+    ensure_started()
+    cutoff = System.system_time(:second) - window_seconds()
+
+    count_hits({:challenge_ip, ip}, cutoff) > 0 or
+      (is_binary(email) and count_hits({:challenge_email, email}, cutoff) > 0)
+  end
+
   @doc """
   Reset the failure counter for the IP/email stored on `conn.private`. Call
   this when a sign-in is successful so legitimate users are not penalised
@@ -109,8 +126,11 @@ defmodule TeslaMateWeb.Plugs.LoginRateLimit do
   @doc """
   Same as `record_success/1` but with explicit ip/email.
   """
-  def record_success(_ip, email) when is_binary(email) do
+  def record_success(ip, email) when is_binary(email) do
+    ensure_started()
     :ets.match_delete(@table, {{:email, email}, :_})
+    :ets.match_delete(@table, {{:challenge_email, email}, :_})
+    :ets.match_delete(@table, {{:challenge_ip, ip}, :_})
     :ok
   end
 
