@@ -55,7 +55,7 @@
           <span><%= length(@report.drives) %> 条</span>
         </div>
         <p class="trip-energy-note">
-          优先采用本程起止的官方电池能量；缺少有效采样时使用续航估算，每程注明来源。“—”表示数据不足或行程未结束。
+          优先按本程起止的电池包读数计算 kWh 与 Wh/km。Tesla 按数值变化上报，系统按时间还原电池状态；历史读数不足时使用续航估算，每程注明来源。
         </p>
         <div :if={@report.drives == []} class="empty-inline">该时间范围没有完整行程</div>
         <div :if={@report.drives != []} class="responsive-table">
@@ -65,8 +65,8 @@
                 <th>开始时间</th>
                 <th>路线</th>
                 <th>里程</th>
-                <th>平均能耗（估算）</th>
-                <th>净耗电量（估算）</th>
+                <th>平均能耗</th>
+                <th>净耗电量</th>
                 <th>时长</th>
                 <th>最高速度</th>
                 <th>海拔变化</th>
@@ -83,12 +83,12 @@
                   <span><%= location_label(drive.end_geofence || drive.end_address) %></span>
                 </td>
                 <td data-label="里程"><%= distance(drive.distance) %></td>
-                <td data-label="平均能耗（估算）">
+                <td data-label="平均能耗">
                   <%= consumption(trip_energy.consumption_wh_km) %>
                 </td>
-                <td data-label="净耗电量（估算）">
+                <td data-label="净耗电量">
                   <%= energy(trip_energy.energy_kwh, 2) %>
-                  <small class="energy-source">
+                  <small class="energy-source" data-source={trip_energy.source}>
                     <%= TeslaMate.TripEnergy.source_label(trip_energy.source) %>
                   </small>
                 </td>

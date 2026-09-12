@@ -33,7 +33,7 @@
       end %>
     <section class="metrics-grid">
       <.metric_card
-        title="所选时期的容量变化估算"
+        title={if @report.history_source == :fleet_capacity, do: "所选时期的满电能量变化", else: "所选时期的容量变化估算"}
         value={
           if @report.degradation, do: percentage(@report.degradation.loss_percent), else: "数据不足"
         }
@@ -57,12 +57,17 @@
       />
     </section>
     <p id="battery-capacity-source" class="drive-method">
-      <%= if capacity? do %>
-        优先使用车辆上报的满电能量；缺少该字段时，用同一采样的剩余能量和 SOC 估算，仅采用 20%～95% 电量样本。
-        至少 7 个有效采样日后比较初期与近期中位数的均值。温度、SOC 区间和 BMS 校准会影响结果。
-      <% else %>
-        当前缺少可用于容量趋势的官方电池历史采样，暂用归一化额定续航。新采样会逐步积累，历史行程不会使用当前电池读数重算。
+      <%= case @report.history_source do %>
+        <% :fleet_capacity -> %>
+          使用车辆直接上报的标称满电能量，按日取中位数。至少 7 个有效采样日后比较初期与近期；变化可能受温度和 BMS 校准影响。
+        <% :fleet_normalized -> %>
+          已收到电池剩余能量，但尚无标称满电能量历史。当前使用同次采样的剩余能量和 SOC 归一化估算，仅采用 20%～95% 电量样本；至少 7 个有效采样日后比较变化。
+        <% _ -> %>
+          当前缺少可用于容量趋势的电池历史采样，暂用归一化额定续航。新采样会逐步积累，历史行程不会使用当前电池读数重算。
       <% end %>
+      <span :if={@report.history_source != :fleet_capacity}>
+        标称满电能量需要车辆软件 2026.32 或更新版本支持，并启用相应遥测字段；绑定钥匙不会使车辆自动提供不支持的字段。
+      </span>
     </p>
     <section :if={@report.degradation} class="data-card degradation-card">
       <div class="data-card__header">
@@ -83,7 +88,11 @@
       </div>
     </section>
     <.bar_chart
-      title={if capacity?, do: "每日满电能量估算", else: "每日归一化满电额定续航"}
+      title={case @report.history_source do
+        :fleet_capacity -> "每日电池包满电能量"
+        :fleet_normalized -> "每日满电能量估算"
+        _ -> "每日归一化满电额定续航"
+      end}
       rows={@report.history}
       unit={if capacity?, do: " kWh", else: " km"}
       empty="当前范围内缺少有效样本"

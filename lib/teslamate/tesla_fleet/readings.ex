@@ -69,6 +69,41 @@ defmodule TeslaMate.TeslaFleet.Readings do
     )
   end
 
+  def field_config_for_vehicle(interval, info) when is_map(info) do
+    firmware = version_parts(info["firmware_version"])
+    fields = field_config(interval, firmware >= {2026, 32, 0})
+
+    if firmware >= {2026, 26, 6} and
+         version_parts(info["fleet_telemetry_version"]) >= {1, 3, 0} do
+      # New clients can send unchanged companion signals in the same payload.
+      # BMS transitions capture session boundaries; energy/SOC and charging
+      # pairs retain the shared timestamp needed by derived calculations.
+      fields
+      |> Map.update!("BMSState", &Map.put(&1, "include_fields", ["EnergyRemaining", "Soc"]))
+      |> Map.update!("EnergyRemaining", &Map.put(&1, "include_fields", ["Soc"]))
+      |> Map.update!("ACChargingEnergyIn", &Map.put(&1, "include_fields", ["DCChargingEnergyIn"]))
+    else
+      fields
+    end
+  end
+
+  def field_config_for_vehicle(interval, _), do: field_config(interval)
+
+  defp version_parts(version) when is_binary(version) do
+    case Regex.run(~r/^(\d+)\.(\d+)(?:\.(\d+))?/, version) do
+      [_, major, minor, patch] ->
+        {String.to_integer(major), String.to_integer(minor), String.to_integer(patch)}
+
+      [_, major, minor] ->
+        {String.to_integer(major), String.to_integer(minor), 0}
+
+      _ ->
+        {0, 0, 0}
+    end
+  end
+
+  defp version_parts(_), do: {0, 0, 0}
+
   def decode(field, %{"value" => raw, "created_at" => time}, now \\ DateTime.utc_now()) do
     with {key, type, min, max} <- @fields[field],
          {:ok, date, _} <- DateTime.from_iso8601(time),

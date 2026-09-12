@@ -77,8 +77,8 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     drive |> Ecto.Changeset.change(end_rated_range_km: nil) |> Repo.update!()
 
     {:ok, view, _html} = live(conn, "/trips")
-    assert has_element?(view, "#trip-row-#{drive.id} [data-label='平均能耗（估算）']", "—")
-    assert has_element?(view, "#trip-row-#{drive.id} [data-label='净耗电量（估算）']", "—")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='平均能耗']", "—")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='净耗电量']", "—")
     refute has_element?(view, "#trip-row-#{drive.id}", "0.00 kWh")
   end
 
@@ -89,8 +89,8 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     drive |> Ecto.Changeset.change(distance: 0.0) |> Repo.update!()
 
     {:ok, view, _html} = live(conn, "/trips")
-    assert has_element?(view, "#trip-row-#{drive.id} [data-label='平均能耗（估算）']", "—")
-    assert has_element?(view, "#trip-row-#{drive.id} [data-label='净耗电量（估算）']", "1.53 kWh")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='平均能耗']", "—")
+    assert has_element?(view, "#trip-row-#{drive.id} [data-label='净耗电量']", "1.53 kWh")
   end
 
   @tag platform_role: :member
@@ -128,8 +128,8 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     drive: drive
   } do
     alias TeslaMate.TeslaFleet.Energy
-    Energy.record(car.id, "EnergyRemaining", 50.0, drive.start_date)
-    Energy.record(car.id, "EnergyRemaining", 49.0, drive.end_date)
+    Energy.record(car.id, "EnergyRemaining", 50.0, DateTime.add(drive.start_date, -125))
+    Energy.record(car.id, "EnergyRemaining", 49.0, DateTime.add(drive.end_date, -66))
 
     for {url, selector} <- [
           {"/trips", "#trip-row-#{drive.id}"},
@@ -139,7 +139,9 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
       {:ok, view, _} = live(conn, url)
       assert has_element?(view, selector, "200.0 Wh/km")
       assert has_element?(view, selector, "1.00 kWh")
-      assert render(view) =~ "官方电池能量差估算"
+      assert render(view) =~ "电池包读数计算"
+      refute render(view) =~ "平均能耗（估算）"
+      refute render(view) =~ "净耗电量（估算）"
     end
 
     report = Fleet.driving(user, car.id)
@@ -150,5 +152,14 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     assert analysis.drive.consumption_wh_km == 200
     assert analysis.drive.official_count == 1
     assert analysis.drive.energy_count == 1
+    {:ok, view, html} = live(conn, "/analysis")
+    assert html =~ "全部按电池包读数计算"
+    assert has_element?(view, ".metric-card", "1.00 kWh")
+    refute html =~ "估算能耗"
+
+    older = %{drive | id: nil, start_date: DateTime.add(drive.start_date, -86_400), end_date: DateTime.add(drive.end_date, -86_400)}
+    Repo.insert!(older)
+    {:ok, _, mixed} = live(conn, "/analysis")
+    assert mixed =~ "1 程电池读数 · 1 程续航估算"
   end
 end

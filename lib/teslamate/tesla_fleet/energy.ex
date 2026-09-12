@@ -8,6 +8,7 @@ defmodule TeslaMate.TeslaFleet.Energy do
 
   @history_fields ~w(EnergyRemaining Soc NominalFullPackEnergyKwh ACChargingEnergyIn DCChargingEnergyIn)
   @boundary_seconds 30
+  @state_max_age_seconds 600
   @minimum_coverage 90
 
   def record(car_id, field, value, date) when field in @history_fields do
@@ -22,8 +23,12 @@ defmodule TeslaMate.TeslaFleet.Energy do
 
   def record(_, _, _, _), do: :ok
 
-  # Lateral index lookups retrieve only the two boundaries per field/session,
-  # rather than transferring years of telemetry into the web process.
+  # Telemetry emits changes, not periodic snapshots. Reconstruct the state at
+  # each boundary from the latest preceding change, preserving its timestamp.
+  # Bound carry-forward to ten minutes; invalid readings must never be skipped.
+  # Charging counters need a fresh near-zero reading from this session instead
+  # of carrying the previous charging session's final counter into its start.
+  # Lateral index lookups keep this bounded even with years of energy history.
   def boundaries(intervals, fields) do
     intervals =
       for interval <- intervals,
@@ -48,29 +53,34 @@ defmodule TeslaMate.TeslaFleet.Energy do
                  EXTRACT(EPOCH FROM (i.end_date - i.start_date))::double precision,
                  EXTRACT(EPOCH FROM (a.measured_at - i.start_date))::double precision,
                  EXTRACT(EPOCH FROM (i.end_date - b.measured_at))::double precision,
-                 CASE WHEN f.field NOT IN ('ACChargingEnergyIn', 'DCChargingEnergyIn') THEN true ELSE NOT EXISTS (
+                 NOT EXISTS (
                    SELECT 1 FROM (
                      SELECT value, lag(value) OVER (ORDER BY measured_at) AS previous
                      FROM fleet_energy_samples
                      WHERE car_id = i.car_id AND field = f.field
                        AND measured_at >= a.measured_at AND measured_at <= b.measured_at
                    ) readings
-                   WHERE value IS NULL OR value < previous
-                 ) END AS counter_valid
+                   WHERE value IS NULL OR
+                     (f.field IN ('ACChargingEnergyIn', 'DCChargingEnergyIn') AND value < previous)
+                 ) AS history_valid
           FROM jsonb_to_recordset($1::jsonb)
             AS i(id bigint, car_id bigint, start_date timestamp, end_date timestamp)
           CROSS JOIN unnest($2::text[]) AS f(field)
           CROSS JOIN LATERAL (
             SELECT measured_at, value FROM fleet_energy_samples
             WHERE car_id = i.car_id AND field = f.field
-              AND measured_at >= i.start_date AND measured_at <= i.start_date + interval '30 seconds'
+              AND measured_at >= CASE WHEN f.field = 'EnergyRemaining'
+                    THEN i.start_date - interval '600 seconds' ELSE i.start_date END
+              AND measured_at <= i.start_date + interval '30 seconds'
               AND measured_at <= i.end_date
-            ORDER BY measured_at LIMIT 1
+            ORDER BY measured_at > i.start_date,
+                     abs(EXTRACT(EPOCH FROM (measured_at - i.start_date))), measured_at
+            LIMIT 1
           ) a
           CROSS JOIN LATERAL (
             SELECT measured_at, value FROM fleet_energy_samples
             WHERE car_id = i.car_id AND field = f.field
-              AND measured_at <= i.end_date AND measured_at >= i.end_date - interval '30 seconds'
+              AND measured_at <= i.end_date AND measured_at >= i.end_date - interval '600 seconds'
               AND measured_at >= i.start_date
             ORDER BY measured_at DESC LIMIT 1
           ) b
@@ -84,10 +94,13 @@ defmodule TeslaMate.TeslaFleet.Energy do
           first_at = DateTime.from_naive!(first_at, "Etc/UTC")
           last_at = DateTime.from_naive!(last_at, "Etc/UTC")
           span = DateTime.diff(last_at, first_at, :microsecond) / 1_000_000
-          coverage = if duration > 0, do: span / duration * 100, else: 0
+          # A retained state covers time until its next change. Only a first
+          # reading after departure leaves the beginning unobserved.
+          coverage = if duration > 0, do: (duration - max(start_gap, 0)) / duration * 100, else: 0
 
-          if is_number(first) and is_number(last) and span > 0 and
-               start_gap <= @boundary_seconds and end_gap <= @boundary_seconds and
+          if is_number(first) and is_number(last) and span > 0 and monotonic and
+               start_gap >= -@state_max_age_seconds and start_gap <= @boundary_seconds and
+               end_gap <= @state_max_age_seconds and
                coverage >= @minimum_coverage do
             reading = %{
               first: first,
@@ -95,6 +108,8 @@ defmodule TeslaMate.TeslaFleet.Energy do
               first_at: first_at,
               last_at: last_at,
               coverage: coverage,
+              start_offset_seconds: start_gap,
+              end_offset_seconds: -end_gap,
               monotonic: monotonic
             }
 
@@ -120,6 +135,8 @@ defmodule TeslaMate.TeslaFleet.Energy do
          end_energy: sample.last,
          start_sample_at: sample.first_at,
          end_sample_at: sample.last_at,
+         start_offset_seconds: sample.start_offset_seconds,
+         end_offset_seconds: sample.end_offset_seconds,
          coverage: sample.coverage
        }}
     end)

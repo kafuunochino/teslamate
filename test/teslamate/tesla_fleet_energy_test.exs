@@ -59,7 +59,7 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
   test "incomplete, invalid and poorly aligned boundaries do not fabricate a complete trip", %{
     interval: i
   } do
-    sample(i, "EnergyRemaining", -5, 55)
+    sample(i, "EnergyRemaining", -601, 55)
     sample(i, "EnergyRemaining", 31, 54.8)
     sample(i, "EnergyRemaining", 600, 52)
     assert Energy.drive_energy([i]) == %{}
@@ -75,6 +75,53 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     sample(i, "EnergyRemaining", 50, 54.7)
     assert Energy.drive_energy([short]) == %{}
     assert Energy.drive_energy([%{i | end_date: nil}]) == %{}
+  end
+
+  test "change-based energy is carried to trip boundaries without inventing new timestamps", %{
+    interval: i
+  } do
+    # The old 30-second window discarded both of these valid retained states.
+    sample(i, "EnergyRemaining", -125, 41.12)
+    sample(i, "EnergyRemaining", 65, 41.0)
+    sample(i, "EnergyRemaining", 534, 40.76)
+    result = Energy.drive_energy([i])[i.id]
+    assert_in_delta result.energy_kwh, 0.36, 0.000001
+    assert result.start_offset_seconds == -125
+    assert result.end_offset_seconds == -66
+    assert result.start_sample_at == DateTime.add(i.start_date, -125)
+    assert result.end_sample_at == DateTime.add(i.start_date, 534)
+    assert result.coverage == 100
+
+    # Neither a future reading nor its reception time belongs to this trip.
+    sample(i, "EnergyRemaining", 605, 10)
+    assert Energy.drive_energy([i])[i.id] == result
+  end
+
+  test "invalid changes are not hidden by carrying an older valid battery state", %{interval: i} do
+    sample(i, "EnergyRemaining", -20, 50)
+    sample(i, "EnergyRemaining", -1, nil)
+    sample(i, "EnergyRemaining", 10, 49.9)
+    sample(i, "EnergyRemaining", 600, 48)
+    assert Energy.drive_energy([i]) == %{}
+  end
+
+  test "interrupted or wholly unobserved intervals never become measured zero", %{interval: i} do
+    sample(i, "EnergyRemaining", -100, 50)
+    assert Energy.drive_energy([i]) == %{}
+    sample(i, "EnergyRemaining", 60, 49)
+    sample(i, "EnergyRemaining", 200, nil)
+    sample(i, "EnergyRemaining", 600, 48)
+    assert Energy.drive_energy([i]) == %{}
+
+    later = %{i | end_date: DateTime.add(i.start_date, 1201)}
+    assert Energy.drive_energy([later]) == %{}
+  end
+
+  test "a near-departure first snapshot is usable only with sufficient observed time", %{interval: i} do
+    sample(i, "EnergyRemaining", 18, 50)
+    sample(i, "EnergyRemaining", 534, 49)
+    assert Energy.drive_energy([i])[i.id].energy_kwh == 1
+    assert Energy.drive_energy([i])[i.id].coverage == 97
   end
 
   test "duplicates are idempotent and out-of-order history keeps its original timestamp", %{
@@ -110,6 +157,19 @@ defmodule TeslaMate.TeslaFleet.EnergyTest do
     assert_in_delta result.loss_percent, 100 / 11, 0.0001
     assert result.battery_source == :fleet_battery
     assert result.input_source == :fleet_ac
+  end
+
+  test "unchanged final charging counters remain valid until the session ends", %{interval: i} do
+    for {field, last} <- [{"ACChargingEnergyIn", 11.0}, {"DCChargingEnergyIn", 10.0}] do
+      sample(i, field, -60, 45.0)
+      sample(i, field, 0, 0.0)
+      sample(i, field, 500, last)
+    end
+
+    result = Energy.charging_energy([i])[i.id]
+    assert result.energy_added == 10
+    assert result.energy_used == 11
+    assert result.loss_kwh == 1
   end
 
   test "DC uses the same battery-side field and never an AC counter for input or losses", %{

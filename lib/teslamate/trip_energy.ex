@@ -1,7 +1,7 @@
 defmodule TeslaMate.TripEnergy do
   @moduledoc """
-  Net driving-energy estimates using the same range-loss model as the legacy
-  TeslaMate drive dashboard. The coefficient and range type must stay paired.
+  Shared net driving energy, preferring timestamped battery-pack states.
+  The legacy range-loss fallback keeps its coefficient and range type paired.
   """
 
   alias TeslaMate.Log.Drive
@@ -22,16 +22,24 @@ defmodule TeslaMate.TripEnergy do
     end
   end
 
-  def source_label(:fleet_battery), do: "官方电池能量差估算"
+  def source_label(:fleet_battery), do: "电池包读数计算"
   def source_label(:range_estimate), do: "续航变化估算"
   def source_label(:power_estimate), do: "功率积分估算"
   def source_label(_), do: "数据不足"
 
   def source_note(:fleet_battery),
-    do: "使用本程起止的官方电池剩余能量；边界相差不超过 30 秒、时间覆盖至少 90%。结果包含能量回收，也可能受电池管理系统校准和温度影响。"
+    do: "净耗电量 = 起点电池剩余能量 − 终点电池剩余能量；平均能耗 = 净耗电量 ÷ 本程里程。Tesla 按数值变化上报，未变化时沿用当时有效的读数，最长 10 分钟；保留原始采样时间。读数来自电池管理系统，包含回收影响，也可能随温度和校准变化。"
+
+  def source_note(:power_estimate),
+    do: "缺少可还原本程起止电池状态的历史采样，按已记录功率积分；超过 30 秒的缺失时段不外推。"
 
   def source_note(_),
-    do: "本程缺少完整的官方电池起止采样，按续航变化与车辆能耗系数估算。负值可能来自回收或续航校准；数据不足显示“—”。"
+    do: "本程电池历史不足、存在无效读数或状态过期，按续航变化与车辆能耗系数估算。绑定钥匙前未保存的电池读数无法补回；当前剩余能量不会用于重算过去的行程。负值可能来自回收或续航校准。"
+
+  def summary_label(_official, 0), do: "数据不足"
+  def summary_label(official, total) when official == total, do: "全部按电池包读数计算"
+  def summary_label(0, _total), do: "续航变化估算"
+  def summary_label(official, total), do: "#{official} 程电池读数 · #{total - official} 程续航估算"
 
   def calculate(%Drive{end_date: nil}, _efficiency, _range), do: empty()
 

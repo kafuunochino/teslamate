@@ -309,14 +309,19 @@ defmodule TeslaMate.TeslaFleet do
          port when is_integer(port) and port in 1..65535 <- c["telemetry_port"],
          ca when is_binary(ca) <- c["telemetry_ca"],
          true <- String.contains?(ca, "BEGIN CERTIFICATE") do
-      config = %{
-        "hostname" => host,
-        "port" => port,
-        "ca" => ca,
-        "fields" => Readings.field_config(interval)
-      }
+      with_token(user, fn access ->
+        with {:ok, status} <-
+               Client.request(:post, "/api/1/vehicles/fleet_status", access, %{"vins" => [vin]}) do
+          info = get_in(status["response"] || status, ["vehicle_info", vin]) || %{}
 
-      with_token(user, fn access -> Client.configure(vin, access, config) end)
+          Client.configure(vin, access, %{
+            "hostname" => host,
+            "port" => port,
+            "ca" => ca,
+            "fields" => Readings.field_config_for_vehicle(interval, info)
+          })
+        end
+      end)
     else
       {:error, _} = error -> error
       _ -> {:error, :receiver_not_configured}

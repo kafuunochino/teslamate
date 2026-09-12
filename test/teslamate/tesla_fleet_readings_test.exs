@@ -180,4 +180,21 @@ defmodule TeslaMate.TeslaFleet.ReadingsTest do
     assert fields["PackCurrent"]["interval_seconds"] == 5
     assert fields["ModuleTempMax"]["interval_seconds"] == 10
   end
+  test "vehicle firmware enables only supported capacity and paired energy fields" do
+    for info <- [%{}, %{"firmware_version" => "unknown"}, %{"firmware_version" => "2026.8.300", "fleet_telemetry_version" => "1.2.0"}] do
+      fields = Readings.field_config_for_vehicle(5, info)
+      refute Map.has_key?(fields, "NominalFullPackEnergyKwh")
+      refute Map.has_key?(fields["EnergyRemaining"], "include_fields")
+    end
+
+    paired = Readings.field_config_for_vehicle(10, %{"firmware_version" => "2026.26.6", "fleet_telemetry_version" => "1.3.0"})
+    assert paired["EnergyRemaining"]["include_fields"] == ["Soc"]
+    refute Map.has_key?(paired, "NominalFullPackEnergyKwh")
+
+    fields = Readings.field_config_for_vehicle(30, %{"firmware_version" => "2026.32.1 abc123", "fleet_telemetry_version" => "1.3.0"})
+    assert fields["NominalFullPackEnergyKwh"]["interval_seconds"] == 30
+    assert fields["BMSState"]["include_fields"] == ["EnergyRemaining", "Soc"]
+    assert fields["ACChargingEnergyIn"]["include_fields"] == ["DCChargingEnergyIn"]
+    assert Readings.field_config_for_vehicle(30, %{"firmware_version" => "2026.32"})["NominalFullPackEnergyKwh"]
+  end
 end

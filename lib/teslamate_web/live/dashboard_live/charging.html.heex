@@ -54,7 +54,7 @@
       <.metric_card
         title="充电侧输入"
         value={energy(@report.stats.energy_used)}
-        hint="包含旧版功率积分估算；直流读数不代表电网侧"
+        hint={"#{@report.stats.input_count} 次交流遥测计量 · #{@report.stats.input_estimate_count} 次功率估算；直流读数不代表电网侧"}
         icon="transmission-tower"
         tone="violet"
       />
