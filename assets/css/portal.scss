@@ -1154,3 +1154,22 @@
     font-size: 8px;
   }
 }
+
+@media (max-width: 760px) {
+  .portal-footer {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+  }
+  .portal-footer p {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+  .portal-footer .portal-theme {
+    justify-self: end;
+  }
+  .portal-footer > a:last-child {
+    grid-column: 1 / -1;
+    order: 2;
+  }
+}
