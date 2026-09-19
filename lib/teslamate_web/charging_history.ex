@@ -1,7 +1,6 @@
 defmodule TeslaMateWeb.ChargingHistory do
   use Phoenix.Component
   use PhoenixHTMLHelpers
-  import Phoenix.HTML.Form
   import TeslaMateWeb.ErrorHelpers
   import TeslaMateWeb.PlatformComponents
 

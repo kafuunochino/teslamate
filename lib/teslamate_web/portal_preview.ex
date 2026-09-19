@@ -138,7 +138,9 @@ defmodule TeslaMateWeb.PortalPreview do
       __changed__: nil,
       report: nil,
       current_user: nil,
-      socket: %Phoenix.LiveView.Socket{endpoint: TeslaMateWeb.Endpoint}
+      # Only route helpers consume this assign; a bare connection keeps static
+      # rendering independent of a running endpoint or LiveView socket.
+      socket: %Plug.Conn{}
     }
   end
 
