@@ -4,8 +4,8 @@
       <span class="auth-brand-mark"><i class="mdi mdi-account-plus-outline"></i></span>
       <div>
         <p class="auth-eyebrow">安全创建账号</p>
-        <h1 id="registration-title">注册车辆数据中心</h1>
-        <p>注册不会自动授予任何车辆权限，随后需使用一次性认领码绑定。</p>
+        <h1 id="registration-title">加入特友会</h1>
+        <p>创建账号后，通过 Tesla 连接授权自己的车辆。每个账号的数据独立。</p>
       </div>
     </div>
 
@@ -59,6 +59,14 @@
         <%= error_tag(f, :password_confirmation) %>
       </div>
 
+      <div :if={@registration_policy.require_invitation} class="field">
+        <%= label(f, :invitation_code, "内测邀请码", class: "label") %>
+        <%= text_input(f, :invitation_code, required: true, maxlength: 64,
+          autocomplete: "off", spellcheck: "false", class: "input",
+          aria_describedby: "invitation-help", placeholder: "TYH-…") %>
+        <p id="invitation-help" class="help">当前为邀请注册。请向管理员获取邀请码，每个码仅可成功注册一个账号。</p>
+        <%= error_tag(f, :invitation_code) %>
+      </div>
       <.turnstile conn={@conn} action="register" />
       <%= submit("创建账号", class: "button is-primary is-fullwidth auth-submit") %>
     <% end %>

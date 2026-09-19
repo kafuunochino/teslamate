@@ -87,7 +87,7 @@ defmodule TeslaMateWeb.UserAuth do
         do: put_flash(conn, :success, "已取消账号注销，账号恢复正常使用"),
         else: conn
 
-    redirect(conn, to: "/")
+    redirect(conn, to: "/dashboard")
   end
 
   def put_authenticated_session(conn, token) do

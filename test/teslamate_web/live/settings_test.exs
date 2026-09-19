@@ -634,7 +634,7 @@ defmodule TeslaMateWeb.SettingsLiveTest do
         |> element("button", "Sign out")
         |> render_click()
 
-        assert_redirect(view, "/")
+        assert_redirect(view, "/dashboard")
 
         assert_called(TeslaMate.Api.sign_out())
       end

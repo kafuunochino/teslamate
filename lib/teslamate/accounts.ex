@@ -7,7 +7,7 @@ defmodule TeslaMate.Accounts do
 
   import Ecto.Query, warn: false
 
-  alias TeslaMate.Accounts.{AuditEvent, Password, User, UserCar, UserSession, VehicleClaim}
+  alias TeslaMate.Accounts.{AuditEvent, Invitations, Password, User, UserCar, UserSession, VehicleClaim}
   alias TeslaMate.Log.Car
   alias TeslaMate.Repo
 
@@ -110,12 +110,16 @@ defmodule TeslaMate.Accounts do
   def authorized_admin?(_), do: false
 
   def sign_up_allowed? do
-    Repo.one(
+    registration_policy().allow_registration
+  end
+
+  def registration_policy do
+    Repo.one!(
       from s in "account_settings",
         prefix: "private",
         where: s.id == 1,
-        select: s.allow_registration
-    ) == true
+        select: %{allow_registration: s.allow_registration, require_invitation: s.require_invitation}
+    )
   end
 
   def set_registration(%User{} = actor, allowed) when is_boolean(allowed) do
@@ -136,13 +140,42 @@ defmodule TeslaMate.Accounts do
 
   def set_registration(_, _), do: {:error, :forbidden}
 
+  def set_registration_policy(actor, allowed, invited)
+      when is_boolean(allowed) and is_boolean(invited) do
+    Repo.transaction(fn ->
+      Repo.query!("SELECT pg_advisory_xact_lock(847300002)")
+      unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
+
+      Repo.update_all(from(s in "account_settings", prefix: "private", where: s.id == 1),
+        set: [allow_registration: allowed, require_invitation: invited])
+
+      audit(:registration_policy_changed, actor,
+        metadata: %{"allowed" => allowed, "require_invitation" => invited})
+      registration_policy()
+    end)
+  end
+
+  def set_registration_policy(_, _, _), do: {:error, :forbidden}
+
   def register_public_user(attrs) when is_map(attrs) do
     Repo.transaction(fn ->
       Repo.query!("SELECT pg_advisory_xact_lock(847300002)")
-      unless sign_up_allowed?(), do: Repo.rollback(:registration_closed)
+      policy = registration_policy()
+      unless policy.allow_registration, do: Repo.rollback(:registration_closed)
+      code = Map.get(attrs, "invitation_code", Map.get(attrs, :invitation_code))
+
+      if policy.require_invitation and not Invitations.valid?(code),
+        do: Repo.rollback(:invalid_invitation)
 
       case register_user(attrs) do
-        {:ok, user} -> user
+        {:ok, user} ->
+          if policy.require_invitation do
+            case Invitations.consume(code, user.id) do
+              :ok -> :ok
+              {:error, reason} -> Repo.rollback(reason)
+            end
+          end
+          user
         {:error, error} -> Repo.rollback(error)
       end
     end)

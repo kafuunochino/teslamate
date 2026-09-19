@@ -48,7 +48,7 @@ defmodule TeslaMateWeb.AccountSecurityTest do
 
   test "admin registration switch persists and gates both GET and POST", %{conn: conn} do
     assert get(build_conn(), "/register").status == 404
-    {:ok, view, _} = live(conn, "/admin/users")
+    {:ok, view, _} = live(conn, "/admin/settings")
 
     view
     |> form("form[phx-submit=registration_policy]", registration: %{enabled: "true"})
@@ -101,7 +101,7 @@ defmodule TeslaMateWeb.AccountSecurityTest do
       |> recycle()
       |> post("/sign_in/verify", %{verification: %{code: NimbleTOTP.verification_code(secret)}})
 
-    assert redirected_to(result) == "/"
+    assert redirected_to(result) == "/dashboard"
     assert get_session(result, :user_session_token)
     refute get_session(result, :login_challenge)
     assert get_session(result, :live_socket_id)

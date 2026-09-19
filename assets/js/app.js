@@ -9,6 +9,10 @@ import { mountTurnstile } from "./turnstile.mjs";
 
 mountTurnstile(window, document);
 
+import { mountPortal, mountInvitationCopy } from "./portal.mjs";
+mountPortal(window, document);
+mountInvitationCopy(window, document);
+
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");

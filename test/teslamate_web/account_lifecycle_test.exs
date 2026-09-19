@@ -114,7 +114,7 @@ defmodule TeslaMateWeb.AccountLifecycleTest do
     login =
       post(build_conn(), "/sign_in", %{user: %{email: c.current_user.email, password: @password}})
 
-    assert redirected_to(login) == "/"
+    assert redirected_to(login) == "/dashboard"
     assert Phoenix.Flash.get(login.assigns.flash, :success) =~ "已取消账号注销"
     refute Accounts.get_user!(c.current_user.id).deletion_scheduled_at
     assert Accounts.get_user(other.id)

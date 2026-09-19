@@ -39,7 +39,7 @@ defmodule TeslaMateWeb.ClientIPTest do
     assert get_session(login_form, :client_ip) == "198.51.100.10"
 
     conn = post(proxied_conn(), "/sign_in", %{user: %{email: user.email, password: @password}})
-    assert redirected_to(conn) == "/"
+    assert redirected_to(conn) == "/dashboard"
     assert conn.private.client_ip == "198.51.100.10"
     assert login_session(conn).ip_address == "198.51.100.10"
     assert [%{ip: "198.51.100.10", outcome: :success}] = LoginAudit.recent()
@@ -63,7 +63,7 @@ defmodule TeslaMateWeb.ClientIPTest do
       |> put_req_header("x-forwarded-for", "203.0.113.99, 198.51.100.20")
       |> post("/sign_in/verify", %{verification: %{code: NimbleTOTP.verification_code(secret)}})
 
-    assert redirected_to(conn) == "/"
+    assert redirected_to(conn) == "/dashboard"
     assert login_session(conn).ip_address == "198.51.100.20"
     assert [%{ip: "198.51.100.20", outcome: :success}] = LoginAudit.recent()
   end

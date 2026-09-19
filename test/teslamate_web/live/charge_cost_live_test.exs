@@ -342,7 +342,7 @@ defmodule TeslaMateWeb.ChargeLive.CostTest do
                |> put_connect_params(%{"referrer" => nil})
                |> live("/charge-cost/#{id}")
 
-      assert ["/"] =
+      assert ["/dashboard"] =
                html
                |> Floki.parse_document!()
                |> Floki.find(".control a")

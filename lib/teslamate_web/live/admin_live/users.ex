@@ -9,19 +9,6 @@ defmodule TeslaMateWeb.AdminLive.Users do
   end
 
   @impl true
-  def handle_event("registration_policy", %{"registration" => params}, socket) do
-    allowed = params["enabled"] == "true"
-
-    case Accounts.set_registration(socket.assigns.current_user, allowed) do
-      {:ok, _} ->
-        {:noreply,
-         socket |> assign(:allow_registration, allowed) |> put_flash(:success, "注册设置已保存")}
-
-      _ ->
-        {:noreply, socket |> put_flash(:error, "没有修改注册设置的权限") |> redirect(to: "/sign_in")}
-    end
-  end
-
   def handle_event("create_claim", %{"claim" => %{"car_id" => car_id, "hours" => hours}}, socket) do
     hours = parse_hours(hours)
 
@@ -140,7 +127,6 @@ defmodule TeslaMateWeb.AdminLive.Users do
         [
           page_title: "用户与车辆权限",
           deletion_requires_code: Accounts.Security.enabled?(socket.assigns.current_user),
-          allow_registration: Accounts.sign_up_allowed?(),
           users: users,
           cars: Log.list_cars(),
           claims: Accounts.list_vehicle_claims(socket.assigns.current_user),

@@ -7,7 +7,7 @@ defmodule TeslaMateWeb.UserAuthTest do
 
   @tag auth: false
   test "unauthenticated users are redirected to the platform sign-in", %{conn: conn} do
-    conn = get(conn, "/")
+    conn = get(conn, "/dashboard")
     assert redirected_to(conn) == "/sign_in"
   end
 
@@ -34,7 +34,7 @@ defmodule TeslaMateWeb.UserAuthTest do
         }
       })
 
-    assert redirected_to(conn) == "/"
+    assert redirected_to(conn) == "/dashboard"
     user = Accounts.get_user_by_email(email)
     assert user.role == :member
     assert Accounts.list_accessible_cars(user) == []

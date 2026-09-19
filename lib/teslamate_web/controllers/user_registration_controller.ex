@@ -6,6 +6,11 @@ defmodule TeslaMateWeb.UserRegistrationController do
   alias TeslaMateWeb.Plugs.LoginRateLimit
   alias TeslaMateWeb.UserAuth
 
+  plug :load_registration_policy
+
+  defp load_registration_policy(conn, _opts),
+    do: assign(conn, :registration_policy, Accounts.registration_policy())
+
   def new(conn, _params) do
     if Accounts.sign_up_allowed?() do
       render(conn, "new.html",
@@ -65,6 +70,16 @@ defmodule TeslaMateWeb.UserRegistrationController do
 
       {:error, :registration_closed} ->
         conn |> put_status(:not_found) |> put_view(TeslaMateWeb.ErrorView) |> render("404.html")
+
+      {:error, :invalid_invitation} ->
+        changeset =
+          Accounts.change_registration(Map.take(user_params, ["name", "email"]))
+          |> Ecto.Changeset.add_error(:invitation_code, "邀请码无效、已使用或已作废，请向管理员获取有效邀请码")
+          |> Map.put(:action, :insert)
+
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render("new.html", page_title: "注册", changeset: changeset)
 
       {:error, changeset} ->
         conn

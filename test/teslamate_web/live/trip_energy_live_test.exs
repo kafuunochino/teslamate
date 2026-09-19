@@ -65,7 +65,7 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     assert has_element?(detail, "#trip-energy-summary", "1.53 kWh")
     assert render(detail) =~ "估算"
 
-    {:ok, home, _html} = live(conn, "/")
+    {:ok, home, _html} = live(conn, "/dashboard")
     assert has_element?(home, ".activity-list", "1.53 kWh")
     assert has_element?(home, ".activity-list", "306.0 Wh/km")
   end
@@ -134,7 +134,7 @@ defmodule TeslaMateWeb.TripEnergyLiveTest do
     for {url, selector} <- [
           {"/trips", "#trip-row-#{drive.id}"},
           {"/trips/#{drive.id}", "#trip-energy-summary"},
-          {"/", ".activity-list"}
+          {"/dashboard", ".activity-list"}
         ] do
       {:ok, view, _} = live(conn, url)
       assert has_element?(view, selector, "200.0 Wh/km")

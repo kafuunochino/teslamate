@@ -17,6 +17,7 @@ defmodule TeslaMate.Accounts.User do
     field :last_login_at, :utc_datetime_usec
     field :password_changed_at, :utc_datetime_usec
 
+    field :invitation_code, :string, virtual: true, redact: true
     field :password, :string, virtual: true, redact: true
     field :password_confirmation, :string, virtual: true, redact: true
 

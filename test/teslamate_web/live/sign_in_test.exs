@@ -26,6 +26,6 @@ defmodule TeslaMateWeb.SignInLiveTest do
     assert_receive {ApiMock,
                     {:sign_in, %TeslaMate.Auth.Tokens{access: "$access", refresh: "$refresh"}}}
 
-    assert_redirect(view, "/", 1000)
+    assert_redirect(view, "/dashboard", 1000)
   end
 end

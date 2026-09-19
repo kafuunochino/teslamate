@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <.live_title suffix=" · TeslaMate CN">
+    <.live_title suffix=" · 特友会">
       <%= assigns[:page_title] || "车辆数据中心" %>
     </.live_title>
     <script
@@ -43,6 +43,7 @@
       crossorigin="use-credentials"
     />
     <link rel="shortcut icon" href={Routes.static_path(@conn, "/favicon.ico?v=6")} />
+    <meta :if={@conn.assigns[:public_portal]} name="description" content="特友会，面向特斯拉车主的车辆数据中心。回顾行程与能耗，了解电池、充电和用车成本，用自己的数据读懂每一次出发。" />
     <meta name="theme-color" content="#0b1020" />
     <%= csrf_meta_tag() %>
     <script
@@ -61,15 +62,18 @@
     />
   </head>
   <% current_user = @conn.assigns[:current_user] %>
-  <body class={if current_user, do: "platform-body", else: "auth-body"} tabindex="0">
+  <body class={cond do @conn.assigns[:public_portal] -> "portal-body"; current_user -> "platform-body"; true -> "auth-body" end} tabindex="0">
+    <%= if @conn.assigns[:public_portal] do %>
+      <%= @inner_content %>
+    <% else %>
     <%= if current_user do %>
       <div class="platform-shell">
         <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
         <aside id="platform-sidebar" class="platform-sidebar" aria-label="主菜单">
           <div class="sidebar-brand">
-            <.link navigate={Routes.dashboard_path(@conn, :home)} aria-label="TeslaMate CN 首页">
+            <.link navigate={Routes.dashboard_path(@conn, :home)} aria-label="特友会控制台">
               <span><i class="mdi mdi-car-connected"></i></span>
-              <div><strong>TeslaMate</strong><small>车辆数据中心</small></div>
+              <div><strong>特友会</strong><small>车辆数据中心</small></div>
             </.link>
             <button
               id="sidebar-close"
@@ -83,7 +87,7 @@
 
           <nav class="sidebar-nav">
             <p>车辆数据</p>
-            <.link navigate={Routes.dashboard_path(@conn, :home)} class={nav_class(@conn, "/")}>
+            <.link navigate={Routes.dashboard_path(@conn, :home)} class={nav_class(@conn, "/dashboard")}>
               <i class="mdi mdi-view-dashboard-outline"></i><span>首页</span>
             </.link>
             <.link navigate={~p"/driving"} class={nav_class(@conn, "/driving")}>
@@ -174,7 +178,7 @@
             >
               <i class="mdi mdi-menu"></i>
             </button>
-            <strong>TeslaMate CN</strong>
+            <strong>特友会</strong>
             <div class="topbar-actions">
               <.theme_controls />
               <.link
@@ -216,6 +220,7 @@
       </div>
     <% else %>
       <header class="auth-toolbar">
+        <a href="/" class="auth-portal-link">特友会 · 返回首页</a>
         <.theme_controls />
       </header>
       <main role="main" class="auth-main">
@@ -224,6 +229,7 @@
         <% end) %>
         <%= @inner_content %>
       </main>
+    <% end %>
     <% end %>
   </body>
 </html>

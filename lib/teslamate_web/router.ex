@@ -75,6 +75,11 @@ defmodule TeslaMateWeb.Router do
   end
 
   scope "/", TeslaMateWeb do
+    pipe_through [:browser]
+    get "/", PortalController, :index
+  end
+
+  scope "/", TeslaMateWeb do
     pipe_through [:browser, :redirect_authenticated_users]
 
     get "/sign_in", UserSessionController, :new
@@ -110,7 +115,7 @@ defmodule TeslaMateWeb.Router do
         {TeslaMateWeb.InitAssigns, :locale},
         {TeslaMateWeb.UserAuth, :ensure_authenticated}
       ] do
-      live "/", DashboardLive.Home, :home, as: :dashboard
+      live "/dashboard", DashboardLive.Home, :home, as: :dashboard
       live "/driving", DashboardLive.Driving, :driving, as: :dashboard
       live "/trips", DashboardLive.Trips, :trips, as: :dashboard
       live "/trips/:id", DashboardLive.Trip, :trip, as: :dashboard
