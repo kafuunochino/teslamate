@@ -1,0 +1,239 @@
+defmodule TeslaMateWeb.ChargingHistory do
+  use Phoenix.Component
+  use PhoenixHTMLHelpers
+  import Phoenix.HTML.Form
+  import TeslaMateWeb.ErrorHelpers
+  import TeslaMateWeb.PlatformComponents
+
+  attr :report, :map, required: true
+  attr :cost_notice, :any, default: nil
+  attr :editing_charge, :any, default: nil
+  attr :cost_changeset, :any, default: nil
+
+  def history(assigns) do
+    ~H"""
+    <.range_picker days={@report.days} />
+
+    <p
+      :if={@cost_notice}
+      id="charge-cost-notice"
+      class={["charge-cost-notice", @cost_notice.error && "charge-cost-notice--error"]}
+      role="status"
+    >
+      <%= @cost_notice.message %>
+    </p>
+
+    <% average_cost = divide(@report.stats.cost, @report.stats.priced_energy_added) %>
+    <section class="metrics-grid">
+      <.metric_card
+        title="充电次数"
+        value={"#{@report.stats.count} 次"}
+        icon="ev-station"
+        tone="blue"
+      />
+      <.metric_card
+        title="充入电量"
+        value={energy(@report.stats.energy_added)}
+        hint={"#{@report.stats.official_count} 次使用官方遥测，其他使用原有会话记录"}
+        icon="lightning-bolt"
+        tone="green"
+      />
+      <.metric_card
+        title="充电侧输入"
+        value={energy(@report.stats.energy_used)}
+        hint={"#{@report.stats.input_count} 次交流遥测计量 · #{@report.stats.input_estimate_count} 次功率估算；直流读数不代表电网侧"}
+        icon="transmission-tower"
+        tone="violet"
+      />
+      <.metric_card
+        title="充电费用"
+        value={if @report.stats.cost_count > 0, do: money(@report.stats.cost), else: "—"}
+        hint={"已记录 #{@report.stats.cost_count} / #{@report.stats.count} 次费用"}
+        icon="cash-multiple"
+        tone="amber"
+      />
+      <.metric_card
+        title="平均每度成本"
+        hint="按有费用记录的充入电量计算"
+        value={if average_cost, do: "#{money(average_cost)}/kWh", else: "—"}
+        icon="cash-clock"
+        tone="cyan"
+      />
+      <.metric_card
+        title="充电时长"
+        value={duration(@report.stats.duration_min)}
+        icon="timer-outline"
+        tone="slate"
+      />
+    </section>
+
+    <section class="metrics-grid">
+      <.metric_card
+        title="交流充电输入与入电池差额"
+        value={energy(@report.stats.loss_kwh, 2)}
+        icon="lightning-bolt-circle"
+        tone="amber"
+        hint={"仅统计 #{@report.stats.loss_count} 次两侧时间对齐的官方采样；包含充电转换与辅助耗电"}
+      />
+    </section>
+    <p class="trip-energy-note">
+      能量优先采用本次会话的官方遥测。两侧完整采样不足、计数器重置或时间不一致时不计算损耗；原有会话数据作为补充并注明来源。
+      该差额不等同于电池容量衰减。
+    </p>
+    <.bar_chart title="每日充入电量" rows={@report.daily_energy} unit=" kWh" />
+
+    <div class="content-grid content-grid--wide">
+      <section class="data-card table-card">
+        <div class="data-card__header">
+          <h2>充电会话</h2>
+          <span>
+            <%= length(@report.sessions) %> 条 · <%= @report.stats.count - @report.stats.cost_count %> 次费用待补充
+          </span>
+        </div>
+        <div :if={@report.sessions == []} class="empty-inline">该时间范围暂无充电记录</div>
+        <div :if={@report.sessions != []} class="responsive-table">
+          <table>
+            <thead>
+              <tr>
+                <th>开始时间</th>
+                <th>位置</th>
+                <th>电量变化</th>
+                <th>充入</th>
+                <th>充电侧输入</th>
+                <th>输入差额 / 比例</th>
+                <th>时长</th>
+                <th>费用</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <%= for session <- @report.sessions do %>
+                <tr id={"charge-session-#{session.id}"}>
+                  <td data-label="开始时间"><%= date_time(session.start_date) %></td>
+                  <td data-label="位置">
+                    <%= location_label(session.geofence || session.address) %>
+                  </td>
+                  <td data-label="电量变化">
+                    <%= session.start_battery_level || "—" %>% → <%= session.end_battery_level ||
+                      "—" %>%
+                  </td>
+                  <td data-label="充入">
+                    <%= energy(session.charge_energy_added, 2) %>
+                    <small class="energy-source">
+                      <%= if session.energy.battery_source == :fleet_battery,
+                        do: "官方电池侧遥测",
+                        else: "车辆会话记录" %>
+                    </small>
+                  </td>
+                  <td data-label="充电侧输入">
+                    <%= energy(session.charge_energy_used, 2) %>
+                    <small class="energy-source">
+                      <%= if session.energy.input_source == :fleet_ac,
+                        do: "官方交流输入遥测",
+                        else: "原有功率积分估算" %>
+                    </small>
+                  </td>
+                  <td data-label="输入差额 / 比例">
+                    <%= energy(session.energy.loss_kwh, 2) %> / <%= percentage(
+                      session.energy.loss_percent
+                    ) %>
+                    <small :if={is_nil(session.energy.loss_kwh)} class="energy-source">
+                      缺少可比的交流两侧数据
+                    </small>
+                  </td>
+                  <td data-label="时长"><%= duration(session.duration_min) %></td>
+                  <td data-label="费用">
+                    <span id={"charge-cost-value-#{session.id}"}>
+                      <%= if is_nil(session.cost), do: "未填写", else: money(session.cost) %>
+                    </span>
+                  </td>
+                  <td data-label="操作">
+                    <button
+                      id={"charge-cost-edit-#{session.id}"}
+                      class="charge-cost-edit"
+                      type="button"
+                      phx-click="edit_cost"
+                      phx-value-id={session.id}
+                      disabled={is_nil(session.end_date)}
+                      aria-expanded={
+                        to_string(!!(@editing_charge && @editing_charge.id == session.id))
+                      }
+                    >
+                      <%= cond do
+                        is_nil(session.end_date) -> "充电结束后可填写"
+                        is_nil(session.cost) -> "补充费用"
+                        true -> "修改费用"
+                      end %>
+                    </button>
+                  </td>
+                </tr>
+                <tr
+                  :if={@editing_charge && @editing_charge.id == session.id}
+                  class="charge-cost-editor-row"
+                >
+                  <td colspan="9">
+                    <.form
+                      :let={f}
+                      for={@cost_changeset}
+                      as={:charge_cost}
+                      id="charge-cost-form"
+                      class="charge-cost-editor"
+                      phx-change="validate_cost"
+                      phx-submit="save_cost"
+                    >
+                      <%= label(f, :cost, "本次充电实付总额（元）", class: "label") %>
+                      <p id="charge-cost-help" class="charge-cost-help">
+                        填写账单最终金额，包含服务费与优惠。0 表示免费，留空表示未知；负数表示退款抵扣。
+                      </p>
+                      <div class="charge-cost-controls">
+                        <%= number_input(f, :cost,
+                          class: "input",
+                          step: "0.01",
+                          min: "-9999.99",
+                          max: "9999.99",
+                          inputmode: "decimal",
+                          placeholder: "例如 38.50",
+                          aria: [describedby: "charge-cost-help charge-cost-errors"]
+                        ) %>
+                        <button
+                          type="submit"
+                          class="button is-link"
+                          phx-disable-with="正在保存…"
+                        >
+                          保存费用
+                        </button>
+                        <button type="button" class="button" phx-click="cancel_cost">
+                          取消
+                        </button>
+                      </div>
+                      <div id="charge-cost-errors" class="help is-danger" role="alert">
+                        <%= error_tag(f, :cost) %>
+                      </div>
+                    </.form>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="data-card ranking-card">
+        <div class="data-card__header">
+          <h2>常用充电地点</h2>
+        </div>
+        <div :if={@report.stations == []} class="empty-inline">暂无站点统计</div>
+        <ol>
+          <li :for={{station, index} <- Enum.with_index(@report.stations, 1)}>
+            <span class="rank"><%= index %></span>
+            <span>
+              <strong><%= station.label %></strong><small><%= energy(station.energy) %> · <%= if station.cost_count > 0, do: money(station.cost), else: "费用待补充" %></small>
+            </span>
+            <b><%= station.count %> 次</b>
+          </li>
+        </ol>
+      </section>
+    </div>
+    """
+  end
+end

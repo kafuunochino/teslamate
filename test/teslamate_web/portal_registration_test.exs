@@ -35,6 +35,41 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
     assert invited =~ "当前为邀请内测"
   end
 
+  test "actual UI previews are identical for visitors and users and never query the database", %{
+    conn: conn,
+    current_user: user
+  } do
+    handler = "portal-preview-#{System.unique_integer([:positive])}"
+    owner = self()
+
+    :ok = :telemetry.attach(handler, [:teslamate, :repo, :query], fn _, _, _, pid ->
+      if self() == pid, do: send(pid, :preview_database_query)
+    end, owner)
+
+    on_exit(fn -> :telemetry.detach(handler) end)
+
+    for page <- ["home", "trips", "charging"] do
+      response = get(build_conn(), "/preview/#{page}?car=123&user=123")
+      html = html_response(response, 200)
+      assert html == html_response(get(conn, "/preview/#{page}"), 200)
+      assert html =~ "虚拟数据演示"
+      assert html =~ "Model Y · 示例车辆"
+      refute html =~ user.email
+      refute html =~ user.name
+      dom = Floki.parse_document!(html)
+      assert Floki.find(dom, "body[inert]") != []
+      assert Floki.find(dom, ".metric-card") != []
+      assert Floki.find(dom, "script") == []
+      [policy] = get_resp_header(response, "content-security-policy")
+      assert policy =~ "connect-src 'none'"
+      assert policy =~ "script-src 'none'"
+      assert policy =~ "frame-ancestors 'self'"
+    end
+
+    assert get(build_conn(), "/preview/vehicles").status == 404
+    refute_received :preview_database_query
+  end
+
   test "direct POST cannot bypass required invitation, forged policy, or reuse", %{
     current_user: admin
   } do

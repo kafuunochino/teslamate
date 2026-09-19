@@ -56,7 +56,12 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
         conn.request_path in ["/register", "/sign_in", "/sign_in/verify"]
 
     turnstile_script = if turnstile?, do: " https://challenges.cloudflare.com", else: ""
-    frames = if turnstile?, do: "https://challenges.cloudflare.com", else: "'none'"
+    frames =
+      cond do
+        turnstile? -> "https://challenges.cloudflare.com"
+        conn.request_path == "/" -> "'self'"
+        true -> "'none'"
+      end
 
     # JS API 2.0 loads its renderer from a separate official CDN and uses
     # dynamic functions. Keep this compatibility exception provider-specific;

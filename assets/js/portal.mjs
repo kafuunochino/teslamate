@@ -2,6 +2,7 @@
 export function mountPortal(win, doc) {
   const story = doc.querySelector(".portal-story");
   if (!story) return;
+  mountPreviews(win, doc);
   const scenes = [...story.querySelectorAll(".portal-scene")];
   const chapters = [...doc.querySelectorAll(".portal-chapters a")];
   const motion = win.matchMedia("(prefers-reduced-motion: reduce)");
@@ -57,6 +58,75 @@ export function mountPortal(win, doc) {
     });
   });
   update();
+}
+
+function mountPreviews(win, doc) {
+  const dialog = doc.getElementById("portal-preview-dialog");
+  const expanded = dialog?.querySelector(".portal-preview-expanded");
+  const stages = [...doc.querySelectorAll(".portal-preview-stage")];
+  const syncTheme = (frame) => {
+    const root = frame.contentDocument?.documentElement;
+    if (root) root.dataset.theme = doc.documentElement.dataset.theme || "light";
+  };
+  const fitExpanded = () => {
+    const frame = expanded?.querySelector("iframe");
+    if (!frame?.contentDocument?.body) return;
+    frame.style.height = "1px";
+    frame.style.height = `${Math.max(500, frame.contentDocument.documentElement.scrollHeight)}px`;
+  };
+  const resize = () => {
+    stages.forEach((stage) =>
+      stage.style.setProperty(
+        "--preview-scale",
+        String(stage.clientWidth / 1440),
+      ),
+    );
+    fitExpanded();
+  };
+  stages.forEach((stage) => {
+    const frame = stage.querySelector("iframe");
+    frame.addEventListener("load", () => syncTheme(frame));
+    syncTheme(frame);
+  });
+  win.addEventListener("themechange", () => {
+    doc.querySelectorAll(".portal-preview-screen").forEach(syncTheme);
+  });
+  win.addEventListener("resize", resize, { passive: true });
+  if (win.ResizeObserver) {
+    const observer = new win.ResizeObserver(() => {
+      stages.forEach((stage) =>
+        stage.style.setProperty(
+          "--preview-scale",
+          String(stage.clientWidth / 1440),
+        ),
+      );
+    });
+    stages.forEach((stage) => observer.observe(stage));
+  }
+  doc.querySelectorAll("[data-preview-page]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!dialog || !expanded) return;
+      const source = button.closest("figure").querySelector("iframe");
+      const frame = source.cloneNode();
+      frame.removeAttribute("loading");
+      frame.classList.add("is-expanded");
+      frame.addEventListener("load", () => {
+        syncTheme(frame);
+        fitExpanded();
+      });
+      expanded.replaceChildren(frame);
+      doc.getElementById("portal-preview-title").textContent =
+        button.dataset.previewTitle;
+      dialog.showModal();
+      expanded.scrollTop = 0;
+      fitExpanded();
+    });
+  });
+  dialog
+    ?.querySelector("[data-preview-close]")
+    .addEventListener("click", () => dialog.close());
+  dialog?.addEventListener("close", () => expanded.replaceChildren());
+  resize();
 }
 
 export function mountInvitationCopy(win, doc) {

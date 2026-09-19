@@ -38,102 +38,7 @@
         </div>
         <div class="portal-hero-notes"><span>你的车辆 · 你的数据</span><span>手机 / 电脑 / 车机</span></div>
       </div>
-      <figure
-        class="portal-demo portal-hero-demo"
-        aria-label="特友会界面概念演示，全部为虚拟数据"
-      >
-        <div class="portal-demo-toolbar">
-          <span class="portal-mini-brand">t+ <b>特友会</b></span><span class="portal-demo-badge">虚拟数据演示</span>
-        </div>
-        <div class="portal-demo-heading">
-          <div>
-            <small>用车概览</small>
-            <h3>今天，也有新的发现。</h3>
-          </div>
-          <span class="portal-demo-live">示例车辆</span>
-        </div>
-        <div class="portal-car-stage" aria-hidden="true">
-          <div class="portal-car-halo"></div>
-          <svg class="portal-car" viewBox="0 0 600 220" fill="none">
-            <defs>
-              <linearGradient
-                id="car-body"
-                x1="300"
-                y1="30"
-                x2="300"
-                y2="200"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stop-color="#ebeff8" /><stop offset=".48" stop-color="#7d8da6" /><stop
-                  offset=".72"
-                  stop-color="#323e56"
-                /><stop offset="1" stop-color="#182032" />
-              </linearGradient>
-              <linearGradient
-                id="car-glass"
-                x1="220"
-                y1="50"
-                x2="350"
-                y2="120"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stop-color="#546681" /><stop offset="1" stop-color="#111c30" />
-              </linearGradient>
-            </defs>
-            <ellipse cx="305" cy="187" rx="249" ry="12" fill="#060c18" opacity=".45" /><path
-              d="M43 145 55 116 122 103 179 61 Q213 35 282 37 L346 39 Q389 43 448 94 L519 111 Q548 118 551 141 L548 162 511 168 Q506 120 467 122 Q428 122 424 171 L172 171 Q170 124 128 124 Q87 124 84 166 L49 162Z"
-              fill="url(#car-body)"
-              stroke="#aab8d0"
-              stroke-width="1.5"
-            /><path
-              d="M149 101 196 64 Q223 47 279 48 L341 50 Q376 56 425 96Z"
-              fill="url(#car-glass)"
-              stroke="#bdc8db"
-            /><path
-              d="M278 48 281 100 M348 53 365 100 M184 109 184 156 M355 104 354 158"
-              stroke="#59697f"
-              stroke-width="2"
-            /><path
-              d="M66 124 104 119 M493 116 534 130"
-              stroke="#e1f6ff"
-              stroke-width="5"
-              stroke-linecap="round"
-            /><path
-              d="M195 117h23m153-3h23"
-              stroke="#cbd2dc"
-              stroke-width="3"
-              stroke-linecap="round"
-            /><circle cx="128" cy="161" r="33" fill="#101624" stroke="#66758c" stroke-width="3" /><circle
-              cx="128"
-              cy="161"
-              r="21"
-              fill="#78869c"
-            /><circle cx="128" cy="161" r="12" fill="#202c40" /><circle
-              cx="467"
-              cy="161"
-              r="33"
-              fill="#101624"
-              stroke="#66758c"
-              stroke-width="3"
-            /><circle cx="467" cy="161" r="21" fill="#78869c" /><circle
-              cx="467"
-              cy="161"
-              r="12"
-              fill="#202c40"
-            />
-          </svg>
-          <span class="portal-car-caption">为探索而出发</span>
-        </div>
-        <div class="portal-demo-metrics">
-          <div><small>本次行程</small><strong>32.8 <em>km</em></strong></div>
-          <div><small>平均能耗</small><strong>142 <em>Wh/km</em></strong></div>
-          <div><small>净耗电量</small><strong>4.66 <em>kWh</em></strong></div>
-        </div>
-        <div class="portal-demo-bottom">
-          <span>行程轨迹</span><span>电池状态</span><span>充电记录</span><span>用车分析</span>
-        </div>
-        <figcaption>界面概念示意 · 所有数值均为虚拟数据</figcaption>
-      </figure>
+      <TeslaMateWeb.PortalPreview.preview page="home" title="首页总览" class="portal-hero-demo" />
     </div>
     <a class="portal-scroll-cue" href="#journeys">
       <span class="portal-scroll-line"></span>向下探索 <span>01 / 05</span>
@@ -166,60 +71,7 @@
           </div>
         </div>
       </div>
-      <figure
-        class="portal-demo portal-route-demo"
-        aria-label="虚构行程与海拔图示，未使用真实位置"
-      >
-        <div class="portal-demo-toolbar">
-          <span>周末 · 山间探索</span><span class="portal-demo-badge">虚构路线</span>
-        </div>
-        <div class="portal-map-illustration">
-          <svg
-            viewBox="0 0 580 370"
-            role="img"
-            aria-label="由虚拟地点出发到达观景点的示意路线"
-          >
-            <defs>
-              <pattern id="map-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-                <path d="M48 0H0V48" fill="none" stroke="currentColor" opacity=".1" />
-              </pattern>
-            </defs>
-            <rect width="580" height="370" fill="url(#map-grid)" />
-            <g fill="none" stroke="currentColor" opacity=".12">
-              <path d="M350 0Q220 110 345 173T555 370M382 0Q260 95 374 165T580 340M414 0Q300 85 406 152T580 290M444 0Q340 78 438 138T580 240M470 0Q377 75 470 125T580 200" /><path
-                d="M0 95 115 152 0 290M0 175 130 206 235 350M105 0 168 118 252 165 281 370M0 315 181 270 375 290 580 250"
-                stroke-width="10"
-              />
-            </g>
-            <path
-              class="portal-route-glow"
-              d="M90 282C157 282 123 201 192 201S321 240 328 171 388 81 460 84"
-            /><path
-              class="portal-route-line"
-              d="M90 282C157 282 123 201 192 201S321 240 328 171 388 81 460 84"
-            /><circle cx="90" cy="282" r="9" fill="#9ff4d5" stroke="#13272d" stroke-width="4" /><circle
-              cx="460"
-              cy="84"
-              r="9"
-              fill="#aca4ff"
-              stroke="#232040"
-              stroke-width="4"
-            />
-            <text x="64" y="318" fill="currentColor" font-size="13">出发点 · 示例</text>
-            <text x="400" y="57" fill="currentColor" font-size="13">山间观景点 · 示例</text>
-          </svg>
-          <div class="portal-altitude"><small>海拔变化</small><strong>+386 <em>m</em></strong></div>
-        </div>
-        <div class="portal-elevation">
-          <span>沿途海拔</span><svg viewBox="0 0 500 65" aria-hidden="true"><path
-            d="M0 61 30 58 60 60 90 43 120 46 150 39 185 46 220 31 255 36 285 18 320 27 355 13 390 17 430 5 470 11 500 2"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          /></svg><span>每一段起伏，都有迹可循</span>
-        </div>
-        <figcaption>虚拟数据演示 · 非真实地图、地点或车辆记录</figcaption>
-      </figure>
+      <TeslaMateWeb.PortalPreview.preview page="trips" title="行程轨迹" class="" />
     </div>
   </section>
 
@@ -230,29 +82,7 @@
     data-scene="03"
   >
     <div class="portal-scene-inner portal-split portal-split-reverse">
-      <figure
-        class="portal-demo portal-energy-demo"
-        aria-label="电池与充电界面概念，全部为虚拟数据"
-      >
-        <div class="portal-demo-toolbar">
-          <span>能量账本</span><span class="portal-demo-badge">虚拟数据演示</span>
-        </div>
-        <div class="portal-energy-display">
-          <div class="portal-energy-ring">
-            <span><small>本次充电增加</small><strong>28.6</strong><em>kWh</em></span>
-          </div>
-          <div class="portal-energy-readings">
-            <p><span>充电时长</span><strong>42 分钟</strong></p>
-            <p><span>本次费用</span><strong>¥ 32.90</strong></p>
-            <p><span>费用来源</span><strong>手动补充</strong></p>
-          </div>
-        </div>
-        <div class="portal-energy-trend">
-          <span>最近 7 次充电 · 示例</span>
-          <div aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        </div>
-        <figcaption>界面概念示意 · 不代表真实电池状态或实际费用</figcaption>
-      </figure>
+      <TeslaMateWeb.PortalPreview.preview page="charging" title="充电记录" class="" />
       <div class="portal-copy">
         <p class="portal-eyebrow">02 / 从一度电，到每一次补能</p>
         <h2 id="energy-title">每一度电，<br />都有<span class="portal-accent">来龙去脉。</span></h2>
@@ -376,7 +206,7 @@
         </details>
         <details>
           <summary>这里展示的是真实车主数据吗？<span aria-hidden="true">+</span></summary>
-          <p>不是。此首页的车辆、路线、数值与图表均为独立制作的虚拟演示，不读取或展示数据库中的车辆记录。</p>
+          <p>不是。示例复用控制台的实际页面和组件，车辆、地点、数值与图表全部使用独立的虚拟数据，不读取或展示数据库中的车辆记录。</p>
         </details>
       </div>
       <footer class="portal-footer">
@@ -414,3 +244,14 @@
   ><span>体验</span></a><a href="#join" aria-label="加入"><span>加入</span></a>
 </nav>
 <div class="portal-progress" aria-hidden="true"><span></span></div>
+
+<dialog id="portal-preview-dialog" class="portal-preview-dialog" aria-labelledby="portal-preview-title">
+  <header>
+    <div><h2 id="portal-preview-title">控制台界面</h2><p>实际界面 · 虚拟数据演示 · 仅供浏览</p></div>
+    <div class="portal-preview-actions">
+      <button type="button" data-theme-toggle aria-label="切换示例深浅模式" aria-pressed="false"><i class="mdi mdi-theme-light-dark" aria-hidden="true"></i></button>
+      <button type="button" data-preview-close aria-label="关闭界面示例" autofocus><i class="mdi mdi-close" aria-hidden="true"></i></button>
+    </div>
+  </header>
+  <div class="portal-preview-expanded"></div>
+</dialog>

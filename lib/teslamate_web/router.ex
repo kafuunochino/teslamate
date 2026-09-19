@@ -43,6 +43,16 @@ defmodule TeslaMateWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :portal_preview do
+    plug :accepts, ["html"]
+    plug :put_secure_browser_headers
+  end
+
+  scope "/", TeslaMateWeb do
+    pipe_through [:portal_preview]
+    get "/preview/:page", PortalPreviewController, :show
+  end
+
   pipeline :map_api do
     plug :fetch_session
     plug :fetch_current_user

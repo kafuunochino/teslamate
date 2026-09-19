@@ -1173,3 +1173,230 @@
     order: 2;
   }
 }
+
+// Real dashboard templates live in isolated, script-free preview documents.
+.portal-ui-demo {
+  min-width: 0;
+  background: var(--platform-bg);
+  border-color: var(--portal-line);
+  color: var(--portal-ink);
+}
+.portal-ui-demo .portal-demo-toolbar {
+  color: var(--portal-muted);
+  background: var(--portal-bg);
+  border-bottom-color: var(--portal-line);
+  padding: 0 16px;
+  gap: 8px;
+}
+.portal-ui-demo .portal-demo-badge {
+  color: var(--portal-muted);
+  border-color: var(--portal-line);
+  white-space: nowrap;
+}
+.portal-ui-demo figcaption {
+  background: var(--portal-bg);
+  color: var(--portal-muted);
+  border-top: 1px solid var(--portal-line);
+}
+.portal-preview-stage {
+  position: relative;
+  aspect-ratio: 1440 / 1100;
+  overflow: hidden;
+}
+.portal-preview-screen {
+  display: block;
+  width: 1440px;
+  max-width: none;
+  height: 1100px;
+  border: 0;
+  transform: scale(var(--preview-scale, 0.35));
+  transform-origin: top left;
+  pointer-events: none;
+}
+.portal-preview-open {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  cursor: zoom-in;
+  background: transparent;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 18px;
+  color: var(--portal-ink);
+}
+.portal-preview-open span {
+  background: var(--portal-glass);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 5px 25px #0002;
+  border: 1px solid var(--portal-line);
+  border-radius: 24px;
+  padding: 9px 15px;
+  font-size: 11px;
+  transition: transform 0.25s;
+}
+.portal-preview-open:hover span {
+  transform: translateY(-3px);
+}
+.portal-ui-demo:focus-within {
+  outline: 2px solid var(--portal-accent);
+  outline-offset: 5px;
+}
+.portal-preview-dialog {
+  width: min(1480px, calc(100vw - 48px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  margin: auto;
+  border: 1px solid var(--portal-line);
+  border-radius: 16px;
+  color: var(--portal-ink);
+  background: var(--portal-bg);
+  overflow: hidden;
+}
+.portal-preview-dialog::backdrop {
+  background: #060b16c9;
+  backdrop-filter: blur(12px);
+}
+.portal-preview-dialog > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--portal-line);
+}
+.portal-preview-dialog h2 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0 0 3px;
+}
+.portal-preview-dialog header p {
+  font-size: 11px;
+  color: var(--portal-muted);
+}
+.portal-preview-actions {
+  display: flex;
+  gap: 8px;
+}
+.portal-preview-actions button {
+  border: 1px solid var(--portal-line);
+  background: var(--portal-tint);
+  color: inherit;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+}
+.portal-preview-expanded {
+  overflow: auto;
+  max-height: calc(100dvh - 132px);
+  overscroll-behavior: contain;
+}
+.portal-preview-screen.is-expanded {
+  width: 100%;
+  transform: none;
+}
+.portal-sample-body {
+  overflow: hidden;
+}
+.portal-sample-body .platform-sidebar {
+  position: absolute;
+}
+.portal-sample-body .platform-topbar {
+  position: relative;
+}
+.portal-sample-body a,
+.portal-sample-body button,
+.portal-sample-body input,
+.portal-sample-body select {
+  pointer-events: none;
+}
+.portal-sample-notice {
+  font-size: 11px;
+  color: var(--platform-muted);
+  margin: -12px 0 20px;
+}
+.portal-sample-body .platform-map {
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--platform-surface-soft);
+  background-image:
+    linear-gradient(
+      35deg,
+      transparent 45%,
+      var(--platform-border) 45%,
+      var(--platform-border) 47%,
+      transparent 47%
+    ),
+    linear-gradient(
+      125deg,
+      transparent 57%,
+      var(--platform-border) 57%,
+      var(--platform-border) 59%,
+      transparent 59%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 47px,
+      var(--platform-border) 48px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 47px,
+      var(--platform-border) 48px
+    );
+}
+.portal-sample-body .platform-map::before {
+  content: "虚拟地点 · 地图占位示意";
+  color: var(--platform-muted);
+  background: var(--platform-surface);
+  border: 1px solid var(--platform-border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .portal-preview-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
+  }
+  .portal-preview-dialog > header {
+    padding: 12px;
+    gap: 8px;
+  }
+  .portal-preview-dialog h2 {
+    font-size: 15px;
+  }
+  .portal-preview-dialog header p {
+    font-size: 9px;
+  }
+  .portal-preview-actions {
+    gap: 6px;
+  }
+  .portal-preview-actions button {
+    width: 36px;
+    height: 36px;
+  }
+  .portal-preview-expanded {
+    max-height: calc(100dvh - 90px);
+  }
+  .portal-ui-demo .portal-demo-toolbar {
+    font-size: 10px;
+    padding: 0 12px;
+  }
+  .portal-preview-open {
+    padding: 10px;
+  }
+  .portal-preview-open span {
+    font-size: 10px;
+    padding: 7px 12px;
+  }
+}
