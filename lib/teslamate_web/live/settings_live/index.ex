@@ -60,49 +60,78 @@ defmodule TeslaMateWeb.SettingsLive.Index do
   end
 
   def handle_event("registration_policy", %{"registration" => params}, socket) do
-    case Accounts.set_registration_policy(socket.assigns.current_user,
-           params["enabled"] == "true", params["require_invitation"] == "true") do
+    case Accounts.set_registration_policy(
+           socket.assigns.current_user,
+           params["enabled"] == "true",
+           params["require_invitation"] == "true"
+         ) do
       {:ok, policy} ->
-        {:noreply, socket |> assign(:registration_policy, policy) |> put_flash(:success, "注册设置已保存")}
-      _ -> {:noreply, put_flash(socket, :error, "无法保存注册设置，请重新登录后重试")}
+        {:noreply,
+         socket |> assign(:registration_policy, policy) |> put_flash(:success, "注册设置已保存")}
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "无法保存注册设置，请重新登录后重试")}
     end
   end
 
   def handle_event("generate_invitations", %{"invitation" => %{"quantity" => value}}, socket) do
-    quantity = case Integer.parse(value) do
-      {n, ""} -> n
-      _ -> 0
-    end
+    quantity =
+      case Integer.parse(value) do
+        {n, ""} -> n
+        _ -> 0
+      end
 
     case Invitations.generate(socket.assigns.current_user, quantity) do
       {:ok, codes} ->
-        {:noreply, assign(socket, new_invitation_codes: codes,
-          invitations: Invitations.list(socket.assigns.current_user))}
-      _ -> {:noreply, put_flash(socket, :error, "生成失败：每次可生成 1–100 个邀请码，且需要管理员权限")}
+        {:noreply,
+         assign(socket,
+           new_invitation_codes: codes,
+           invitations: Invitations.list(socket.assigns.current_user)
+         )}
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "生成失败：每次可生成 1–100 个邀请码，且需要管理员权限")}
     end
   end
+
+  def handle_event("refresh_invitations", _, socket),
+    do: {:noreply, assign(socket, :invitations, Invitations.list(socket.assigns.current_user, socket.assigns.invitations.page))}
 
   def handle_event("clear_invitation_codes", _, socket),
     do: {:noreply, assign(socket, :new_invitation_codes, [])}
 
   def handle_event("invitation_page", %{"page" => value}, socket) do
-    page = case Integer.parse(value) do
-      {n, ""} -> n
-      _ -> 1
-    end
+    page =
+      case Integer.parse(value) do
+        {n, ""} -> n
+        _ -> 1
+      end
+
     {:noreply, assign(socket, :invitations, Invitations.list(socket.assigns.current_user, page))}
   end
 
   def handle_event("revoke_invitation", %{"id" => value}, socket) do
-    result = case Integer.parse(value) do
-      {id, ""} -> Invitations.revoke(socket.assigns.current_user, id)
-      _ -> {:error, :unavailable}
-    end
+    result =
+      case Integer.parse(value) do
+        {id, ""} -> Invitations.revoke(socket.assigns.current_user, id)
+        _ -> {:error, :unavailable}
+      end
+
     case result do
       {:ok, :ok} ->
-        {:noreply, socket |> assign(:invitations, Invitations.list(socket.assigns.current_user,
-          socket.assigns.invitations.page)) |> put_flash(:success, "邀请码已作废")}
-      _ -> {:noreply, put_flash(socket, :error, "邀请码已使用或状态已变化，请刷新列表")}
+        {:noreply,
+         socket
+         |> assign(
+           :invitations,
+           Invitations.list(
+             socket.assigns.current_user,
+             socket.assigns.invitations.page
+           )
+         )
+         |> put_flash(:success, "邀请码已作废")}
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "邀请码已使用或状态已变化，请刷新列表")}
     end
   end
 

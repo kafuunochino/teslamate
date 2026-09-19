@@ -5,7 +5,8 @@ export function mountPortal(win, doc) {
   const scenes = [...story.querySelectorAll(".portal-scene")];
   const chapters = [...doc.querySelectorAll(".portal-chapters a")];
   const motion = win.matchMedia("(prefers-reduced-motion: reduce)");
-  const syncMotion = () => doc.body.classList.toggle("portal-motion", !motion.matches);
+  const syncMotion = () =>
+    doc.body.classList.toggle("portal-motion", !motion.matches);
   syncMotion();
   motion.addEventListener?.("change", syncMotion);
   let scheduled = false;
@@ -16,7 +17,8 @@ export function mountPortal(win, doc) {
     let active = 0;
     scenes.forEach((scene, index) => {
       const rect = scene.getBoundingClientRect();
-      const visible = rect.top < top + story.clientHeight * .82 && rect.bottom > top + 100;
+      const visible =
+        rect.top < top + story.clientHeight * 0.82 && rect.bottom > top + 100;
       scene.classList.toggle("is-visible", visible);
       if (rect.top <= middle) active = index;
     });
@@ -24,8 +26,11 @@ export function mountPortal(win, doc) {
       if (index === active) link.setAttribute("aria-current", "location");
       else link.removeAttribute("aria-current");
     });
-    doc.body.style.setProperty("--portal-progress", String((active + 1) / scenes.length));
-    const travel = motion.matches ? 0 : Math.min(story.scrollTop * .08, 30);
+    doc.body.style.setProperty(
+      "--portal-progress",
+      String((active + 1) / scenes.length),
+    );
+    const travel = motion.matches ? 0 : Math.min(story.scrollTop * 0.08, 30);
     doc.body.style.setProperty("--portal-travel", `${travel}px`);
   };
   const schedule = () => {
@@ -41,7 +46,10 @@ export function mountPortal(win, doc) {
     if (!target || !story.contains(target)) return;
     link.addEventListener("click", (event) => {
       event.preventDefault();
-      target.scrollIntoView({ behavior: motion.matches ? "auto" : "smooth", block: "start" });
+      target.scrollIntoView({
+        behavior: motion.matches ? "auto" : "smooth",
+        block: "start",
+      });
       win.history.replaceState(null, "", link.getAttribute("href"));
       // Preserve keyboard reading order after a chapter link is used.
       target.setAttribute("tabindex", "-1");

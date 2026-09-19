@@ -5,7 +5,10 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
 
   defp visitor, do: %{build_conn() | remote_ip: {192, 0, 2, 213}}
 
-  test "public root is a fictional product portal for visitors and signed-in users", %{conn: conn, current_user: user} do
+  test "public root is a fictional product portal for visitors and signed-in users", %{
+    conn: conn,
+    current_user: user
+  } do
     for connection <- [build_conn(), conn] do
       html = connection |> get("/") |> html_response(200)
       assert html =~ "特友会"
@@ -18,6 +21,7 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
       refute html =~ ~s(id="platform-sidebar")
       refute html =~ ~s(id="vehicle-map")
     end
+
     assert redirected_to(get(build_conn(), "/dashboard")) == "/sign_in"
   end
 
@@ -31,20 +35,32 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
     assert invited =~ "当前为邀请内测"
   end
 
-  test "direct POST cannot bypass required invitation, forged policy, or reuse", %{current_user: admin} do
+  test "direct POST cannot bypass required invitation, forged policy, or reuse", %{
+    current_user: admin
+  } do
     {:ok, _} = Accounts.set_registration_policy(admin, true, true)
     {:ok, [code]} = Invitations.generate(admin, 1)
     page = get(build_conn(), "/register").resp_body |> Floki.parse_document!()
     assert Floki.find(page, "input[name='user[invitation_code]'][required]") != []
-    params = %{"email" => "portal-invite@example.com", "name" => "New User",
-      "password" => "correct horse battery staple 42", "password_confirmation" => "correct horse battery staple 42",
-      "require_invitation" => "false", "role" => "admin", "is_system_admin" => "true"}
+
+    params = %{
+      "email" => "portal-invite@example.com",
+      "name" => "New User",
+      "password" => "correct horse battery staple 42",
+      "password_confirmation" => "correct horse battery staple 42",
+      "require_invitation" => "false",
+      "role" => "admin",
+      "is_system_admin" => "true"
+    }
+
     count = Repo.aggregate(Accounts.User, :count)
+
     for invalid <- [nil, "", "invalid", %{"nested" => "invalid"}] do
       result = post(visitor(), "/register", %{user: Map.put(params, "invitation_code", invalid)})
       assert result.status == 422
       assert result.resp_body =~ "邀请码无效"
     end
+
     assert Repo.aggregate(Accounts.User, :count) == count
     assert Invitations.valid?(code)
     success = post(visitor(), "/register", %{user: Map.put(params, "invitation_code", code)})
@@ -55,19 +71,42 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
     refute Accounts.get_user_by_email("replay@example.com")
   end
 
-  test "system settings saves invitation policy and manages single-display code batches", %{conn: conn, current_user: admin} do
+  test "system settings saves invitation policy and manages single-display code batches", %{
+    conn: conn,
+    current_user: admin
+  } do
     {:ok, view, _} = live(conn, "/admin/settings")
-    view |> form("form[phx-submit=registration_policy]", registration: %{enabled: "true", require_invitation: "true"}) |> render_submit()
+
+    view
+    |> form("form[phx-submit=registration_policy]",
+      registration: %{enabled: "true", require_invitation: "true"}
+    )
+    |> render_submit()
+
     assert %{allow_registration: true, require_invitation: true} = Accounts.registration_policy()
-    html = view |> form("form[phx-submit=generate_invitations]", invitation: %{quantity: "3"}) |> render_submit()
-    codes = html |> Floki.parse_document!() |> Floki.find("#invitation-codes") |> Floki.text() |> String.split()
+
+    html =
+      view
+      |> form("form[phx-submit=generate_invitations]", invitation: %{quantity: "3"})
+      |> render_submit()
+
+    codes =
+      html
+      |> Floki.parse_document!()
+      |> Floki.find("#invitation-codes")
+      |> Floki.text()
+      |> String.split()
+
     assert length(codes) == 3
     assert %{total: 3, used: 0} = Invitations.list(admin)
     html = render_click(view, "clear_invitation_codes")
     refute html =~ hd(codes)
     {:ok, _, reloaded} = live(conn, "/admin/settings")
     refute reloaded =~ hd(codes)
-    assert Phoenix.Logger.filter_values(%{"invitation_code" => hd(codes)}) == %{"invitation_code" => "[FILTERED]"}
+
+    assert Phoenix.Logger.filter_values(%{"invitation_code" => hd(codes)}) == %{
+             "invitation_code" => "[FILTERED]"
+           }
   end
 
   @tag platform_role: :member

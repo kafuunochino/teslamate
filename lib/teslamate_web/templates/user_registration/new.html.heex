@@ -61,9 +61,15 @@
 
       <div :if={@registration_policy.require_invitation} class="field">
         <%= label(f, :invitation_code, "内测邀请码", class: "label") %>
-        <%= text_input(f, :invitation_code, required: true, maxlength: 64,
-          autocomplete: "off", spellcheck: "false", class: "input",
-          aria_describedby: "invitation-help", placeholder: "TYH-…") %>
+        <%= text_input(f, :invitation_code,
+          required: true,
+          maxlength: 64,
+          autocomplete: "off",
+          spellcheck: "false",
+          class: "input",
+          aria_describedby: "invitation-help",
+          placeholder: "TYH-…"
+        ) %>
         <p id="invitation-help" class="help">当前为邀请注册。请向管理员获取邀请码，每个码仅可成功注册一个账号。</p>
         <%= error_tag(f, :invitation_code) %>
       </div>

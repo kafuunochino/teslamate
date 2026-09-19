@@ -36,13 +36,29 @@ defmodule TeslaMate.Accounts.Invitations do
       page = if is_integer(page), do: min(max(page, 1), pages), else: 1
 
       entries =
-        Repo.all(from i in Invitation,
-          order_by: [desc: i.id], limit: @page_size, offset: ^((page - 1) * @page_size),
-          select: %{id: i.id, label: i.label, inserted_at: i.inserted_at,
-                    used_at: i.used_at, revoked_at: i.revoked_at})
+        Repo.all(
+          from i in Invitation,
+            order_by: [desc: i.id],
+            limit: @page_size,
+            offset: ^((page - 1) * @page_size),
+            select: %{
+              id: i.id,
+              label: i.label,
+              inserted_at: i.inserted_at,
+              used_at: i.used_at,
+              revoked_at: i.revoked_at
+            }
+        )
 
-      %{entries: entries, total: total, used: used, revoked: revoked,
-        available: total - used - revoked, page: page, pages: pages}
+      %{
+        entries: entries,
+        total: total,
+        used: used,
+        revoked: revoked,
+        available: total - used - revoked,
+        page: page,
+        pages: pages
+      }
     else
       {:error, :forbidden}
     end
@@ -53,9 +69,13 @@ defmodule TeslaMate.Accounts.Invitations do
       policy_lock()
       unless Accounts.authorized_admin?(actor), do: Repo.rollback(:forbidden)
 
-      {count, _} = Repo.update_all(
-        from(i in Invitation, where: i.id == ^id and is_nil(i.used_at) and is_nil(i.revoked_at)),
-        set: [revoked_at: DateTime.utc_now()])
+      {count, _} =
+        Repo.update_all(
+          from(i in Invitation,
+            where: i.id == ^id and is_nil(i.used_at) and is_nil(i.revoked_at)
+          ),
+          set: [revoked_at: DateTime.utc_now()]
+        )
 
       if count != 1, do: Repo.rollback(:unavailable)
       :ok
@@ -65,17 +85,24 @@ defmodule TeslaMate.Accounts.Invitations do
   # Called only inside register_public_user's transaction, after the shared
   # policy lock. Failed account validation rolls back consumption as well.
   def consume(code, user_id) do
-    {count, _} = Repo.update_all(
-      from(i in Invitation,
-        where: i.code_hash == ^hash(normalize(code)) and is_nil(i.used_at) and is_nil(i.revoked_at)),
-      set: [used_at: DateTime.utc_now(), used_by_id: user_id])
+    {count, _} =
+      Repo.update_all(
+        from(i in Invitation,
+          where:
+            i.code_hash == ^hash(normalize(code)) and is_nil(i.used_at) and is_nil(i.revoked_at)
+        ),
+        set: [used_at: DateTime.utc_now(), used_by_id: user_id]
+      )
 
     if count == 1, do: :ok, else: {:error, :invalid_invitation}
   end
 
   def valid?(code) when is_binary(code) and byte_size(code) <= 64 do
-    Repo.exists?(from i in Invitation,
-      where: i.code_hash == ^hash(normalize(code)) and is_nil(i.used_at) and is_nil(i.revoked_at))
+    Repo.exists?(
+      from i in Invitation,
+        where:
+          i.code_hash == ^hash(normalize(code)) and is_nil(i.used_at) and is_nil(i.revoked_at)
+    )
   end
 
   def valid?(_), do: false

@@ -16,13 +16,38 @@
   <a class="button is-light" href="/admin/tesla-account">兼容采集器连接</a>
 </header>
 
-<section id="registration" class="data-card invitation-settings" aria-labelledby="registration-heading">
-  <div class="data-card__header"><div><h2 id="registration-heading">注册与邀请</h2><p>控制特友会的内测准入。新账号始终为普通用户，邀请码不会授予车辆或管理权限。</p></div></div>
+<section
+  id="registration"
+  class="data-card invitation-settings"
+  aria-labelledby="registration-heading"
+>
+  <div class="data-card__header">
+    <div>
+      <h2 id="registration-heading">注册与邀请</h2>
+      <p>控制特友会的内测准入。新账号始终为普通用户，邀请码不会授予车辆或管理权限。</p>
+    </div>
+  </div>
   <form phx-submit="registration_policy" class="platform-form invitation-policy">
     <input type="hidden" name="registration[enabled]" value="false" />
-    <label class="checkbox"><input id="allow-registration" type="checkbox" name="registration[enabled]" value="true" checked={@registration_policy.allow_registration} /> 允许新用户注册</label>
+    <label class="checkbox">
+      <input
+        id="allow-registration"
+        type="checkbox"
+        name="registration[enabled]"
+        value="true"
+        checked={@registration_policy.allow_registration}
+      /> 允许新用户注册
+    </label>
     <input type="hidden" name="registration[require_invitation]" value="false" />
-    <label class="checkbox"><input id="require-invitation" type="checkbox" name="registration[require_invitation]" value="true" checked={@registration_policy.require_invitation} /> 仅允许邀请注册</label>
+    <label class="checkbox">
+      <input
+        id="require-invitation"
+        type="checkbox"
+        name="registration[require_invitation]"
+        value="true"
+        checked={@registration_policy.require_invitation}
+      /> 仅允许邀请注册
+    </label>
     <p class="help">勾选邀请注册后，注册必须提供有效邀请码。关闭新用户注册时，即使有邀请码也无法注册，已有账号仍可登录。修改后请保存。</p>
     <button type="submit" class="button is-primary">保存注册设置</button>
   </form>
@@ -31,38 +56,121 @@
     <p class="help">每个码仅能使用一次，成功注册才会消耗。生成不会自动开放注册；关闭邀请注册期间不会消耗邀请码。</p>
     <form phx-submit="generate_invitations" class="invitation-generate">
       <label for="invitation-quantity">生成数量</label>
-      <input id="invitation-quantity" class="input" name="invitation[quantity]" type="number" min="1" max="100" value="5" required />
-      <button class="button is-primary" type="submit" phx-disable-with="正在生成…">生成邀请码</button>
+      <input
+        id="invitation-quantity"
+        class="input"
+        name="invitation[quantity]"
+        type="number"
+        min="1"
+        max="100"
+        value="5"
+        required
+      />
+      <button class="button is-primary" type="submit" phx-disable-with="正在生成…">
+        生成邀请码
+      </button>
     </form>
-    <div :if={@new_invitation_codes != []} id="new-invitations" class="invitation-result" role="status">
+    <div
+      :if={@new_invitation_codes != []}
+      id="new-invitations"
+      class="invitation-result"
+      role="status"
+    >
       <h4>已生成 <%= length(@new_invitation_codes) %> 个邀请码</h4>
       <p>完整邀请码仅本次显示，请复制保存后再离开。系统仅保存校验摘要，无法找回原码。</p>
       <label for="invitation-codes" class="is-sr-only">本次生成的邀请码</label>
       <textarea id="invitation-codes" class="textarea" rows="5" readonly spellcheck="false"><%= Enum.join(@new_invitation_codes, "
 ") %></textarea>
       <button type="button" class="button is-light" data-copy-invitations>复制全部</button>
-      <button type="button" class="button is-light" phx-click="clear_invitation_codes">已保存，收起</button>
+      <button type="button" class="button is-light" phx-click="clear_invitation_codes">
+        已保存，收起
+      </button>
     </div>
     <div class="invitation-totals" aria-live="polite">
+      <button type="button" class="button is-small is-light" phx-click="refresh_invitations">刷新使用状态</button>
       <span>累计 <strong><%= @invitations.total %></strong></span><span>未使用 <strong><%= @invitations.available %></strong></span><span>已使用 <strong><%= @invitations.used %></strong></span><span>已作废 <strong><%= @invitations.revoked %></strong></span>
     </div>
-    <p :if={@invitations.total > 0 and @invitations.used == @invitations.total} class="help">全部邀请码均已使用。</p>
+    <p :if={@invitations.total > 0 and @invitations.used == @invitations.total} class="help">
+      全部邀请码均已使用。
+    </p>
     <p :if={@invitations.entries == []} class="help">还没有邀请码。设置生成数量，开始邀请第一位内测用户。</p>
     <div :if={@invitations.entries != []} class="table-container">
-      <table class="table is-fullwidth"><thead><tr><th>邀请码标识</th><th>状态</th><th>生成时间</th><th>使用时间</th><th>操作</th></tr></thead><tbody>
-        <tr :for={invitation <- @invitations.entries} id={"invitation-#{invitation.id}"}>
-          <td><code><%= invitation.label %></code></td>
-          <td><%= cond do %><% invitation.used_at -> %>已使用<% invitation.revoked_at -> %>已作废<% true -> %>未使用<% end %></td>
-          <td><time datetime={DateTime.to_iso8601(invitation.inserted_at)}><%= Calendar.strftime(DateTime.shift_zone!(invitation.inserted_at, "Asia/Shanghai"), "%Y-%m-%d %H:%M") %></time></td>
-          <td><%= if invitation.used_at, do: Calendar.strftime(DateTime.shift_zone!(invitation.used_at, "Asia/Shanghai"), "%Y-%m-%d %H:%M"), else: "—" %></td>
-          <td><button :if={is_nil(invitation.used_at) and is_nil(invitation.revoked_at)} type="button" class="button is-small is-light" phx-click="revoke_invitation" phx-value-id={invitation.id} data-confirm="作废后此邀请码将无法注册，确定继续？">作废</button></td>
-        </tr>
-      </tbody></table>
+      <table class="table is-fullwidth">
+        <thead>
+          <tr>
+            <th>邀请码标识</th>
+            <th>状态</th>
+            <th>生成时间</th>
+            <th>使用时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr :for={invitation <- @invitations.entries} id={"invitation-#{invitation.id}"}>
+            <td><code><%= invitation.label %></code></td>
+            <td>
+              <%= cond do %>
+                <% invitation.used_at -> %>
+                  已使用
+                <% invitation.revoked_at -> %>
+                  已作废
+                <% true -> %>
+                  未使用
+              <% end %>
+            </td>
+            <td>
+              <time datetime={DateTime.to_iso8601(invitation.inserted_at)}>
+                <%= Calendar.strftime(
+                  DateTime.shift_zone!(invitation.inserted_at, "Asia/Shanghai"),
+                  "%Y-%m-%d %H:%M"
+                ) %>
+              </time>
+            </td>
+            <td>
+              <%= if invitation.used_at,
+                do:
+                  Calendar.strftime(
+                    DateTime.shift_zone!(invitation.used_at, "Asia/Shanghai"),
+                    "%Y-%m-%d %H:%M"
+                  ),
+                else: "—" %>
+            </td>
+            <td>
+              <button
+                :if={is_nil(invitation.used_at) and is_nil(invitation.revoked_at)}
+                type="button"
+                class="button is-small is-light"
+                phx-click="revoke_invitation"
+                phx-value-id={invitation.id}
+                data-confirm="作废后此邀请码将无法注册，确定继续？"
+              >
+                作废
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div :if={@invitations.pages > 1} class="invitation-pagination">
-      <button type="button" class="button is-light" phx-click="invitation_page" phx-value-page={@invitations.page - 1} disabled={@invitations.page == 1}>上一页</button>
+      <button
+        type="button"
+        class="button is-light"
+        phx-click="invitation_page"
+        phx-value-page={@invitations.page - 1}
+        disabled={@invitations.page == 1}
+      >
+        上一页
+      </button>
       <span>第 <%= @invitations.page %> / <%= @invitations.pages %> 页</span>
-      <button type="button" class="button is-light" phx-click="invitation_page" phx-value-page={@invitations.page + 1} disabled={@invitations.page == @invitations.pages}>下一页</button>
+      <button
+        type="button"
+        class="button is-light"
+        phx-click="invitation_page"
+        phx-value-page={@invitations.page + 1}
+        disabled={@invitations.page == @invitations.pages}
+      >
+        下一页
+      </button>
     </div>
   </div>
 </section>

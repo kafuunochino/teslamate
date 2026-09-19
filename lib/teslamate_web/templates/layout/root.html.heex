@@ -43,7 +43,11 @@
       crossorigin="use-credentials"
     />
     <link rel="shortcut icon" href={Routes.static_path(@conn, "/favicon.ico?v=6")} />
-    <meta :if={@conn.assigns[:public_portal]} name="description" content="特友会，面向特斯拉车主的车辆数据中心。回顾行程与能耗，了解电池、充电和用车成本，用自己的数据读懂每一次出发。" />
+    <meta
+      :if={@conn.assigns[:public_portal]}
+      name="description"
+      content="特友会，面向特斯拉车主的车辆数据中心。回顾行程与能耗，了解电池、充电和用车成本，用自己的数据读懂每一次出发。"
+    />
     <meta name="theme-color" content="#0b1020" />
     <%= csrf_meta_tag() %>
     <script
@@ -62,174 +66,189 @@
     />
   </head>
   <% current_user = @conn.assigns[:current_user] %>
-  <body class={cond do @conn.assigns[:public_portal] -> "portal-body"; current_user -> "platform-body"; true -> "auth-body" end} tabindex="0">
+  <body
+    class={
+      cond do
+        @conn.assigns[:public_portal] -> "portal-body"
+        current_user -> "platform-body"
+        true -> "auth-body"
+      end
+    }
+    tabindex="0"
+  >
     <%= if @conn.assigns[:public_portal] do %>
       <%= @inner_content %>
     <% else %>
-    <%= if current_user do %>
-      <div class="platform-shell">
-        <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
-        <aside id="platform-sidebar" class="platform-sidebar" aria-label="主菜单">
-          <div class="sidebar-brand">
-            <.link navigate={Routes.dashboard_path(@conn, :home)} aria-label="特友会控制台">
-              <span><i class="mdi mdi-car-connected"></i></span>
-              <div><strong>特友会</strong><small>车辆数据中心</small></div>
-            </.link>
-            <button
-              id="sidebar-close"
-              class="sidebar-close"
-              type="button"
-              aria-label="关闭菜单"
-            >
-              <i class="mdi mdi-close"></i>
-            </button>
-          </div>
-
-          <nav class="sidebar-nav">
-            <p>车辆数据</p>
-            <.link navigate={Routes.dashboard_path(@conn, :home)} class={nav_class(@conn, "/dashboard")}>
-              <i class="mdi mdi-view-dashboard-outline"></i><span>首页</span>
-            </.link>
-            <.link navigate={~p"/driving"} class={nav_class(@conn, "/driving")}>
-              <i class="mdi mdi-gauge"></i><span>行车仪表盘</span>
-            </.link>
-            <.link
-              navigate={Routes.dashboard_path(@conn, :trips)}
-              class={nav_class(@conn, "/trips")}
-            >
-              <i class="mdi mdi-map-marker-path"></i><span>行程轨迹</span>
-            </.link>
-            <.link
-              navigate={Routes.dashboard_path(@conn, :battery)}
-              class={nav_class(@conn, "/battery")}
-            >
-              <i class="mdi mdi-car-battery"></i><span>电池</span>
-            </.link>
-            <.link
-              navigate={Routes.dashboard_path(@conn, :charging)}
-              class={nav_class(@conn, "/charging")}
-            >
-              <i class="mdi mdi-ev-station"></i><span>充电</span>
-            </.link>
-            <.link
-              navigate={Routes.dashboard_path(@conn, :analysis)}
-              class={nav_class(@conn, "/analysis")}
-            >
-              <i class="mdi mdi-chart-box-outline"></i><span>分析</span>
-            </.link>
-            <.link navigate={~p"/vehicles"} class={nav_class(@conn, "/vehicles")}>
-              <i class="mdi mdi-car-key"></i><span>车辆中心</span>
-            </.link>
-
-            <.link href={~p"/tesla-account"} class={nav_class(@conn, "/tesla-account")}>
-              <i class="mdi mdi-cloud-key-outline"></i><span>Tesla 连接</span>
-            </.link>
-            <.link navigate={~p"/geo-fences"} class={nav_class(@conn, "/geo-fences")}>
-              <i class="mdi mdi-map-marker-radius"></i><span>地理围栏</span>
-            </.link>
-
-            <%= if TeslaMate.Accounts.admin?(current_user) do %>
-              <p>系统管理</p>
-              <.link navigate={~p"/admin/users"} class={nav_class(@conn, "/admin/users")}>
-                <i class="mdi mdi-account-lock-outline"></i><span>用户与权限</span>
-              </.link>
-              <.link navigate={~p"/admin/settings"} class={nav_class(@conn, "/admin/settings")}>
-                <i class="mdi mdi-tune-variant"></i><span>系统设置</span>
-              </.link>
-              <.link navigate={~p"/admin/import"} class={nav_class(@conn, "/admin/import")}>
-                <i class="mdi mdi-database-import-outline"></i><span>数据导入</span>
-              </.link>
-            <% end %>
-          </nav>
-
-          <div class="sidebar-account">
-            <div class="account-avatar">
-              <%= current_user.name |> String.first() |> String.upcase() %>
-            </div>
-            <div>
-              <strong><%= current_user.name %></strong><small><%= if TeslaMate.Accounts.admin?(current_user), do: "管理员", else: "普通用户" %></small>
-            </div>
-            <.link href={Routes.user_settings_path(@conn, :edit)} aria-label="账号设置">
-              <i class="mdi mdi-cog-outline"></i>
-            </.link>
-          </div>
-        </aside>
-
-        <button
-          id="sidebar-desktop-toggle"
-          class="sidebar-desktop-toggle"
-          type="button"
-          aria-label="折叠侧栏"
-          aria-controls="platform-sidebar"
-          aria-expanded="true"
-          title="折叠侧栏"
-        >
-          <i class="mdi mdi-chevron-left" aria-hidden="true"></i>
-        </button>
-
-        <div class="platform-main">
-          <header class="mobile-topbar platform-topbar">
-            <button
-              id="sidebar-open"
-              type="button"
-              aria-label="打开菜单"
-              aria-controls="platform-sidebar"
-              aria-expanded="false"
-            >
-              <i class="mdi mdi-menu"></i>
-            </button>
-            <strong>特友会</strong>
-            <div class="topbar-actions">
-              <.theme_controls />
+      <%= if current_user do %>
+        <div class="platform-shell">
+          <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+          <aside id="platform-sidebar" class="platform-sidebar" aria-label="主菜单">
+            <div class="sidebar-brand">
               <.link
-                href={Routes.user_settings_path(@conn, :edit)}
-                class="topbar-account"
-                aria-label="账号设置"
+                navigate={Routes.dashboard_path(@conn, :home)}
+                aria-label="特友会控制台"
               >
-                <i class="mdi mdi-account-circle-outline"></i>
+                <span><i class="mdi mdi-car-connected"></i></span>
+                <div><strong>特友会</strong><small>车辆数据中心</small></div>
+              </.link>
+              <button
+                id="sidebar-close"
+                class="sidebar-close"
+                type="button"
+                aria-label="关闭菜单"
+              >
+                <i class="mdi mdi-close"></i>
+              </button>
+            </div>
+
+            <nav class="sidebar-nav">
+              <p>车辆数据</p>
+              <.link
+                navigate={Routes.dashboard_path(@conn, :home)}
+                class={nav_class(@conn, "/dashboard")}
+              >
+                <i class="mdi mdi-view-dashboard-outline"></i><span>首页</span>
+              </.link>
+              <.link navigate={~p"/driving"} class={nav_class(@conn, "/driving")}>
+                <i class="mdi mdi-gauge"></i><span>行车仪表盘</span>
+              </.link>
+              <.link
+                navigate={Routes.dashboard_path(@conn, :trips)}
+                class={nav_class(@conn, "/trips")}
+              >
+                <i class="mdi mdi-map-marker-path"></i><span>行程轨迹</span>
+              </.link>
+              <.link
+                navigate={Routes.dashboard_path(@conn, :battery)}
+                class={nav_class(@conn, "/battery")}
+              >
+                <i class="mdi mdi-car-battery"></i><span>电池</span>
+              </.link>
+              <.link
+                navigate={Routes.dashboard_path(@conn, :charging)}
+                class={nav_class(@conn, "/charging")}
+              >
+                <i class="mdi mdi-ev-station"></i><span>充电</span>
+              </.link>
+              <.link
+                navigate={Routes.dashboard_path(@conn, :analysis)}
+                class={nav_class(@conn, "/analysis")}
+              >
+                <i class="mdi mdi-chart-box-outline"></i><span>分析</span>
+              </.link>
+              <.link navigate={~p"/vehicles"} class={nav_class(@conn, "/vehicles")}>
+                <i class="mdi mdi-car-key"></i><span>车辆中心</span>
+              </.link>
+
+              <.link href={~p"/tesla-account"} class={nav_class(@conn, "/tesla-account")}>
+                <i class="mdi mdi-cloud-key-outline"></i><span>Tesla 连接</span>
+              </.link>
+              <.link navigate={~p"/geo-fences"} class={nav_class(@conn, "/geo-fences")}>
+                <i class="mdi mdi-map-marker-radius"></i><span>地理围栏</span>
+              </.link>
+
+              <%= if TeslaMate.Accounts.admin?(current_user) do %>
+                <p>系统管理</p>
+                <.link navigate={~p"/admin/users"} class={nav_class(@conn, "/admin/users")}>
+                  <i class="mdi mdi-account-lock-outline"></i><span>用户与权限</span>
+                </.link>
+                <.link navigate={~p"/admin/settings"} class={nav_class(@conn, "/admin/settings")}>
+                  <i class="mdi mdi-tune-variant"></i><span>系统设置</span>
+                </.link>
+                <.link navigate={~p"/admin/import"} class={nav_class(@conn, "/admin/import")}>
+                  <i class="mdi mdi-database-import-outline"></i><span>数据导入</span>
+                </.link>
+              <% end %>
+            </nav>
+
+            <div class="sidebar-account">
+              <div class="account-avatar">
+                <%= current_user.name |> String.first() |> String.upcase() %>
+              </div>
+              <div>
+                <strong><%= current_user.name %></strong><small><%= if TeslaMate.Accounts.admin?(current_user), do: "管理员", else: "普通用户" %></small>
+              </div>
+              <.link href={Routes.user_settings_path(@conn, :edit)} aria-label="账号设置">
+                <i class="mdi mdi-cog-outline"></i>
               </.link>
             </div>
-          </header>
+          </aside>
 
-          <main role="main" class="platform-content">
-            <%= Enum.map(@flash, fn {flash_key, flash_message} -> %>
-              <p class={"platform-flash platform-flash--#{flash_key}"}><%= flash_message %></p>
-            <% end) %>
-            <%= @inner_content %>
-          </main>
+          <button
+            id="sidebar-desktop-toggle"
+            class="sidebar-desktop-toggle"
+            type="button"
+            aria-label="折叠侧栏"
+            aria-controls="platform-sidebar"
+            aria-expanded="true"
+            title="折叠侧栏"
+          >
+            <i class="mdi mdi-chevron-left" aria-hidden="true"></i>
+          </button>
 
-          <% update = TeslaMate.Updater.get_update() %>
-          <footer class="platform-footer footer">
-            <%= if update do %>
-              <%= link to: TeslaMate.Updater.releases_url(),
+          <div class="platform-main">
+            <header class="mobile-topbar platform-topbar">
+              <button
+                id="sidebar-open"
+                type="button"
+                aria-label="打开菜单"
+                aria-controls="platform-sidebar"
+                aria-expanded="false"
+              >
+                <i class="mdi mdi-menu"></i>
+              </button>
+              <strong>特友会</strong>
+              <div class="topbar-actions">
+                <.theme_controls />
+                <.link
+                  href={Routes.user_settings_path(@conn, :edit)}
+                  class="topbar-account"
+                  aria-label="账号设置"
+                >
+                  <i class="mdi mdi-account-circle-outline"></i>
+                </.link>
+              </div>
+            </header>
+
+            <main role="main" class="platform-content">
+              <%= Enum.map(@flash, fn {flash_key, flash_message} -> %>
+                <p class={"platform-flash platform-flash--#{flash_key}"}><%= flash_message %></p>
+              <% end) %>
+              <%= @inner_content %>
+            </main>
+
+            <% update = TeslaMate.Updater.get_update() %>
+            <footer class="platform-footer footer">
+              <%= if update do %>
+                <%= link to: TeslaMate.Updater.releases_url(),
                   class: "button is-rounded is-text is-small has-text-grey",
                   type: "button",
                   target: "_blank",
                   rel: "noopener noreferrer" do %>
-                <span class="icon"><i class="mdi mdi-gift"></i></span>
-                <strong><%= [gettext("Update available"), ": ", update] %></strong>
+                  <span class="icon"><i class="mdi mdi-gift"></i></span>
+                  <strong><%= [gettext("Update available"), ": ", update] %></strong>
+                <% end %>
+              <% else %>
+                <span>北京时间（UTC+8） · 数据仅对授权账号开放</span>
               <% end %>
-            <% else %>
-              <span>北京时间（UTC+8） · 数据仅对授权账号开放</span>
-            <% end %>
-            <%= form_for @conn, Routes.user_session_path(@conn, :delete), [method: :delete], fn _f -> %>
-              <button type="submit"><i class="mdi mdi-logout"></i> 退出登录</button>
-            <% end %>
-          </footer>
+              <%= form_for @conn, Routes.user_session_path(@conn, :delete), [method: :delete], fn _f -> %>
+                <button type="submit"><i class="mdi mdi-logout"></i> 退出登录</button>
+              <% end %>
+            </footer>
+          </div>
         </div>
-      </div>
-    <% else %>
-      <header class="auth-toolbar">
-        <a href="/" class="auth-portal-link">特友会 · 返回首页</a>
-        <.theme_controls />
-      </header>
-      <main role="main" class="auth-main">
-        <%= Enum.map(@flash, fn {flash_key, flash_message} -> %>
-          <p class={"platform-flash platform-flash--#{flash_key}"}><%= flash_message %></p>
-        <% end) %>
-        <%= @inner_content %>
-      </main>
-    <% end %>
+      <% else %>
+        <header class="auth-toolbar">
+          <a href="/" class="auth-portal-link">特友会 · 返回首页</a>
+          <.theme_controls />
+        </header>
+        <main role="main" class="auth-main">
+          <%= Enum.map(@flash, fn {flash_key, flash_message} -> %>
+            <p class={"platform-flash platform-flash--#{flash_key}"}><%= flash_message %></p>
+          <% end) %>
+          <%= @inner_content %>
+        </main>
+      <% end %>
     <% end %>
   </body>
 </html>

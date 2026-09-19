@@ -7,7 +7,16 @@ defmodule TeslaMate.Accounts do
 
   import Ecto.Query, warn: false
 
-  alias TeslaMate.Accounts.{AuditEvent, Invitations, Password, User, UserCar, UserSession, VehicleClaim}
+  alias TeslaMate.Accounts.{
+    AuditEvent,
+    Invitations,
+    Password,
+    User,
+    UserCar,
+    UserSession,
+    VehicleClaim
+  }
+
   alias TeslaMate.Log.Car
   alias TeslaMate.Repo
 
@@ -118,7 +127,10 @@ defmodule TeslaMate.Accounts do
       from s in "account_settings",
         prefix: "private",
         where: s.id == 1,
-        select: %{allow_registration: s.allow_registration, require_invitation: s.require_invitation}
+        select: %{
+          allow_registration: s.allow_registration,
+          require_invitation: s.require_invitation
+        }
     )
   end
 
@@ -147,10 +159,13 @@ defmodule TeslaMate.Accounts do
       unless active_admin_actor?(actor), do: Repo.rollback(:forbidden)
 
       Repo.update_all(from(s in "account_settings", prefix: "private", where: s.id == 1),
-        set: [allow_registration: allowed, require_invitation: invited])
+        set: [allow_registration: allowed, require_invitation: invited]
+      )
 
       audit(:registration_policy_changed, actor,
-        metadata: %{"allowed" => allowed, "require_invitation" => invited})
+        metadata: %{"allowed" => allowed, "require_invitation" => invited}
+      )
+
       registration_policy()
     end)
   end
@@ -175,8 +190,11 @@ defmodule TeslaMate.Accounts do
               {:error, reason} -> Repo.rollback(reason)
             end
           end
+
           user
-        {:error, error} -> Repo.rollback(error)
+
+        {:error, error} ->
+          Repo.rollback(error)
       end
     end)
   end
