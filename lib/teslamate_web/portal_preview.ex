@@ -50,7 +50,8 @@ defmodule TeslaMateWeb.PortalPreview do
     """
   end
 
-  def document(page, stylesheet \\ "/assets/app.css") when page in ["home", "trips", "charging"] do
+  def document(page, stylesheet \\ "/assets/app.css")
+      when page in ["home", "trips", "charging"] do
     assigns = %{
       __changed__: nil,
       page: page,

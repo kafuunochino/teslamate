@@ -25,7 +25,9 @@ defmodule TeslaMateWeb.PortalPreviewController do
     |> put_resp_header("x-frame-options", "SAMEORIGIN")
     |> put_resp_header("x-robots-tag", "noindex, nofollow")
     |> put_resp_header("cache-control", "no-store")
-    |> html(TeslaMateWeb.PortalPreview.document(page, Routes.static_path(conn, "/assets/app.css")))
+    |> html(
+      TeslaMateWeb.PortalPreview.document(page, Routes.static_path(conn, "/assets/app.css"))
+    )
   end
 
   def show(conn, _params), do: send_resp(conn, 404, "Not found")
