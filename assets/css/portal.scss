@@ -1008,6 +1008,7 @@
 }
 .portal-preview-expanded {
   overflow: auto;
+  overflow-anchor: none;
   max-height: calc(100dvh - 132px);
   overscroll-behavior: contain;
 }

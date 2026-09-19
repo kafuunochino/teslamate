@@ -56,6 +56,7 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
         conn.request_path in ["/register", "/sign_in", "/sign_in/verify"]
 
     turnstile_script = if turnstile?, do: " https://challenges.cloudflare.com", else: ""
+
     frames =
       cond do
         turnstile? -> "https://challenges.cloudflare.com"

@@ -42,9 +42,15 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
     handler = "portal-preview-#{System.unique_integer([:positive])}"
     owner = self()
 
-    :ok = :telemetry.attach(handler, [:teslamate, :repo, :query], fn _, _, _, pid ->
-      if self() == pid, do: send(pid, :preview_database_query)
-    end, owner)
+    :ok =
+      :telemetry.attach(
+        handler,
+        [:teslamate, :repo, :query],
+        fn _, _, _, pid ->
+          if self() == pid, do: send(pid, :preview_database_query)
+        end,
+        owner
+      )
 
     on_exit(fn -> :telemetry.detach(handler) end)
 

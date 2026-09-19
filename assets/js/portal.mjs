@@ -66,7 +66,10 @@ function mountPreviews(win, doc) {
   const stages = [...doc.querySelectorAll(".portal-preview-stage")];
   const syncTheme = (frame) => {
     const root = frame.contentDocument?.documentElement;
-    if (root) root.dataset.theme = doc.documentElement.dataset.theme || "light";
+    if (root) {
+      root.dataset.theme = doc.documentElement.dataset.theme || "light";
+      win.teslamateTheme?.syncControls(frame.contentDocument);
+    }
   };
   const fitExpanded = () => {
     const frame = expanded?.querySelector("iframe");
@@ -113,6 +116,7 @@ function mountPreviews(win, doc) {
       frame.addEventListener("load", () => {
         syncTheme(frame);
         fitExpanded();
+        expanded.scrollTop = 0;
       });
       expanded.replaceChildren(frame);
       doc.getElementById("portal-preview-title").textContent =

@@ -38,7 +38,11 @@
         </div>
         <div class="portal-hero-notes"><span>你的车辆 · 你的数据</span><span>手机 / 电脑 / 车机</span></div>
       </div>
-      <TeslaMateWeb.PortalPreview.preview page="home" title="首页总览" class="portal-hero-demo" />
+      <TeslaMateWeb.PortalPreview.preview
+        page="home"
+        title="首页总览"
+        class="portal-hero-demo"
+      />
     </div>
     <a class="portal-scroll-cue" href="#journeys">
       <span class="portal-scroll-line"></span>向下探索 <span>01 / 05</span>
@@ -245,12 +249,28 @@
 </nav>
 <div class="portal-progress" aria-hidden="true"><span></span></div>
 
-<dialog id="portal-preview-dialog" class="portal-preview-dialog" aria-labelledby="portal-preview-title">
+<dialog
+  id="portal-preview-dialog"
+  class="portal-preview-dialog"
+  aria-labelledby="portal-preview-title"
+>
   <header>
-    <div><h2 id="portal-preview-title">控制台界面</h2><p>实际界面 · 虚拟数据演示 · 仅供浏览</p></div>
+    <div>
+      <h2 id="portal-preview-title">控制台界面</h2>
+      <p>实际界面 · 虚拟数据演示 · 仅供浏览</p>
+    </div>
     <div class="portal-preview-actions">
-      <button type="button" data-theme-toggle aria-label="切换示例深浅模式" aria-pressed="false"><i class="mdi mdi-theme-light-dark" aria-hidden="true"></i></button>
-      <button type="button" data-preview-close aria-label="关闭界面示例" autofocus><i class="mdi mdi-close" aria-hidden="true"></i></button>
+      <button
+        type="button"
+        data-theme-toggle
+        aria-label="切换示例深浅模式"
+        aria-pressed="false"
+      >
+        <i class="mdi mdi-theme-light-dark" aria-hidden="true"></i>
+      </button>
+      <button type="button" data-preview-close aria-label="关闭界面示例" autofocus>
+        <i class="mdi mdi-close" aria-hidden="true"></i>
+      </button>
     </div>
   </header>
   <div class="portal-preview-expanded"></div>
