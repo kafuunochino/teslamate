@@ -1294,3 +1294,51 @@
     padding: 7px 8px;
   }
 }
+
+.portal-route-mobile-labels {
+  display: none;
+}
+@media (max-width: 760px) {
+  .portal-route-mobile-labels {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px 10px;
+    color: var(--platform-text);
+    font-size: 10px;
+  }
+  .portal-route-mobile-labels span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .portal-route-mobile-labels i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .route-label-start {
+    background: #23a57d;
+  }
+  .route-label-end {
+    background: #8291ff;
+  }
+  .portal-route-mobile-labels small {
+    grid-column: 1 / -1;
+    color: var(--platform-muted);
+    font-size: 9px;
+  }
+  .portal-route-map .sample-map-legend,
+  .portal-route-map .sample-map-bubble,
+  .portal-route-map .sample-map-labels {
+    display: none;
+  }
+  .portal-route-map .sample-map-markers {
+    font-size: 26px;
+  }
+}

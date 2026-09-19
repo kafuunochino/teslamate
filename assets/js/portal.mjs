@@ -74,8 +74,14 @@ function mountPreviews(win, doc) {
   const fitExpanded = () => {
     const frame = expanded?.querySelector("iframe");
     if (!frame?.contentDocument?.body) return;
-    frame.style.height = "1px";
-    frame.style.height = `${Math.max(500, frame.contentDocument.documentElement.scrollHeight)}px`;
+    frame.style.height = `${Math.max(500, win.innerHeight - 128)}px`;
+    // Real pages can size their maps from viewport height. Settle that layout
+    // before measuring the full document, rather than collapsing it to 1px.
+    for (let pass = 0; pass < 4; pass++) {
+      const height = frame.contentDocument.documentElement.scrollHeight;
+      if (height <= frame.clientHeight) break;
+      frame.style.height = `${height}px`;
+    }
   };
   const resize = () => {
     stages.forEach((stage) =>

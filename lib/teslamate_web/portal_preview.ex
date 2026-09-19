@@ -282,7 +282,11 @@ defmodule TeslaMateWeb.PortalPreview do
       route_points()
       |> Enum.with_index()
       |> Enum.map(fn {{x, y}, index} ->
-        %{longitude: x / 10000, latitude: y / 10000, date: DateTime.add(time(), div(index * 48 * 60, length(route_points()) - 1))}
+        %{
+          longitude: x / 10000,
+          latitude: y / 10000,
+          date: DateTime.add(time(), div(index * 48 * 60, length(route_points()) - 1))
+        }
       end)
 
     %{drive: drive, energy: energy, positions: positions}
@@ -290,8 +294,20 @@ defmodule TeslaMateWeb.PortalPreview do
 
   # These are illustration-space coordinates, not a recorded GPS track.
   defp route_points do
-    [{120, 440}, {220, 440}, {270, 410}, {270, 310}, {375, 310}, {455, 260},
-     {530, 260}, {580, 200}, {650, 200}, {705, 145}, {795, 145}, {850, 100}]
+    [
+      {120, 440},
+      {220, 440},
+      {270, 410},
+      {270, 310},
+      {375, 310},
+      {455, 260},
+      {530, 260},
+      {580, 200},
+      {650, 200},
+      {705, 145},
+      {795, 145},
+      {850, 100}
+    ]
   end
 
   defp route_map(assigns) do
@@ -308,7 +324,10 @@ defmodule TeslaMateWeb.PortalPreview do
       <rect width="1000" height="560" class="sample-map-ground" />
       <path class="sample-map-park" d="M0 315 190 330 210 510 110 560H0Z" />
       <path class="sample-map-park" d="M685 0 650 80 735 115 855 70 940 140 1000 110V0Z" />
-      <path class="sample-map-water" d="M0 210Q160 150 305 190T560 125 815 265 1000 235V305Q850 325 725 250T565 190 290 250 0 280Z" />
+      <path
+        class="sample-map-water"
+        d="M0 210Q160 150 305 190T560 125 815 265 1000 235V305Q850 325 725 250T565 190 290 250 0 280Z"
+      />
       <g class="sample-map-blocks">
         <rect x="75" y="50" width="98" height="70" rx="12" />
         <rect x="210" y="45" width="125" height="86" rx="12" />
@@ -339,7 +358,10 @@ defmodule TeslaMateWeb.PortalPreview do
       </g>
       <circle cx="120" cy="440" r="17" class="sample-map-start" />
       <circle cx="850" cy="100" r="17" class="sample-map-end" />
-      <g class="sample-map-markers"><text x="120" y="446">起</text><text x="850" y="106">终</text></g>
+      <g class="sample-map-markers">
+        <text x="120" y="446">起</text>
+        <text x="850" y="106">终</text>
+      </g>
       <g class="sample-map-bubble">
         <rect x="40" y="462" width="178" height="33" rx="9" />
         <text x="129" y="484">湖畔公园 · 出发</text>
@@ -351,6 +373,11 @@ defmodule TeslaMateWeb.PortalPreview do
         <text x="150" y="43">虚拟路线演示 · 非真实道路</text>
       </g>
     </svg>
+    <div class="portal-route-mobile-labels" aria-label="虚拟路线的起点与终点">
+      <span><i class="route-label-start"></i> 起点 · 湖畔公园</span>
+      <span><i class="route-label-end"></i> 终点 · 山间观景台</span>
+      <small>虚拟路线演示 · 非真实道路</small>
+    </div>
     """
   end
 
