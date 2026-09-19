@@ -1141,3 +1141,16 @@
   cursor: pointer;
   padding: 8px 0;
 }
+
+@media (max-width: 760px) {
+  .portal-demo-metrics strong {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: clamp(17px, 5vw, 23px);
+    white-space: nowrap;
+  }
+  .portal-demo-metrics em {
+    font-size: 8px;
+  }
+}

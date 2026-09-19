@@ -87,7 +87,9 @@
       </button>
     </div>
     <div class="invitation-totals" aria-live="polite">
-      <button type="button" class="button is-small is-light" phx-click="refresh_invitations">刷新使用状态</button>
+      <button type="button" class="button is-small is-light" phx-click="refresh_invitations">
+        刷新使用状态
+      </button>
       <span>累计 <strong><%= @invitations.total %></strong></span><span>未使用 <strong><%= @invitations.available %></strong></span><span>已使用 <strong><%= @invitations.used %></strong></span><span>已作废 <strong><%= @invitations.revoked %></strong></span>
     </div>
     <p :if={@invitations.total > 0 and @invitations.used == @invitations.total} class="help">

@@ -33,7 +33,8 @@
             href={if @registration_policy.allow_registration, do: "/register", else: "#join"}
           >
             加入内测 <span aria-hidden="true">↗</span>
-          </a><a class="portal-text-link" href="#journeys">探索特友会 <span aria-hidden="true">↓</span></a>
+          </a>
+          <a class="portal-text-link" href="#journeys">探索特友会 <span aria-hidden="true">↓</span></a>
         </div>
         <div class="portal-hero-notes"><span>你的车辆 · 你的数据</span><span>手机 / 电脑 / 车机</span></div>
       </div>
@@ -346,7 +347,8 @@
         <div class="portal-actions">
           <a :if={@registration_policy.allow_registration} class="portal-button" href="/register">
             注册特友会 <span aria-hidden="true">↗</span>
-          </a><a
+          </a>
+          <a
             class={
               if @registration_policy.allow_registration,
                 do: "portal-text-link",
@@ -380,7 +382,15 @@
           <span class="portal-mark" aria-hidden="true">t<span>+</span></span><strong>特友会</strong>
         </a>
         <p>独立车辆数据项目，非 Tesla 官方产品。<br />基于 TeslaMate 开源项目构建。</p>
-        <button type="button" class="portal-theme" data-theme-toggle aria-label="切换深浅模式" aria-pressed="false">切换明暗</button>
+        <button
+          type="button"
+          class="portal-theme"
+          data-theme-toggle
+          aria-label="切换深浅模式"
+          aria-pressed="false"
+        >
+          切换明暗
+        </button>
         <a
           href="https://github.com/kafuunochino/teslamate"
           target="_blank"

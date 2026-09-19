@@ -95,7 +95,13 @@ defmodule TeslaMateWeb.SettingsLive.Index do
   end
 
   def handle_event("refresh_invitations", _, socket),
-    do: {:noreply, assign(socket, :invitations, Invitations.list(socket.assigns.current_user, socket.assigns.invitations.page))}
+    do:
+      {:noreply,
+       assign(
+         socket,
+         :invitations,
+         Invitations.list(socket.assigns.current_user, socket.assigns.invitations.page)
+       )}
 
   def handle_event("clear_invitation_codes", _, socket),
     do: {:noreply, assign(socket, :new_invitation_codes, [])}
