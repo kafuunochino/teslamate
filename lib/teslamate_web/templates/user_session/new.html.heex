@@ -78,7 +78,7 @@
             <strong>访问与共享。</strong>普通用户只能访问归属于自己账号的车辆数据，管理员按系统管理职责访问。除下述必要服务处理及法律要求外，我们不会将车辆数据公开展示、出售、交换，或通过其他渠道向其他用户、平台或机构分享、共享。
           </p>
           <p>
-            <strong>必要服务处理。</strong>车辆连接依赖 Tesla 的授权与车辆接口；地图显示和地址解析可能向所配置的地图服务（如高德、OpenStreetMap）及 Nominatim 地址服务提供相关坐标或地图请求。启用 Cloudflare Turnstile 人机验证时，Cloudflare 会处理必要的 IP 地址、浏览器及验证信息。上述服务仅用于实现相关功能，不代表车辆历史记录会被公开发布或供其他用户共享。
+            <strong>必要服务处理。</strong>车辆连接依赖 Tesla 的授权与车辆接口；地图显示和地址解析可能向所配置的地图服务（如高德、OpenStreetMap）及 Nominatim 地址服务提供相关坐标或地图请求。当前部署通过 Cloudflare 代理提供网站访问，相关请求与响应数据会经过 Cloudflare 处理。启用 Cloudflare Turnstile 人机验证时，Cloudflare 还会处理必要的 IP 地址、浏览器及验证信息。上述服务仅用于实现相关功能，不代表车辆历史记录会被公开发布或供其他用户共享。
           </p>
           <p>
             <strong>授权与历史数据。</strong>您可在「Tesla 连接」管理车辆授权，在「账号设置」管理登录设备或申请注销。按当前系统规则，注销账号不会自动删除车辆历史；解除账号绑定后，保留的历史仅管理员可见。如对数据使用有疑问，请联系本系统管理员。
@@ -97,7 +97,7 @@
           </p>
           <p>
             <strong>Essential service processing.</strong>
-            Vehicle connections use Tesla's authorization and vehicle APIs. Map display and address lookup may send relevant coordinates or map requests to the configured map service, such as AMap or OpenStreetMap, and to the Nominatim address service. When Cloudflare Turnstile is enabled, Cloudflare processes the IP address, browser information, and verification data needed for security checks. These services support the relevant features; they do not make your vehicle history public or available for other users to share.
+            Vehicle connections use Tesla's authorization and vehicle APIs. Map display and address lookup may send relevant coordinates or map requests to the configured map service, such as AMap or OpenStreetMap, and to the Nominatim address service. The current deployment uses Cloudflare as a web proxy, so site requests and responses pass through Cloudflare for delivery. When Cloudflare Turnstile is enabled, Cloudflare also processes the IP address, browser information, and verification data needed for security checks. These services support the relevant features; they do not make your vehicle history public or available for other users to share.
           </p>
           <p>
             <strong>Authorization and historical records.</strong>
