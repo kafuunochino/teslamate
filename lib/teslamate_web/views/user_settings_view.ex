@@ -3,7 +3,7 @@ defmodule TeslaMateWeb.UserSettingsView do
   import Phoenix.Component, only: [form: 1]
 
   def authenticator_qr_data_uri(email, key) do
-    issuer = "TeslaMate CN"
+    issuer = "特友会"
     label = URI.encode(issuer <> ":" <> email, &URI.char_unreserved?/1)
 
     query =
