@@ -4,6 +4,15 @@
     <span class="portal-mark" aria-hidden="true">t<span>+</span></span><strong>特友会</strong><span class="portal-beta">内测中</span>
   </a>
   <nav aria-label="门户导航">
+    <button
+      type="button"
+      class="portal-header-theme"
+      data-theme-toggle
+      aria-label="切换门户深浅模式"
+      aria-pressed="false"
+    >
+      <i class="mdi mdi-white-balance-sunny" data-theme-icon aria-hidden="true"></i>
+    </button>
     <a href="/sign_in">登录</a>
     <a href={if @registration_policy.allow_registration, do: "/register", else: "#join"}>注册</a>
     <a href="/dashboard" class="portal-console">控制台 <span aria-hidden="true">↗</span></a>
@@ -75,7 +84,44 @@
           </div>
         </div>
       </div>
-      <TeslaMateWeb.PortalPreview.preview page="trips" title="行程轨迹" class="" />
+      <div class="portal-journey-examples">
+        <div class="portal-preview-tabs" role="tablist" aria-label="行程界面示例">
+          <button
+            id="portal-trip-tab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="portal-trip-example"
+          >
+            <i class="mdi mdi-map-marker-path" aria-hidden="true"></i> 轨迹详情
+          </button>
+          <button
+            id="portal-trips-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="portal-trips-example"
+            tabindex="-1"
+          >
+            <i class="mdi mdi-format-list-bulleted" aria-hidden="true"></i> 行程列表
+          </button>
+        </div>
+        <div id="portal-trip-example" role="tabpanel" aria-labelledby="portal-trip-tab">
+          <TeslaMateWeb.PortalPreview.preview
+            page="trip"
+            title="行程详情 · 查看轨迹"
+            class="portal-ui-demo--trip"
+          />
+        </div>
+        <div
+          id="portal-trips-example"
+          role="tabpanel"
+          aria-labelledby="portal-trips-tab"
+          hidden
+        >
+          <TeslaMateWeb.PortalPreview.preview page="trips" title="行程轨迹" />
+        </div>
+      </div>
     </div>
   </section>
 

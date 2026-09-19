@@ -3,7 +3,7 @@ defmodule TeslaMateWeb.PortalPreviewController do
 
   # This route has no session, database, or vehicle-data pipeline. It serves
   # only fixed fixtures through the same templates used by the private app.
-  def show(conn, %{"page" => page}) when page in ["home", "trips", "charging"] do
+  def show(conn, %{"page" => page}) when page in ["home", "trips", "trip", "charging"] do
     conn
     |> put_resp_header(
       "content-security-policy",

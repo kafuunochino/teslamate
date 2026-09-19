@@ -54,12 +54,18 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
 
     on_exit(fn -> :telemetry.detach(handler) end)
 
-    for page <- ["home", "trips", "charging"] do
+    for page <- ["home", "trips", "trip", "charging"] do
       response = get(build_conn(), "/preview/#{page}?car=123&user=123")
       html = html_response(response, 200)
       assert html == html_response(get(conn, "/preview/#{page}"), 200)
       assert html =~ "虚拟数据演示"
-      assert html =~ "Model Y · 示例车辆"
+      if page != "trip", do: assert(html =~ "Model Y · 示例车辆")
+      if page == "trip" do
+        assert html =~ "portal-route-map"
+        assert html =~ "虚拟路线演示"
+        assert html =~ "146.0 Wh/km"
+        assert html =~ "6.22 kWh"
+      end
       refute html =~ user.email
       refute html =~ user.name
       dom = Floki.parse_document!(html)

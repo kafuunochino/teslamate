@@ -86,6 +86,33 @@ function mountPreviews(win, doc) {
     );
     fitExpanded();
   };
+  doc.querySelectorAll(".portal-preview-tabs").forEach((tablist) => {
+    const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((item) => {
+          const selected = item === tab;
+          item.setAttribute("aria-selected", String(selected));
+          item.tabIndex = selected ? 0 : -1;
+          doc.getElementById(item.getAttribute("aria-controls")).hidden =
+            !selected;
+        });
+        resize();
+      });
+      tab.addEventListener("keydown", (event) => {
+        const next = {
+          ArrowRight: (index + 1) % tabs.length,
+          ArrowLeft: (index + tabs.length - 1) % tabs.length,
+          Home: 0,
+          End: tabs.length - 1,
+        }[event.key];
+        if (next === undefined) return;
+        event.preventDefault();
+        tabs[next].click();
+        tabs[next].focus();
+      });
+    });
+  });
   stages.forEach((stage) => {
     const frame = stage.querySelector("iframe");
     frame.addEventListener("load", () => syncTheme(frame));

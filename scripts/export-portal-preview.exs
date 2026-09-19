@@ -3,7 +3,7 @@
 [directory] = System.argv()
 File.mkdir_p!(Path.join(directory, "preview"))
 
-for page <- ["home", "trips", "charging"] do
+for page <- ["home", "trips", "trip", "charging"] do
   File.write!(
     Path.join([directory, "preview", page <> ".html"]),
     TeslaMateWeb.PortalPreview.document(page)

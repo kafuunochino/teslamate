@@ -51,10 +51,10 @@ defmodule TeslaMateWeb.PortalPreview do
   end
 
   def document(page, stylesheet \\ "/assets/app.css")
-      when page in ["home", "trips", "charging"] do
+      when page in ["home", "trips", "trip", "charging"] do
     assigns = %{
       __changed__: nil,
-      page: page,
+      page: if(page == "trip", do: "trips", else: page),
       stylesheet: stylesheet,
       content: content(page),
       navigation: [
@@ -130,6 +130,18 @@ defmodule TeslaMateWeb.PortalPreview do
 
   defp content("home"), do: DashboardLive.Home.render(%{base_assigns() | report: home()})
   defp content("trips"), do: DashboardLive.Trips.render(%{base_assigns() | report: trips()})
+
+  defp content("trip") do
+    report = trip()
+
+    base_assigns()
+    |> Map.merge(%{
+      report: report,
+      map_points: Jason.encode!(report.positions),
+      map_preview: route_map(%{__changed__: nil})
+    })
+    |> DashboardLive.Trip.render()
+  end
 
   defp content("charging") do
     assigns = %{__changed__: nil, report: charging()}
@@ -238,6 +250,108 @@ defmodule TeslaMateWeb.PortalPreview do
         }
       end
     )
+  end
+
+  defp trip do
+    drive =
+      hd(drives())
+      |> Map.merge(%{
+        car_id: 0,
+        end_date: DateTime.add(time(), 48 * 60),
+        outside_temp_avg: 23.5,
+        start_km: 12817.9,
+        end_km: 12860.5,
+        start_rated_range_km: 399.4,
+        end_rated_range_km: 356.8,
+        power_max: 96,
+        power_min: -42
+      })
+
+    energy =
+      drive_energy()[1]
+      |> Map.merge(%{
+        start_sample_at: drive.start_date,
+        end_sample_at: drive.end_date,
+        start_energy: 41.82,
+        end_energy: 35.6,
+        start_offset_seconds: 0,
+        end_offset_seconds: 0
+      })
+
+    positions =
+      route_points()
+      |> Enum.with_index()
+      |> Enum.map(fn {{x, y}, index} ->
+        %{longitude: x / 10000, latitude: y / 10000, date: DateTime.add(time(), div(index * 48 * 60, length(route_points()) - 1))}
+      end)
+
+    %{drive: drive, energy: energy, positions: positions}
+  end
+
+  # These are illustration-space coordinates, not a recorded GPS track.
+  defp route_points do
+    [{120, 440}, {220, 440}, {270, 410}, {270, 310}, {375, 310}, {455, 260},
+     {530, 260}, {580, 200}, {650, 200}, {705, 145}, {795, 145}, {850, 100}]
+  end
+
+  defp route_map(assigns) do
+    points = Enum.map_join(route_points(), " ", fn {x, y} -> "#{x},#{y}" end)
+    assigns = assign(assigns, :points, points)
+
+    ~H"""
+    <svg
+      class="portal-route-map"
+      viewBox="0 0 1000 560"
+      role="img"
+      aria-label="虚拟行程地图：从湖畔公园经过示例道路，到达山间观景台"
+    >
+      <rect width="1000" height="560" class="sample-map-ground" />
+      <path class="sample-map-park" d="M0 315 190 330 210 510 110 560H0Z" />
+      <path class="sample-map-park" d="M685 0 650 80 735 115 855 70 940 140 1000 110V0Z" />
+      <path class="sample-map-water" d="M0 210Q160 150 305 190T560 125 815 265 1000 235V305Q850 325 725 250T565 190 290 250 0 280Z" />
+      <g class="sample-map-blocks">
+        <rect x="75" y="50" width="98" height="70" rx="12" />
+        <rect x="210" y="45" width="125" height="86" rx="12" />
+        <rect x="378" y="45" width="100" height="90" rx="12" />
+        <rect x="322" y="365" width="95" height="128" rx="12" />
+        <rect x="473" y="355" width="130" height="110" rx="12" />
+        <rect x="651" y="353" width="127" height="140" rx="12" />
+        <rect x="834" y="362" width="98" height="128" rx="12" />
+      </g>
+      <g class="sample-map-road-edge">
+        <path d="M0 155H510L670 40M50 0V155M195 0V165M365 0V175M0 515H1000M455 560V330L375 310M625 560V290M805 560V320L915 210V0M0 375H260M575 0V180" />
+        <polyline points={@points} />
+      </g>
+      <g class="sample-map-roads">
+        <path d="M0 155H510L670 40M50 0V155M195 0V165M365 0V175M0 515H1000M455 560V330L375 310M625 560V290M805 560V320L915 210V0M0 375H260M575 0V180" />
+        <polyline points={@points} />
+      </g>
+      <g class="sample-map-labels">
+        <text x="82" y="360">湖畔公园</text>
+        <text x="360" y="535">环湖路 · 示例</text>
+        <text x="663" y="398">创意园区</text>
+        <text x="777" y="47">山间绿地</text>
+      </g>
+      <polyline class="sample-map-route-halo" points={@points} />
+      <polyline class="sample-map-route" points={@points} />
+      <g class="sample-map-directions">
+        <path d="m245 417 10-7-10-7M485 253l10 7-10 7M744 138l10 7-10 7" />
+      </g>
+      <circle cx="120" cy="440" r="17" class="sample-map-start" />
+      <circle cx="850" cy="100" r="17" class="sample-map-end" />
+      <g class="sample-map-markers"><text x="120" y="446">起</text><text x="850" y="106">终</text></g>
+      <g class="sample-map-bubble">
+        <rect x="40" y="462" width="178" height="33" rx="9" />
+        <text x="129" y="484">湖畔公园 · 出发</text>
+        <rect x="724" y="174" width="230" height="33" rx="9" />
+        <text x="839" y="196">山间观景台 · 到达</text>
+      </g>
+      <g class="sample-map-legend">
+        <rect x="23" y="20" width="254" height="35" rx="10" />
+        <text x="150" y="43">虚拟路线演示 · 非真实道路</text>
+      </g>
+    </svg>
+    """
   end
 
   defp drive_energy do
