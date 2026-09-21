@@ -12,6 +12,7 @@ end
 
 html =
   Phoenix.View.render_to_string(TeslaMateWeb.PortalView, "index.html",
+    current_user: nil,
     registration_policy: %{allow_registration: true, require_invitation: true}
   )
 

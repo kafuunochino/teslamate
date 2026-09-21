@@ -9,20 +9,56 @@ defmodule TeslaMateWeb.PortalRegistrationTest do
     conn: conn,
     current_user: user
   } do
-    for connection <- [build_conn(), conn] do
-      html = connection |> get("/") |> html_response(200)
+    for {connection, signed_in?} <- [{build_conn(), false}, {conn, true}] do
+      response = get(connection, "/")
+      html = html_response(response, 200)
+      dom = Floki.parse_document!(html)
       assert html =~ "特友会"
       assert html =~ "虚拟数据演示"
       assert html =~ "非真实地图、地点或车辆记录"
-      assert html =~ ~s(href="/sign_in")
       assert html =~ ~s(href="/dashboard")
+      assert get_resp_header(response, "cache-control") == ["no-store"]
       refute html =~ user.email
-      refute html =~ user.name
       refute html =~ ~s(id="platform-sidebar")
       refute html =~ ~s(id="vehicle-map")
+
+      if signed_in? do
+        assert dom |> Floki.find(".portal-account-name") |> Floki.text() == user.name
+        assert Floki.attribute(dom, ".portal-account", "href") == ["/account"]
+        assert Floki.find(dom, "a[href='/sign_in'], a[href='/register']") == []
+        assert html =~ "你已登录"
+      else
+        assert html =~ ~s(href="/sign_in")
+        assert Floki.find(dom, ".portal-account") == []
+        refute html =~ user.name
+      end
     end
 
     assert redirected_to(get(build_conn(), "/dashboard")) == "/sign_in"
+  end
+
+  @tag platform_role: :member
+  test "portal shows the member identity and drops it when the session is revoked", %{
+    conn: conn,
+    current_user: user
+  } do
+    {:ok, _} =
+      user
+      |> Ecto.Changeset.change(name: "当前车友 <Member>")
+      |> Repo.update()
+
+    html = get(conn, "/") |> html_response(200)
+    dom = Floki.parse_document!(html)
+    assert dom |> Floki.find(".portal-account-name") |> Floki.text() == "当前车友 <Member>"
+    refute html =~ "<Member>"
+    refute html =~ user.email
+    refute html =~ ~s(href="/sign_in")
+
+    :ok = Accounts.delete_session(get_session(conn, :user_session_token))
+    visitor_html = get(conn, "/") |> html_response(200)
+    assert visitor_html =~ ~s(href="/sign_in")
+    refute visitor_html =~ "当前车友"
+    refute visitor_html =~ "portal-account-name"
   end
 
   test "portal registration action respects closure and invitation policy", %{current_user: admin} do

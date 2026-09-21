@@ -13,8 +13,20 @@
     >
       <i class="mdi mdi-white-balance-sunny" data-theme-icon aria-hidden="true"></i>
     </button>
-    <a href="/sign_in">登录</a>
-    <a href={if @registration_policy.allow_registration, do: "/register", else: "#join"}>注册</a>
+    <%= if @current_user do %>
+      <a
+        href="/account"
+        class="portal-account"
+        title={@current_user.name}
+        aria-label={"账号设置：#{@current_user.name}"}
+      >
+        <i class="mdi mdi-account-circle-outline" aria-hidden="true"></i>
+        <span class="portal-account-name"><%= @current_user.name %></span>
+      </a>
+    <% else %>
+      <a href="/sign_in">登录</a>
+      <a href={if @registration_policy.allow_registration, do: "/register", else: "#join"}>注册</a>
+    <% end %>
     <a href="/dashboard" class="portal-console">控制台 <span aria-hidden="true">↗</span></a>
   </nav>
 </header>
@@ -39,9 +51,16 @@
         <div class="portal-actions">
           <a
             class="portal-button"
-            href={if @registration_policy.allow_registration, do: "/register", else: "#join"}
+            href={
+              cond do
+                @current_user -> "/dashboard"
+                @registration_policy.allow_registration -> "/register"
+                true -> "#join"
+              end
+            }
           >
-            加入内测 <span aria-hidden="true">↗</span>
+            <%= if @current_user, do: "进入控制台", else: "加入内测" %>
+            <span aria-hidden="true">↗</span>
           </a>
           <a class="portal-text-link" href="#journeys">探索特友会 <span aria-hidden="true">↓</span></a>
         </div>
@@ -211,6 +230,8 @@
         <p class="portal-lead">把那些一闪而过的数据，<br />变成更了解爱车的日常。</p>
         <div class="portal-join-status">
           <%= cond do %>
+            <% @current_user -> %>
+              <p>你已登录，可进入控制台查看车辆数据，或在账号设置中管理个人资料。</p>
             <% not @registration_policy.allow_registration -> %>
               <p>当前暂未开放新账号注册，请联系管理员了解内测安排。已有账号可直接登录。</p>
             <% @registration_policy.require_invitation -> %>
@@ -220,19 +241,28 @@
           <% end %>
         </div>
         <div class="portal-actions">
-          <a :if={@registration_policy.allow_registration} class="portal-button" href="/register">
-            注册特友会 <span aria-hidden="true">↗</span>
-          </a>
-          <a
-            class={
-              if @registration_policy.allow_registration,
-                do: "portal-text-link",
-                else: "portal-button"
-            }
-            href="/sign_in"
-          >
-            登录已有账号 <span aria-hidden="true">↗</span>
-          </a>
+          <%= if @current_user do %>
+            <a class="portal-button" href="/dashboard">
+              进入控制台 <span aria-hidden="true">↗</span>
+            </a>
+            <a class="portal-text-link" href="/account">
+              账号设置 <span aria-hidden="true">↗</span>
+            </a>
+          <% else %>
+            <a :if={@registration_policy.allow_registration} class="portal-button" href="/register">
+              注册特友会 <span aria-hidden="true">↗</span>
+            </a>
+            <a
+              class={
+                if @registration_policy.allow_registration,
+                  do: "portal-text-link",
+                  else: "portal-button"
+              }
+              href="/sign_in"
+            >
+              登录已有账号 <span aria-hidden="true">↗</span>
+            </a>
+          <% end %>
         </div>
       </div>
       <div class="portal-faq">
