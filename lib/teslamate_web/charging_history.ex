@@ -81,10 +81,10 @@ defmodule TeslaMateWeb.ChargingHistory do
     </p>
     <TeslaMateWeb.LineChart.chart
       id="charging-energy-chart"
-      title="每日充入电量"
+      title="充电日充入电量"
       rows={@report.daily_energy}
-      max_gap={366 * 86_400}
-      note="按有记录的日期连接趋势，选点数值为当天统计；未记录日期不补零。"
+      max_gap={86_400}
+      note="按北京时间的充电开始日期汇总，与下方会话的充入电量一致；跨日会话归入开始日期。无记录日期留空，曲线只连接相邻的充电日。"
       zero
       unit=" kWh"
     />
