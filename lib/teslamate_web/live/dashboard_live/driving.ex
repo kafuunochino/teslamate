@@ -199,66 +199,22 @@ defmodule TeslaMateWeb.DashboardLive.Driving do
   attr :tone, :string, default: "blue"
 
   defp trend_chart(assigns) do
-    rows = Enum.reverse(assigns.trail)
-    values = Enum.map(rows, &Map.get(&1, assigns.field)) |> Enum.filter(&is_number/1)
-    minimum = Enum.min(values, fn -> 0 end)
-    maximum = Enum.max(values, fn -> 0 end)
-    low = if assigns.field == :power, do: min(minimum, 0), else: minimum
-    high = if assigns.field == :power, do: max(maximum, 0), else: maximum
-    start = if rows == [], do: 0, else: DateTime.to_unix(hd(rows).date, :millisecond)
-    finish = if rows == [], do: 0, else: DateTime.to_unix(List.last(rows).date, :millisecond)
-
-    {segments, _previous} =
-      Enum.reduce(rows, {[], nil}, fn row, {segments, previous} ->
-        value = Map.get(row, assigns.field)
-
-        if is_number(value) do
-          x =
-            8 + (DateTime.to_unix(row.date, :millisecond) - start) / max(finish - start, 1) * 584
-
-          y = 130 - (value - low) / max(high - low, 1) * 118
-          point = "#{Float.round(x, 1)},#{Float.round(y, 1)}"
-
-          if previous && DateTime.diff(row.date, previous.date) <= 30 && segments != [] do
-            [segment | rest] = segments
-            {[[point | segment] | rest], row}
-          else
-            {[[point] | segments], row}
-          end
-        else
-          {segments, nil}
-        end
-      end)
-
-    assigns =
-      assign(assigns,
-        points:
-          segments
-          |> Enum.filter(&(length(&1) > 1))
-          |> Enum.map(&(Enum.reverse(&1) |> Enum.join(" "))),
-        minimum: if(values != [], do: minimum),
-        maximum: if(values != [], do: maximum)
-      )
+    rows = Enum.map(assigns.trail, &%{period: &1.date, value: Map.get(&1, assigns.field)})
+    assigns = assign(assigns, rows: rows)
 
     ~H"""
-    <section class={["data-card", "drive-trend", "drive-trend--#{@tone}"]}>
-      <div class="data-card__header">
-        <h2><%= @title %></h2>
-        <span><%= scalar(@minimum, @unit, 0) %> ～ <%= scalar(@maximum, @unit, 0) %></span>
-      </div>
-      <svg
-        :if={@points != []}
-        viewBox="0 0 600 140"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label={@title}
-      >
-        <path d="M8 12H592 M8 71H592 M8 130H592" class="drive-trend__grid" />
-        <polyline :for={points <- @points} points={points} fill="none" class="drive-trend__line" />
-      </svg>
-      <div :if={@points == []} class="empty-inline">等待连续采样数据</div>
-      <p>该行程最近 20 分钟内的采样，缺失时段留空。</p>
-    </section>
+    <TeslaMateWeb.LineChart.chart
+      id={"driving-#{@field}-chart"}
+      title={@title}
+      rows={@rows}
+      unit={@unit}
+      tone={@tone}
+      period="time"
+      max_gap={30}
+      zero={@field == :power}
+      empty="等待行程采样数据"
+      note="该行程最近 20 分钟内的采样，缺失时段留空。"
+    />
     """
   end
 end

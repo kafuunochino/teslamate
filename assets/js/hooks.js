@@ -1,3 +1,4 @@
+export { LineChart } from "./line-chart.mjs";
 import { createVehicleMapHook } from "./vehicle-map.mjs";
 import {
   createGeoFenceMapHook,

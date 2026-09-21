@@ -62,36 +62,6 @@ defmodule TeslaMateWeb.PlatformComponents do
     """
   end
 
-  attr :title, :string, required: true
-  attr :rows, :list, required: true
-  attr :unit, :string, default: ""
-  attr :empty, :string, default: "当前时间范围暂无数据"
-
-  def bar_chart(assigns) do
-    values = Enum.map(assigns.rows, &number(Map.get(&1, :value)))
-    maximum = Enum.max([0.0 | values])
-    assigns = assign(assigns, maximum: maximum)
-
-    ~H"""
-    <section class="data-card chart-card">
-      <div class="data-card__header">
-        <h2><%= @title %></h2>
-      </div>
-      <div :if={@rows == []} class="empty-inline"><%= @empty %></div>
-      <div :if={@rows != []} class="bar-chart" role="img" aria-label={@title}>
-        <div
-          :for={row <- @rows}
-          class="bar-chart__column"
-          title={"#{format_period(row.period)}：#{format_number(row.value, 1)}#{@unit}"}
-        >
-          <span class="bar-chart__bar" style={"height: #{bar_height(row.value, @maximum)}%"}></span>
-          <small><%= compact_period(row.period) %></small>
-        </div>
-      </div>
-    </section>
-    """
-  end
-
   attr :label, :string, required: true
   attr :value, :integer, default: nil
   attr :hint, :string, default: nil
@@ -241,16 +211,4 @@ defmodule TeslaMateWeb.PlatformComponents do
   defp number(value) when is_float(value), do: value
   defp number(_), do: 0.0
 
-  defp bar_height(_value, maximum) when maximum <= 0, do: 4
-  defp bar_height(value, maximum), do: max(4, round(number(value) / maximum * 100))
-
-  defp format_period(%Date{} = value), do: Calendar.strftime(value, "%Y-%m-%d")
-  defp format_period(%NaiveDateTime{} = value), do: Calendar.strftime(value, "%Y-%m-%d")
-  defp format_period(%DateTime{} = value), do: Calendar.strftime(value, "%Y-%m-%d")
-  defp format_period(value), do: to_string(value)
-
-  defp compact_period(%Date{} = value), do: Calendar.strftime(value, "%m/%d")
-  defp compact_period(%NaiveDateTime{} = value), do: Calendar.strftime(value, "%m/%d")
-  defp compact_period(%DateTime{} = value), do: Calendar.strftime(value, "%m/%d")
-  defp compact_period(value), do: to_string(value)
 end

@@ -89,7 +89,7 @@
         </div>
       </div>
     </section>
-    <.bar_chart
+    <TeslaMateWeb.LineChart.chart id="battery-capacity-chart"
       title={
         case @report.history_source do
           :fleet_capacity -> "每日电池包满电能量"
@@ -98,6 +98,7 @@
         end
       }
       rows={@report.history}
+      precision={2}
       unit={if capacity?, do: " kWh", else: " km"}
       empty="当前范围内缺少有效样本"
     />
