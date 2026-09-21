@@ -42,18 +42,25 @@ defmodule TeslaMateWeb.LineChartTest do
     single = LineChart.geometry([%{period: ~D[2026-09-01], value: 0}], 86_400, false)
     assert [%{x: 360.0, y: 100.0, value: 0.0}] = single.points
 
-    constant = LineChart.geometry(for(day <- 1..3, do: %{period: Date.new!(2026, 9, day), value: 62}), 86_400, false)
+    constant =
+      LineChart.geometry(
+        for(day <- 1..3, do: %{period: Date.new!(2026, 9, day), value: 62}),
+        86_400,
+        false
+      )
+
     assert Enum.all?(constant.points, &(&1.y == 100.0))
   end
 
   test "renders values, units, axes and keyboard instructions without requiring JavaScript" do
-    html = render_component(&LineChart.chart/1,
-      id: "battery-chart",
-      title: "每日满电能量估算",
-      rows: [%{period: ~D[2026-09-21], value: Decimal.new("62.47")}],
-      precision: 2,
-      unit: " kWh"
-    )
+    html =
+      render_component(&LineChart.chart/1,
+        id: "battery-chart",
+        title: "每日满电能量估算",
+        rows: [%{period: ~D[2026-09-21], value: Decimal.new("62.47")}],
+        precision: 2,
+        unit: " kWh"
+      )
 
     assert html =~ "62.47 kWh"
     assert html =~ "2026-09-21"
@@ -65,22 +72,27 @@ defmodule TeslaMateWeb.LineChartTest do
   end
 
   test "sample timestamps are shown in Beijing time" do
-    html = render_component(&LineChart.chart/1,
-      id: "power-chart",
-      title: "耗电与回收功率",
-      rows: [%{period: ~U[2026-09-20 16:00:05Z], value: -8.5}],
-      period: "time",
-      unit: " kW"
-    )
+    html =
+      render_component(&LineChart.chart/1,
+        id: "power-chart",
+        title: "耗电与回收功率",
+        rows: [%{period: ~U[2026-09-20 16:00:05Z], value: -8.5}],
+        period: "time",
+        unit: " kW"
+      )
 
     assert html =~ "2026-09-21 00:00:05"
     assert html =~ "-8.5 kW"
   end
 
   test "empty charts display their empty state without an interactive plot" do
-    html = render_component(&LineChart.chart/1,
-      id: "empty-chart", title: "电池", rows: [], empty: "缺少有效样本"
-    )
+    html =
+      render_component(&LineChart.chart/1,
+        id: "empty-chart",
+        title: "电池",
+        rows: [],
+        empty: "缺少有效样本"
+      )
 
     assert html =~ "缺少有效样本"
     refute html =~ "data-chart-plot"

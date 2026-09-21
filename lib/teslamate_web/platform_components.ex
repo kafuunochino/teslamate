@@ -210,5 +210,4 @@ defmodule TeslaMateWeb.PlatformComponents do
   defp number(value) when is_integer(value), do: value * 1.0
   defp number(value) when is_float(value), do: value
   defp number(_), do: 0.0
-
 end

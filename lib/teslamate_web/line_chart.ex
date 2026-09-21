@@ -69,7 +69,14 @@ defmodule TeslaMateWeb.LineChart do
                 r={if length(@points) > 90, do: 1.5, else: 3}
                 class="line-chart__point"
               />
-              <line data-chart-guide x1={@latest.x} x2={@latest.x} y1="0" y2="200" class="line-chart__guide" />
+              <line
+                data-chart-guide
+                x1={@latest.x}
+                x2={@latest.x}
+                y1="0"
+                y2="200"
+                class="line-chart__guide"
+              />
             </svg>
             <span
               data-chart-marker
@@ -98,7 +105,9 @@ defmodule TeslaMateWeb.LineChart do
   def geometry(rows, max_gap, zero) do
     rows =
       rows
-      |> Enum.map(fn row -> Map.merge(row, %{time: timestamp(row.period), value: numeric(row.value)}) end)
+      |> Enum.map(fn row ->
+        Map.merge(row, %{time: timestamp(row.period), value: numeric(row.value)})
+      end)
       |> Enum.sort_by(& &1.time)
       |> Enum.reverse()
       |> Enum.uniq_by(& &1.time)
@@ -118,7 +127,9 @@ defmodule TeslaMateWeb.LineChart do
     {points, parts, _previous} =
       Enum.reduce(rows, {[], [], nil}, fn row, {points, parts, previous} ->
         if is_number(row.value) do
-          x = if start == finish, do: 360.0, else: 12 + (row.time - start) / (finish - start) * 696
+          x =
+            if start == finish, do: 360.0, else: 12 + (row.time - start) / (finish - start) * 696
+
           y = 200 - (row.value - low) / (high - low) * 200
           point = Map.merge(row, %{x: Float.round(x, 2), y: Float.round(y, 2)})
 
@@ -154,15 +165,23 @@ defmodule TeslaMateWeb.LineChart do
   defp numeric(_value), do: nil
 
   defp timestamp(%Date{} = value), do: Date.diff(value, ~D[1970-01-01]) * 86_400
-  defp timestamp(%NaiveDateTime{} = value), do: value |> DateTime.from_naive!("Etc/UTC") |> timestamp()
+
+  defp timestamp(%NaiveDateTime{} = value),
+    do: value |> DateTime.from_naive!("Etc/UTC") |> timestamp()
+
   defp timestamp(%DateTime{} = value), do: DateTime.to_unix(value, :millisecond) / 1000
 
-  defp period_label(value, "time"), do: date_time(value) <> Calendar.strftime(local_time(value), ":%S")
+  defp period_label(value, "time"),
+    do: date_time(value) <> Calendar.strftime(local_time(value), ":%S")
+
   defp period_label(value, "month"), do: Calendar.strftime(value, "%Y-%m")
   defp period_label(value, _period), do: Calendar.strftime(value, "%Y-%m-%d")
   defp short_label(value, "time"), do: Calendar.strftime(local_time(value), "%H:%M")
   defp short_label(value, "month"), do: Calendar.strftime(value, "%Y-%m")
   defp short_label(value, _period), do: Calendar.strftime(value, "%m/%d")
-  defp local_time(%NaiveDateTime{} = value), do: value |> DateTime.from_naive!("Etc/UTC") |> local_time()
+
+  defp local_time(%NaiveDateTime{} = value),
+    do: value |> DateTime.from_naive!("Etc/UTC") |> local_time()
+
   defp local_time(%DateTime{} = value), do: DateTime.shift_zone!(value, "Asia/Shanghai")
 end

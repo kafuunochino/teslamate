@@ -46,7 +46,13 @@
       />
     </section>
 
-    <TeslaMateWeb.LineChart.chart id="trips-distance-chart" title="每日行驶里程" rows={@report.daily_distance} zero unit=" km" />
+    <TeslaMateWeb.LineChart.chart
+      id="trips-distance-chart"
+      title="每日行驶里程"
+      rows={@report.daily_distance}
+      zero
+      unit=" km"
+    />
 
     <div class="content-grid content-grid--wide">
       <section id="trip-list" class="data-card table-card">

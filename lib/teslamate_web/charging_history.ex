@@ -79,7 +79,13 @@ defmodule TeslaMateWeb.ChargingHistory do
       能量优先采用本次会话的官方遥测。两侧完整采样不足、计数器重置或时间不一致时不计算损耗；原有会话数据作为补充并注明来源。
       该差额不等同于电池容量衰减。
     </p>
-    <TeslaMateWeb.LineChart.chart id="charging-energy-chart" title="每日充入电量" rows={@report.daily_energy} zero unit=" kWh" />
+    <TeslaMateWeb.LineChart.chart
+      id="charging-energy-chart"
+      title="每日充入电量"
+      rows={@report.daily_energy}
+      zero
+      unit=" kWh"
+    />
 
     <div class="content-grid content-grid--wide">
       <section class="data-card table-card">

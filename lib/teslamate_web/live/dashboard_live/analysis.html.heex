@@ -121,6 +121,14 @@
       </ul>
     </section>
 
-    <TeslaMateWeb.LineChart.chart id="monthly-distance-chart" title="月度行驶里程" rows={@report.monthly_distance} period="month" max_gap={32 * 86_400} zero unit=" km" />
+    <TeslaMateWeb.LineChart.chart
+      id="monthly-distance-chart"
+      title="月度行驶里程"
+      rows={@report.monthly_distance}
+      period="month"
+      max_gap={32 * 86_400}
+      zero
+      unit=" km"
+    />
   <% end %>
 </div>
