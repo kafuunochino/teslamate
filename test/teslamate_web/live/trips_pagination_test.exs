@@ -69,16 +69,18 @@ defmodule TeslaMateWeb.TripsPaginationTest do
     assert has_element?(view, "#trip-pagination", "共 41 条")
     assert has_element?(view, "#trips-previous[aria-disabled='true']")
     assert row_count(view) == 20
+    next_page = "/trips?car=#{car.id}&days=90&page=2#trip-list"
+    assert has_element?(view, "#trips-next[href='#{next_page}']")
 
     view |> element("#trips-next") |> render_click()
-    assert_patch(view, "/trips?car=#{car.id}&days=90&page=2#trip-list")
+    assert_patch(view, "/trips?car=#{car.id}&days=90&page=2")
     assert row_count(view) == 20
     assert has_element?(view, "#trip-pagination", "第 21–40 条")
     assert has_element?(view, "#trip-row-#{List.last(ids)}")
     assert has_element?(view, ".metric-card", "41 次")
 
     view |> element("#trips-last") |> render_click()
-    assert_patch(view, "/trips?car=#{car.id}&days=90&page=3#trip-list")
+    assert_patch(view, "/trips?car=#{car.id}&days=90&page=3")
     assert row_count(view) == 1
     assert has_element?(view, "#trips-next[aria-disabled='true']")
 
@@ -87,7 +89,7 @@ defmodule TeslaMateWeb.TripsPaginationTest do
     assert has_element?(view, "#trip-pagination", "第 1–20 条，共 21 条")
 
     view |> element("#trips-next") |> render_click()
-    assert_patch(view, "/trips?car=#{car.id}&days=7&page=2#trip-list")
+    assert_patch(view, "/trips?car=#{car.id}&days=7&page=2")
 
     view |> form(".vehicle-picker", vehicle: %{id: other_car.id}) |> render_change()
     assert_patch(view, "/trips?car=#{other_car.id}&days=7")
