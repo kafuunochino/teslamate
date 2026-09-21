@@ -3,10 +3,7 @@
   <% trip_energy = @report.energy %>
   <header class="page-heading">
     <div>
-      <.link
-        navigate={Routes.dashboard_path(@socket, :trips, car: drive.car_id)}
-        class="back-link"
-      >
+      <.link navigate={@back_to_trips} class="back-link">
         <i class="mdi mdi-arrow-left"></i> 返回行程列表
       </.link>
       <p class="page-kicker">行程 #<%= drive.id %></p>

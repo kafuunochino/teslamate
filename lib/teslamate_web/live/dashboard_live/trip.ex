@@ -4,7 +4,7 @@ defmodule TeslaMateWeb.DashboardLive.Trip do
   alias TeslaMate.Fleet
 
   @impl true
-  def mount(%{"id" => id}, _session, socket) do
+  def mount(%{"id" => id} = params, _session, socket) do
     case Fleet.trip(socket.assigns.current_user, id) do
       nil ->
         {:ok,
@@ -19,7 +19,13 @@ defmodule TeslaMateWeb.DashboardLive.Trip do
          assign(socket,
            page_title: "行程详情",
            report: report,
-           map_points: Jason.encode!(points)
+           map_points: Jason.encode!(points),
+           back_to_trips:
+             Routes.dashboard_path(socket, :trips,
+               car: report.drive.car_id,
+               days: params["days"] || 30,
+               page: params["page"] || 1
+             ) <> "#trip-list"
          )}
     end
   end

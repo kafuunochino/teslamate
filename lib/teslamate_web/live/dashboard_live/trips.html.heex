@@ -49,15 +49,15 @@
     <.bar_chart title="每日行驶里程" rows={@report.daily_distance} unit=" km" />
 
     <div class="content-grid content-grid--wide">
-      <section class="data-card table-card">
+      <section id="trip-list" class="data-card table-card">
         <div class="data-card__header">
           <h2>行程明细</h2>
-          <span><%= length(@report.drives) %> 条</span>
+          <span>共 <%= @report.pagination.total_count %> 条</span>
         </div>
         <p class="trip-energy-note">
           优先按本程起止的电池包读数计算 kWh 与 Wh/km。Tesla 按数值变化上报，系统按时间还原电池状态；历史读数不足时使用续航估算，每程注明来源。
         </p>
-        <div :if={@report.drives == []} class="empty-inline">该时间范围没有完整行程</div>
+        <div :if={@report.drives == []} class="empty-inline">该时间范围没有行程</div>
         <div :if={@report.drives != []} class="responsive-table">
           <table>
             <thead>
@@ -101,7 +101,12 @@
                 </td>
                 <td data-label="详情">
                   <.link
-                    navigate={Routes.dashboard_path(@socket, :trip, drive.id)}
+                    navigate={
+                      Routes.dashboard_path(@socket, :trip, drive.id,
+                        days: @report.days,
+                        page: @report.pagination.page
+                      )
+                    }
                     class="table-action"
                   >
                     查看轨迹
@@ -111,6 +116,29 @@
             </tbody>
           </table>
         </div>
+        <nav id="trip-pagination" class="trip-pagination" aria-label="行程明细分页">
+          <p class="trip-pagination__summary" aria-live="polite">
+            第 <%= @report.pagination.from %>–<%= @report.pagination.to %> 条，共 <%= @report.pagination.total_count %> 条
+            <span>每页 <%= @report.pagination.page_size %> 条</span>
+          </p>
+          <div class="trip-pagination__controls">
+            <span class="trip-pagination__page" aria-live="polite">
+              第 <%= @report.pagination.page %> / <%= @report.pagination.total_pages %> 页
+            </span>
+            <div class="trip-pagination__actions">
+              <%= for {key, label, page, disabled} <- pagination_links(@report.pagination) do %>
+                <span :if={disabled} id={"trips-#{key}"} aria-disabled="true"><%= label %></span>
+                <.link
+                  :if={!disabled}
+                  id={"trips-#{key}"}
+                  patch={page_path(@socket, @report, page)}
+                >
+                  <%= label %>
+                </.link>
+              <% end %>
+            </div>
+          </div>
+        </nav>
       </section>
 
       <section class="data-card ranking-card">

@@ -975,6 +975,77 @@ body.auth-body {
   white-space: nowrap;
 }
 
+#trip-list {
+  scroll-margin-top: 76px;
+}
+
+.trip-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--platform-border);
+  color: var(--platform-muted);
+  font-size: 0.8rem;
+}
+
+.trip-pagination__summary {
+  margin: 0;
+
+  span {
+    display: block;
+    margin-top: 3px;
+  }
+}
+
+.trip-pagination__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.trip-pagination__page {
+  white-space: nowrap;
+}
+
+.trip-pagination__actions {
+  display: flex;
+  gap: 6px;
+
+  a,
+  span {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid var(--platform-border);
+    border-radius: 8px;
+    color: var(--platform-text);
+    background: var(--platform-surface-soft);
+    white-space: nowrap;
+  }
+
+  a:hover {
+    border-color: var(--platform-primary);
+    color: var(--platform-primary);
+    text-decoration: none;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--platform-primary);
+    outline-offset: 2px;
+  }
+
+  [aria-disabled="true"] {
+    opacity: 0.45;
+  }
+}
+
 .platform-map {
   width: 100%;
   height: 330px;

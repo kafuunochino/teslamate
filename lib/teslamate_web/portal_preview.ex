@@ -137,6 +137,7 @@ defmodule TeslaMateWeb.PortalPreview do
     base_assigns()
     |> Map.merge(%{
       report: report,
+      back_to_trips: "/preview/trips",
       map_points: Jason.encode!(report.positions),
       map_preview: route_map(%{__changed__: nil})
     })
@@ -207,21 +208,22 @@ defmodule TeslaMateWeb.PortalPreview do
       car: car(),
       cars: [car()],
       days: 30,
+      pagination: %{page: 1, page_size: 20, total_count: 4, total_pages: 1, from: 1, to: 4},
       stats: %{
-        count: 38,
-        distance: 1286.4,
-        duration_min: 1548,
-        average_distance: 33.85,
-        max_speed: 98
+        count: 4,
+        distance: 125.0,
+        duration_min: 151,
+        average_distance: 31.25,
+        max_speed: 94
       },
-      daily_distance:
-        bars([26.8, 38.4, 0, 42.6, 64.8, 28.5, 96.2, 54.6, 33.8, 0, 48.2, 82.5, 36.1, 62.8]),
+      daily_distance: bars([35.2, 18.8, 28.4, 42.6]),
       drives: drives(),
       drive_energy: drive_energy(),
       destinations: [
-        %{label: "创意园 · 示例", distance: 486.2, count: 16},
-        %{label: "湖畔公园 · 示例", distance: 288.4, count: 8},
-        %{label: "山间观景台 · 示例", distance: 192.6, count: 3}
+        %{label: "创意园 · 示例", distance: 28.4, count: 1},
+        %{label: "湖畔公园 · 示例", distance: 18.8, count: 1},
+        %{label: "山间观景台 · 示例", distance: 42.6, count: 1},
+        %{label: "城市展览馆 · 示例", distance: 35.2, count: 1}
       ]
     }
   end

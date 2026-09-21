@@ -17,6 +17,7 @@ defmodule TeslaMate.Fleet do
   alias TeslaMate.Vehicles
 
   @allowed_ranges [7, 30, 90, 365]
+  @trips_page_size 20
 
   # Telemetry timestamps are stored as UTC without a PostgreSQL time zone.
   defmacrop beijing_timestamp(field) do
@@ -164,18 +165,24 @@ defmodule TeslaMate.Fleet do
     :exit, _ -> nil
   end
 
-  def trips(%User{} = user, requested_car_id, requested_days \\ 30) do
+  def trips(%User{} = user, requested_car_id, requested_days \\ 30, requested_page \\ 1) do
     days = normalize_days(requested_days)
     {cars, car} = resolve_vehicle(user, requested_car_id)
 
     if car do
-      since = since(days)
+      query =
+        Drive
+        |> where([d], d.car_id == ^car.id and d.start_date >= ^since(days))
+
+      stats = drive_stats(query)
+      pagination = trip_pagination(requested_page, stats.count)
+      offset = (pagination.page - 1) * pagination.page_size
 
       drives =
-        Drive
-        |> where([d], d.car_id == ^car.id and d.start_date >= ^since)
+        query
         |> order_by([d], desc: d.start_date, desc: d.id)
-        |> limit(150)
+        |> limit(^@trips_page_size)
+        |> offset(^offset)
         |> preload([:start_address, :end_address, :start_geofence, :end_geofence])
         |> Repo.all()
 
@@ -183,14 +190,21 @@ defmodule TeslaMate.Fleet do
         cars: cars,
         car: car,
         days: days,
+        pagination: pagination,
         drives: drives,
         drive_energy: drive_energy(drives, car),
-        stats: drive_stats(car.id, days),
+        stats: stats,
         daily_distance: daily_distance(car.id, days),
         destinations: top_destinations(car.id, days, 8)
       }
     else
-      empty_report(cars) |> Map.merge(%{days: days, drives: [], destinations: []})
+      empty_report(cars)
+      |> Map.merge(%{
+        days: days,
+        drives: [],
+        destinations: [],
+        pagination: trip_pagination(1, 0)
+      })
     end
   end
 
@@ -501,6 +515,11 @@ defmodule TeslaMate.Fleet do
   defp drive_stats(car_id, days) do
     Drive
     |> where([d], d.car_id == ^car_id and d.start_date >= ^since(days))
+    |> drive_stats()
+  end
+
+  defp drive_stats(query) do
+    query
     |> select([d], %{
       count: count(d.id),
       distance: fragment("COALESCE(SUM(?), 0)", d.distance),
@@ -934,6 +953,20 @@ defmodule TeslaMate.Fleet do
   end
 
   defp normalize_days(_), do: 30
+
+  defp trip_pagination(requested_page, total_count) do
+    total_pages = max(div(total_count + @trips_page_size - 1, @trips_page_size), 1)
+    page = requested_page |> parse_id() |> clamp(1, total_pages)
+
+    %{
+      page: page,
+      page_size: @trips_page_size,
+      total_count: total_count,
+      total_pages: total_pages,
+      from: if(total_count == 0, do: 0, else: (page - 1) * @trips_page_size + 1),
+      to: min(page * @trips_page_size, total_count)
+    }
+  end
 
   defp since(days), do: DateTime.add(DateTime.utc_now(), -days, :day)
   defp clamp(value, minimum, maximum), do: value |> max(minimum) |> min(maximum)
