@@ -60,7 +60,9 @@ defmodule TeslaMateWeb.BatteryComponents do
 
   defp reading_group(assigns) do
     assigns =
-      assign(assigns, :range_notice,
+      assign(
+        assigns,
+        :range_notice,
         if(assigns.mode == "battery" and assigns.group.id == "state",
           do: range_notice(assigns.data)
         )
