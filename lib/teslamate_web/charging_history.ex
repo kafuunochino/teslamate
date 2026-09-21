@@ -83,6 +83,8 @@ defmodule TeslaMateWeb.ChargingHistory do
       id="charging-energy-chart"
       title="每日充入电量"
       rows={@report.daily_energy}
+      max_gap={366 * 86_400}
+      note="按有记录的日期连接趋势，选点数值为当天统计；未记录日期不补零。"
       zero
       unit=" kWh"
     />

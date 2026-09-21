@@ -126,7 +126,8 @@
       title="月度行驶里程"
       rows={@report.monthly_distance}
       period="month"
-      max_gap={32 * 86_400}
+      max_gap={366 * 86_400}
+      note="按有记录的月份连接趋势，选点数值为当月统计；未记录月份不补零。"
       zero
       unit=" km"
     />
