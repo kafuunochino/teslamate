@@ -249,7 +249,11 @@
               账号设置 <span aria-hidden="true">↗</span>
             </a>
           <% else %>
-            <a :if={@registration_policy.allow_registration} class="portal-button" href="/register">
+            <a
+              :if={@registration_policy.allow_registration}
+              class="portal-button"
+              href="/register"
+            >
               注册特友会 <span aria-hidden="true">↗</span>
             </a>
             <a
