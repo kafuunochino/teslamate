@@ -40,7 +40,8 @@ defmodule TeslaMateWeb.LineChartTest do
     assert LineChart.geometry([%{period: ~D[2026-09-01], value: nil}], 86_400, false).points == []
 
     single = LineChart.geometry([%{period: ~D[2026-09-01], value: 0}], 86_400, false)
-    assert [%{x: 360.0, y: 100.0, value: 0.0}] = single.points
+    assert [%{x: 360.0, y: 100.0} = point] = single.points
+    assert point.value == 0
 
     constant =
       LineChart.geometry(
