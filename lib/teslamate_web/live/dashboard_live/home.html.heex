@@ -38,7 +38,7 @@
         <div class="battery-gauge" style={"--battery: #{battery || 0}"}>
           <span><%= if battery, do: "#{battery}%", else: "—" %></span>
         </div>
-        <div><strong><%= distance(range) %></strong><small>预计额定续航</small></div>
+        <div><strong><%= distance(range) %></strong><small>额定续航</small></div>
       </div>
     </section>
 
@@ -50,7 +50,7 @@
         tone="green"
       />
       <.metric_card
-        title="预计续航"
+        title="额定续航"
         value={distance(range)}
         icon="map-marker-distance"
         tone="blue"

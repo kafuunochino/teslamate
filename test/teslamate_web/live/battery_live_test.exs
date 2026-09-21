@@ -113,6 +113,70 @@ defmodule TeslaMateWeb.BatteryLiveTest do
     assert length(ids) == length(Enum.uniq(ids))
   end
 
+  test "equal ranges are explained and independent values reappear after refresh", %{
+    conn: conn,
+    position: position
+  } do
+    position =
+      position
+      |> Ecto.Changeset.change(
+        est_battery_range_km: Decimal.new("210.0"),
+        ideal_battery_range_km: Decimal.new("210.00")
+      )
+      |> Repo.update!()
+
+    {:ok, view, _} = live(conn, "/battery")
+    assert has_element?(view, "#battery-range-notice", "三项续航数值相同")
+
+    position
+    |> Ecto.Changeset.change(est_battery_range_km: Decimal.new("190"))
+    |> Repo.update!()
+
+    view |> element("#battery-refresh-now") |> render_click()
+    refute has_element?(view, "#battery-range-notice")
+    assert has_element?(view, "#battery-rated_battery_range_km dd", "210.0 km")
+    assert has_element?(view, "#battery-est_battery_range_km dd", "190.0 km")
+    assert has_element?(view, "#battery-ideal_battery_range_km dd", "210.0 km")
+  end
+
+  test "rounding is distinguished from identical range readings", %{
+    conn: conn,
+    position: position
+  } do
+    position
+    |> Ecto.Changeset.change(
+      rated_battery_range_km: Decimal.new("210.01"),
+      est_battery_range_km: Decimal.new("210.02"),
+      ideal_battery_range_km: Decimal.new("210.03")
+    )
+    |> Repo.update!()
+
+    {:ok, view, _} = live(conn, "/battery")
+    assert has_element?(view, "#battery-range-notice", "保留 1 位小数后显示相同")
+    refute has_element?(view, "#battery-range-notice", "三项续航数值相同")
+  end
+
+  test "missing ranges and readings from different times are not described as equal", %{
+    conn: conn,
+    position: position
+  } do
+    position =
+      position
+      |> Ecto.Changeset.change(
+        date: DateTime.add(position.date, 1),
+        est_battery_range_km: Decimal.new("210")
+      )
+      |> Repo.update!()
+
+    {:ok, view, _} = live(conn, "/battery")
+    refute has_element?(view, "#battery-range-notice")
+
+    position |> Ecto.Changeset.change(est_battery_range_km: nil) |> Repo.update!()
+    view |> element("#battery-refresh-now") |> render_click()
+    refute has_element?(view, "#battery-range-notice")
+    assert has_element?(view, "#battery-est_battery_range_km dd", "—")
+  end
+
   test "temperature telemetry is rendered with timestamps and removed on invalid refresh", %{
     conn: conn,
     car: car

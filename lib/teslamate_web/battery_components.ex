@@ -59,6 +59,13 @@ defmodule TeslaMateWeb.BatteryComponents do
   attr :data, :map, required: true
 
   defp reading_group(assigns) do
+    assigns =
+      assign(assigns, :range_notice,
+        if(assigns.mode == "battery" and assigns.group.id == "state",
+          do: range_notice(assigns.data)
+        )
+      )
+
     ~H"""
     <section id={"#{@mode}-#{@group.id}"} class="data-card battery-panel">
       <div class="data-card__header">
@@ -74,8 +81,12 @@ defmodule TeslaMateWeb.BatteryComponents do
           label={label}
           format={format}
           reading={BatteryData.get(@data, key)}
+          description={reading_description(key)}
         />
       </dl>
+      <p :if={@range_notice} id="battery-range-notice" class="battery-range-notice">
+        <i class="mdi mdi-information-outline" aria-hidden="true"></i> <%= @range_notice %>
+      </p>
     </section>
     """
   end
@@ -84,12 +95,14 @@ defmodule TeslaMateWeb.BatteryComponents do
   attr :label, :string, required: true
   attr :format, :any, required: true
   attr :reading, :any, default: nil
+  attr :description, :string, default: nil
 
   def reading(assigns) do
     ~H"""
     <div id={@id} class="battery-reading">
       <dt><%= @label %></dt>
       <dd><%= display(@reading && @reading.value, @format) %></dd>
+      <small :if={@description} class="battery-reading-description"><%= @description %></small>
       <small :if={@reading} class={if @reading.fresh?, do: "is-current", else: "is-recorded"}>
         <%= if @reading.source == :telemetry, do: "遥测 · " %><%= if @reading.fresh?,
           do: "采集于",
@@ -101,6 +114,50 @@ defmodule TeslaMateWeb.BatteryComponents do
     </div>
     """
   end
+
+  defp reading_description(:rated_battery_range_km),
+    do: "当前电量对应的额定里程，非实际路况预测。"
+
+  defp reading_description(:est_battery_range_km),
+    do: "车辆对当前电量的续航预估，考虑驾驶条件。"
+
+  defp reading_description(:ideal_battery_range_km),
+    do: "车辆按理想速度、天气等条件给出的续航。"
+
+  defp reading_description(:full_rated_range_km),
+    do: "用同次采样的额定续航和电量换算至 100%。"
+
+  defp reading_description(_), do: nil
+
+  # Compare only complete readings from the same source and sampling instant.
+  # Equal display strings may be rounding; they do not imply equal readings.
+  defp range_notice(data) do
+    with %{value: rated, measured_at: %DateTime{} = time, source: source} <-
+           BatteryData.get(data, :rated_battery_range_km),
+         %{value: estimated, measured_at: ^time, source: ^source} <-
+           BatteryData.get(data, :est_battery_range_km),
+         %{value: ideal, measured_at: ^time, source: ^source} <-
+           BatteryData.get(data, :ideal_battery_range_km),
+         rated when is_number(rated) <- range_number(rated),
+         estimated when is_number(estimated) <- range_number(estimated),
+         ideal when is_number(ideal) <- range_number(ideal) do
+      cond do
+        rated == estimated and rated == ideal ->
+          "当前采样的三项续航数值相同，已分别保留车辆读数；不代表实际可行驶距离一定相同。"
+
+        distance(rated) == distance(estimated) and distance(rated) == distance(ideal) ->
+          "三项读数存在细微差异，保留 1 位小数后显示相同；系统仍保留各自的采样值。"
+
+        true ->
+          nil
+      end
+    else
+      _ -> nil
+    end
+  end
+
+  defp range_number(%Decimal{} = value), do: Decimal.to_float(value)
+  defp range_number(value), do: value
 
   # Each signal has one owning page. Valid ordinary readings stay visible;
   # diagnostics and unavailable optional signals remain in the expandable area.
@@ -153,7 +210,7 @@ defmodule TeslaMateWeb.BatteryComponents do
         "state",
         "电量与续航",
         "battery-high",
-        "电量差不代表电池衰减；估算满电续航只使用同次采样且电量不低于 20%。",
+        "三项续航由车辆分别上报，含义不同、数值可能相同。电量差不代表电池衰减；满电换算仅使用同次采样且电量不低于 20%。",
         [
           {:battery_level, "显示电量", :percent},
           {:usable_battery_level, "可用电量", :percent},

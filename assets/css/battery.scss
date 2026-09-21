@@ -45,6 +45,19 @@
 .battery-reading time {
   display: block;
 }
+.battery-reading .battery-reading-description {
+  margin-bottom: 8px;
+}
+.battery-range-notice {
+  margin: 0 20px 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--platform-surface-soft);
+  color: var(--platform-muted);
+  font-size: 0.75rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
 .battery-toolbar {
   display: flex;
   align-items: center;
@@ -101,6 +114,9 @@
   }
   .battery-reading {
     padding: 12px 10px;
+  }
+  .battery-range-notice {
+    margin: 0 12px 12px;
   }
 }
 @media (max-width: 350px) {

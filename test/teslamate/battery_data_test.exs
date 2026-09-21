@@ -67,6 +67,38 @@ defmodule TeslaMate.BatteryDataTest do
     refute BatteryData.readings(%{live | healthy: false}, [], @now).battery_heater.fresh?
   end
 
+  test "keeps all three API ranges independent through decoding and unit conversion" do
+    charge =
+      Charge.result(%{
+        "timestamp" => DateTime.to_unix(@now, :millisecond),
+        "battery_range" => 200,
+        "est_battery_range" => 180,
+        "ideal_battery_range" => 220
+      })
+
+    live = summary(charge)
+    data = BatteryData.readings(live, [], @now)
+    assert live.rated_battery_range_km == 321.87
+    assert live.est_battery_range_km == 289.68
+    assert live.ideal_battery_range_km == 354.06
+    assert data.rated_battery_range_km.value == 321.87
+    assert data.est_battery_range_km.value == 289.68
+    assert data.ideal_battery_range_km.value == 354.06
+  end
+
+  test "missing ranges are not replaced with the available rated range" do
+    charge = %Charge{timestamp: DateTime.to_unix(@now, :millisecond), battery_range: 200}
+
+    for data <- [
+          BatteryData.readings(summary(charge), [], @now),
+          BatteryData.readings(nil, [%{date: @now, rated_battery_range_km: 321.87}], @now)
+        ] do
+      assert data.rated_battery_range_km.value == 321.87
+      refute Map.has_key?(data, :est_battery_range_km)
+      refute Map.has_key?(data, :ideal_battery_range_km)
+    end
+  end
+
   test "keeps stored data after restart without presenting it as live" do
     old = DateTime.add(@now, -60)
     stored = %{date: old, battery_level: 55, usable_battery_level: 53, battery_heater_on: false}
