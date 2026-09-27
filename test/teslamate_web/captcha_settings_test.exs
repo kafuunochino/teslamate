@@ -1,7 +1,7 @@
 defmodule TeslaMateWeb.CaptchaSettingsTest do
   use TeslaMateWeb.ConnCase, async: false
   alias TeslaMate.{Accounts, Repo}
-  alias TeslaMate.Auth.{Captcha, CaptchaSettings, CaptchaVendors}
+  alias TeslaMate.Auth.{CaptchaSettings, CaptchaVendors}
   alias TeslaMate.Auth.CaptchaSettings.Record
   alias TeslaMateWeb.Plugs.LoginRateLimit
 
