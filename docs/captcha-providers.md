@@ -6,11 +6,11 @@
 
 ## 所需配置
 
-| 厂商 | 必填内容 |
-| --- | --- |
-| Cloudflare Turnstile | Site Key、Secret Key、允许的网站域名（不含协议或路径） |
-| 阿里云验证码 2.0 | 地域、身份标 prefix、Web/H5 场景 ID、RAM AccessKey ID / Secret |
-| 腾讯云验证码 2.0 | CaptchaAppId、AppSecretKey、云 API SecretId / SecretKey |
+| 厂商                 | 必填内容                                                       |
+| -------------------- | -------------------------------------------------------------- |
+| Cloudflare Turnstile | Site Key、Secret Key、允许的网站域名（不含协议或路径）         |
+| 阿里云验证码 2.0     | 地域、身份标 prefix、Web/H5 场景 ID、RAM AccessKey ID / Secret |
+| 腾讯云验证码 2.0     | CaptchaAppId、AppSecretKey、云 API SecretId / SecretKey        |
 
 在厂商控制台授权实际访问本站的域名。阿里云使用 V3 架构，前后端地域必须一致，关闭场景的测试放行模式，建议选择交互式验证。腾讯云使用普通 CaptchaAppId，暂不支持控制台的强制 CaptchaAppId 加密鉴权选项。使用具备验证码调用权限的子账号凭据。
 

@@ -11,11 +11,14 @@ defmodule TeslaMate.Repo.Migrations.CreateCaptchaSettings do
     end
 
     create constraint(:captcha_settings, :captcha_settings_singleton,
-             check: "id = 1", prefix: "private")
+             check: "id = 1",
+             prefix: "private"
+           )
 
     create constraint(:captcha_settings, :captcha_settings_provider,
              check: "provider IS NULL OR provider IN ('cloudflare', 'aliyun', 'tencent')",
-             prefix: "private")
+             prefix: "private"
+           )
 
     # NULL preserves the existing environment-based Turnstile policy on upgrade.
     execute(

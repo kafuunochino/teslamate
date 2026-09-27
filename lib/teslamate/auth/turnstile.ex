@@ -34,10 +34,17 @@ defmodule TeslaMate.Auth.Turnstile do
 
   def verify(token, ip, action, config) do
     cond do
-      not TeslaMate.Auth.CaptchaSettings.configured?("cloudflare", config) -> {:error, :unavailable}
-      not is_binary(token) -> {:error, :invalid}
-      byte_size(token) == 0 or byte_size(token) > 2048 -> {:error, :invalid}
-      true -> request(token, ip, action, config)
+      not TeslaMate.Auth.CaptchaSettings.configured?("cloudflare", config) ->
+        {:error, :unavailable}
+
+      not is_binary(token) ->
+        {:error, :invalid}
+
+      byte_size(token) == 0 or byte_size(token) > 2048 ->
+        {:error, :invalid}
+
+      true ->
+        request(token, ip, action, config)
     end
   end
 

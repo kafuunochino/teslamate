@@ -47,8 +47,10 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
     do: put_csp(conn, provider)
 
   defp put_csp(conn) do
-    provider = if conn.request_path in ["/register", "/sign_in", "/sign_in/verify"],
-      do: TeslaMate.Auth.CaptchaSettings.active().provider
+    provider =
+      if conn.request_path in ["/register", "/sign_in", "/sign_in/verify"],
+        do: TeslaMate.Auth.CaptchaSettings.active().provider
+
     put_csp(conn, provider)
   end
 
@@ -62,11 +64,13 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
 
     captcha_sources = TeslaMateWeb.CaptchaSources.for_provider(captcha_provider)
     captcha_hosts = if captcha_sources == [], do: "", else: " " <> Enum.join(captcha_sources, " ")
-    frames = cond do
-      captcha_sources != [] -> Enum.join(captcha_sources, " ")
-      conn.request_path == "/" -> "'self'"
-      true -> "'none'"
-    end
+
+    frames =
+      cond do
+        captcha_sources != [] -> Enum.join(captcha_sources, " ")
+        conn.request_path == "/" -> "'self'"
+        true -> "'none'"
+      end
 
     # JS API 2.0 loads its renderer from a separate official CDN and uses
     # dynamic functions. Keep this compatibility exception provider-specific;

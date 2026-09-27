@@ -141,7 +141,7 @@ export function mountCaptcha(win, doc) {
       if (id !== generation) return;
       status.textContent = "点击按钮完成人机验证。";
       if (provider === "tencent") {
-        instance = new win.TencentCaptcha(
+        const created = new win.TencentCaptcha(
           root.dataset.appId,
           (result) => {
             if (id !== generation || submitting) return;
@@ -153,10 +153,17 @@ export function mountCaptcha(win, doc) {
           },
           { userLanguage: "zh-cn" },
         );
+        if (id !== generation) {
+          created.destroy();
+          return;
+        }
+        instance = created;
         trigger.disabled = false;
         trigger.addEventListener("click", () => {
           if (id !== generation) return;
           status.textContent = "请完成弹窗中的验证。";
+          trigger.disabled = true;
+          win.clearTimeout(timer);
           timer = win.setTimeout(
             () => failed(id, "验证超时，请重新加载验证。"),
             120000,

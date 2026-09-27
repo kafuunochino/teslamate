@@ -22,12 +22,25 @@ defmodule TeslaMate.Auth.Captcha do
     supplied_revision = params["captcha_revision"]
 
     cond do
-      not CaptchaSettings.configured?(provider, config) -> {:error, :unavailable}
-      supplied_provider != provider and not (provider == "cloudflare" and is_nil(supplied_provider)) -> {:error, :invalid}
-      supplied_revision != to_string(revision) and not (provider == "cloudflare" and is_nil(supplied_revision)) -> {:error, :invalid}
-      provider == "cloudflare" -> Turnstile.verify(params["cf-turnstile-response"], ip, action, config)
-      provider in ["aliyun", "tencent"] -> CaptchaVendors.verify(provider, config, params, ip)
-      true -> {:error, :unavailable}
+      not CaptchaSettings.configured?(provider, config) ->
+        {:error, :unavailable}
+
+      supplied_provider != provider and
+          not (provider == "cloudflare" and is_nil(supplied_provider)) ->
+        {:error, :invalid}
+
+      supplied_revision != to_string(revision) and
+          not (provider == "cloudflare" and is_nil(supplied_revision)) ->
+        {:error, :invalid}
+
+      provider == "cloudflare" ->
+        Turnstile.verify(params["cf-turnstile-response"], ip, action, config)
+
+      provider in ["aliyun", "tencent"] ->
+        CaptchaVendors.verify(provider, config, params, ip)
+
+      true ->
+        {:error, :unavailable}
     end
   end
 
