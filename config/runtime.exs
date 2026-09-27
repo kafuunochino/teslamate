@@ -107,6 +107,10 @@ end
 
 config :phoenix,
   filter_parameters: [
+    "captcha_settings",
+    "captcha_token",
+    "captcha_randstr",
+    "captcha_setup_token",
     "cf-turnstile-response",
     "client_secret",
     "code",

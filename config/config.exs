@@ -29,6 +29,10 @@ config :phoenix,
     "code",
     "access",
     "refresh",
+    "captcha_settings",
+    "captcha_token",
+    "captcha_randstr",
+    "captcha_setup_token",
     "cf-turnstile-response"
   ],
   static_compressors: [

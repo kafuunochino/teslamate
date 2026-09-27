@@ -158,6 +158,9 @@ defmodule TeslaMateWeb.Router do
 
     # Keep legacy operational pages available to administrators while the
     # end-user UI is fully served by the unified platform above.
+    post "/captcha", CaptchaSettingsController, :create
+    post "/captcha/verify", CaptchaSettingsController, :verify
+
     get "/collector", CarController, :index
     get "/tesla-account/fleet", TeslaFleetController, :index
     post "/tesla-account/fleet/check", TeslaFleetController, :check

@@ -5,7 +5,7 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
   Sets:
     * `Content-Security-Policy` — restricts scripts/styles/connections to the
       unified TeslaMate origin. Only authentication pages may embed the
-      Cloudflare challenge when Turnstile is enabled.
+      selected CAPTCHA provider when verification is enabled.
       `frame-ancestors` is left configurable via
       `TESLAMATE_CSP_FRAME_ANCESTORS` (default `'none'`) so external webhooks
       cannot embed TeslaMate in an iframe.
@@ -43,7 +43,16 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
 
   # ---- builders ----------------------------------------------------------
 
+  def for_captcha(conn, provider) when provider in ["cloudflare", "aliyun", "tencent"],
+    do: put_csp(conn, provider)
+
   defp put_csp(conn) do
+    provider = if conn.request_path in ["/register", "/sign_in", "/sign_in/verify"],
+      do: TeslaMate.Auth.CaptchaSettings.active().provider
+    put_csp(conn, provider)
+  end
+
+  defp put_csp(conn, captcha_provider) do
     # Cloudflare forwards this per-response nonce to its injected detection
     # scripts. Never allow all inline scripts or reuse a nonce across pages.
     nonce = :crypto.strong_rand_bytes(24) |> Base.encode64()
@@ -51,18 +60,13 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
     sources = if amap?, do: " https://*.amap.com https://*.autonavi.com", else: ""
     geocoding_source = if amap?, do: "", else: " https://nominatim.openstreetmap.org"
 
-    turnstile? =
-      TeslaMateWeb.Config.turnstile_enabled?() and
-        conn.request_path in ["/register", "/sign_in", "/sign_in/verify"]
-
-    turnstile_script = if turnstile?, do: " https://challenges.cloudflare.com", else: ""
-
-    frames =
-      cond do
-        turnstile? -> "https://challenges.cloudflare.com"
-        conn.request_path == "/" -> "'self'"
-        true -> "'none'"
-      end
+    captcha_sources = TeslaMateWeb.CaptchaSources.for_provider(captcha_provider)
+    captcha_hosts = if captcha_sources == [], do: "", else: " " <> Enum.join(captcha_sources, " ")
+    frames = cond do
+      captcha_sources != [] -> Enum.join(captcha_sources, " ")
+      conn.request_path == "/" -> "'self'"
+      true -> "'none'"
+    end
 
     # JS API 2.0 loads its renderer from a separate official CDN and uses
     # dynamic functions. Keep this compatibility exception provider-specific;
@@ -91,11 +95,11 @@ defmodule TeslaMateWeb.Plugs.SecurityHeaders do
       [
         "default-src 'self'",
         "base-uri 'self'",
-        "img-src 'self' data: blob: https://tile.openstreetmap.org#{sources}",
+        "img-src 'self' data: blob: https://tile.openstreetmap.org#{sources}#{captcha_hosts}",
         "font-src 'self' data:",
-        "script-src #{script_src()} 'nonce-#{nonce}'#{amap_scripts}#{turnstile_script}",
-        "style-src #{style_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}",
-        "connect-src 'self' ws: wss:#{sources}#{geocoding_source}",
+        "script-src #{script_src()} 'nonce-#{nonce}'#{amap_scripts}#{captcha_hosts}",
+        "style-src #{style_src()}#{if amap?, do: " https://webapi.amap.com", else: ""}#{captcha_hosts}",
+        "connect-src 'self' ws: wss:#{sources}#{geocoding_source}#{captcha_hosts}",
         "worker-src 'self'#{if amap?, do: " blob:", else: ""}",
         "frame-src #{frames}",
         "frame-ancestors #{frame_ancestors()}",

@@ -1,0 +1,14 @@
+<section class="auth-page" aria-labelledby="captcha-setup-title">
+  <div class="auth-card">
+    <h1 id="captcha-setup-title" class="title is-4">验证并启用人机验证</h1>
+    <p>即将使用：<%= TeslaMate.Auth.CaptchaSettings.label(@settings.provider) %>。</p>
+    <p class="help mb-4">请完成下方验证，再点击保存。服务端校验通过后才会启用，未完成前继续使用原配置。本次验证有效期为 10 分钟。</p>
+    <p :if={@error} class="auth-alert" role="alert"><%= @error %></p>
+    <.form for={%{}} action="/admin/captcha/verify" method="post" class="auth-form" autocomplete="off">
+      <input type="hidden" name="captcha_setup_token" value={@setup_token} />
+      <.challenge settings={@settings} action="settings" />
+      <button class="button is-primary is-fullwidth auth-submit" type="submit">验证并保存</button>
+    </.form>
+    <p class="auth-switch"><a href="/admin/settings#captcha-settings">取消并返回系统设置</a></p>
+  </div>
+</section>

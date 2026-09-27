@@ -5,9 +5,9 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 
 import * as hooks from "./hooks";
-import { mountTurnstile } from "./turnstile.mjs";
+import { mountCaptcha } from "./captcha.mjs";
 
-mountTurnstile(window, document);
+mountCaptcha(window, document);
 
 import { mountPortal, mountInvitationCopy } from "./portal.mjs";
 mountPortal(window, document);

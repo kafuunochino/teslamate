@@ -25,23 +25,31 @@ defmodule TeslaMate.Auth.Turnstile do
   end
 
   def verify(token, ip, action) do
+    verify(token, ip, action, %{
+      "site_key" => Config.turnstile_site_key(),
+      "secret_key" => Config.turnstile_secret_key(),
+      "hostnames" => Enum.join(Config.turnstile_hostnames(), ",")
+    })
+  end
+
+  def verify(token, ip, action, config) do
     cond do
-      not configured?() -> {:error, :unavailable}
+      not TeslaMate.Auth.CaptchaSettings.configured?("cloudflare", config) -> {:error, :unavailable}
       not is_binary(token) -> {:error, :invalid}
       byte_size(token) == 0 or byte_size(token) > 2048 -> {:error, :invalid}
-      true -> request(token, ip, action)
+      true -> request(token, ip, action, config)
     end
   end
 
   def message(:unavailable), do: "人机验证暂时不可用，请稍后刷新重试或联系管理员"
   def message(_), do: "请完成人机验证后重试；验证过期时请重新验证"
 
-  defp request(token, ip, action) do
+  defp request(token, ip, action, config) do
     client = Application.get_env(:teslamate, :turnstile_http_client, TeslaMate.HTTP)
 
     body =
       URI.encode_query(%{
-        "secret" => Config.turnstile_secret_key(),
+        "secret" => config["secret_key"],
         "response" => token,
         "remoteip" => ip
       })
@@ -53,7 +61,7 @@ defmodule TeslaMate.Auth.Turnstile do
            receive_timeout: 5_000,
            pool_timeout: 1_000
          ) do
-      {:ok, %{status: 200, body: response}} -> validate_response(response, action)
+      {:ok, %{status: 200, body: response}} -> validate_response(response, action, config)
       _ -> {:error, :unavailable}
     end
   rescue
@@ -62,11 +70,11 @@ defmodule TeslaMate.Auth.Turnstile do
     :exit, _ -> {:error, :unavailable}
   end
 
-  defp validate_response(body, action) do
+  defp validate_response(body, action, config) do
     case Jason.decode(body) do
       {:ok, %{"success" => true, "hostname" => hostname, "action" => ^action}}
       when is_binary(hostname) ->
-        if String.downcase(hostname) in Config.turnstile_hostnames(),
+        if String.downcase(hostname) in String.split(config["hostnames"], ","),
           do: :ok,
           else: {:error, :invalid}
 

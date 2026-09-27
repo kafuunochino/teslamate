@@ -4,7 +4,7 @@ defmodule TeslaMateWeb.UserSessionController do
   alias TeslaMate.Accounts
   alias TeslaMate.Accounts.Security
   alias TeslaMate.Auth.LoginAudit
-  alias TeslaMate.Auth.Turnstile
+  alias TeslaMate.Auth.Captcha
   alias TeslaMateWeb.Plugs.LoginRateLimit
   alias TeslaMateWeb.UserAuth
 
@@ -36,7 +36,7 @@ defmodule TeslaMateWeb.UserSessionController do
         )
 
       :ok ->
-        case Turnstile.verify_if_required(params, ip, "login", email) do
+        case Captcha.verify_if_required(params, ip, "login", email) do
           :ok ->
             authenticate(conn, ip, email, password)
 
@@ -47,7 +47,7 @@ defmodule TeslaMateWeb.UserSessionController do
             |> put_status(:unprocessable_entity)
             |> render("new.html",
               page_title: "登录",
-              error: Turnstile.message(reason),
+              error: Captcha.message(reason),
               email: email
             )
         end
@@ -76,7 +76,7 @@ defmodule TeslaMateWeb.UserSessionController do
 
     if user = Security.challenge_user(token) do
       with :ok <- LoginRateLimit.check(ip, user.email),
-           :ok <- Turnstile.verify_if_required(params, ip, "login_2fa", user.email) do
+           :ok <- Captcha.verify_if_required(params, ip, "login_2fa", user.email) do
         complete_verification(conn, token, code, user)
       else
         {:error, :rate_limited, retry_after} ->
@@ -96,7 +96,7 @@ defmodule TeslaMateWeb.UserSessionController do
           |> put_status(:unprocessable_entity)
           |> render("verify.html",
             page_title: "两步验证",
-            error: Turnstile.message(reason),
+            error: Captcha.message(reason),
             email: user.email
           )
       end

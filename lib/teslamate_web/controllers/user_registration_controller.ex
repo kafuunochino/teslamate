@@ -2,7 +2,7 @@ defmodule TeslaMateWeb.UserRegistrationController do
   use TeslaMateWeb, :controller
 
   alias TeslaMate.Accounts
-  alias TeslaMate.Auth.Turnstile
+  alias TeslaMate.Auth.Captcha
   alias TeslaMateWeb.Plugs.LoginRateLimit
   alias TeslaMateWeb.UserAuth
 
@@ -33,14 +33,14 @@ defmodule TeslaMateWeb.UserRegistrationController do
           # expensive password hash. This bounds public CPU and database spam.
           LoginRateLimit.record_failure(ip, email_key)
 
-          case Turnstile.verify_if_required(params, ip, "register") do
+          case Captcha.verify_if_required(params, ip, "register") do
             :ok ->
               register(conn, user_params)
 
             {:error, reason} ->
               conn
               |> put_status(:unprocessable_entity)
-              |> put_flash(:error, Turnstile.message(reason))
+              |> put_flash(:error, Captcha.message(reason))
               |> render("new.html",
                 page_title: "注册",
                 changeset: Accounts.change_registration(Map.take(user_params, ["name", "email"]))
