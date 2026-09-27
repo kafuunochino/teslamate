@@ -400,7 +400,7 @@ defmodule TeslaMateWeb.CaptchaSettingsTest do
 
     changed =
       view
-      |> element("#captcha_settings_provider")
+      |> element("#captcha-settings-form_provider")
       |> render_change(%{"captcha_settings" => %{"provider" => "tencent"}})
 
     assert changed =~ "captcha-settings-app_id"

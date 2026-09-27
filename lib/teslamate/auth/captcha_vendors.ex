@@ -127,7 +127,8 @@ defmodule TeslaMate.Auth.CaptchaVendors do
          "Success" => true,
          "Code" => "Success",
          "Result" => %{"VerifyResult" => true, "VerifyCode" => "T001"}
-       }), do: :ok
+       }),
+       do: :ok
 
   defp result("aliyun", %{"Result" => %{"VerifyCode" => "T005"}}), do: {:error, :test_mode}
   defp result("aliyun", %{"Success" => false}), do: {:error, :credentials}
