@@ -178,10 +178,10 @@ defmodule TeslaMateWeb.CaptchaSettingsTest do
     assert {:error, :expired} = CaptchaSettings.draft(admin, token <> "tampered")
     accept("aliyun")
 
-    assert {:error, :invalid} =
+    assert {:error, :stale_configuration} =
              CaptchaSettings.verify_and_save(admin, token, proof("aliyun", 3), "192.0.2.1")
 
-    assert {:error, :invalid} =
+    assert {:error, :stale_configuration} =
              CaptchaSettings.verify_and_save(admin, token, proof("tencent", 0), "192.0.2.1")
 
     refute_received {:captcha_request, _, _, _}

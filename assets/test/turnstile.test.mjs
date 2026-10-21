@@ -8,6 +8,7 @@ function fixture({ width = 340, api = true, configured = "true" } = {}) {
   let now = 0;
   let timerId = 0;
   const submit = { disabled: false };
+  const proof = { value: "", disabled: false };
   const status = {};
   const host = { clientWidth: width };
   const retry = { addEventListener: (name, fn) => (events.retry = fn) };
@@ -15,6 +16,7 @@ function fixture({ width = 340, api = true, configured = "true" } = {}) {
     querySelector: () => submit,
     addEventListener: (name, fn) => (events.submit = fn),
   };
+  proof.form = form;
   const root = {
     dataset: { sitekey: "public-key", action: "register", configured },
     closest: () => form,
@@ -23,6 +25,7 @@ function fixture({ width = 340, api = true, configured = "true" } = {}) {
         "[data-turnstile-widget]": host,
         "[data-turnstile-status]": status,
         "[data-turnstile-retry]": retry,
+        "[data-turnstile-response]": proof,
       })[selector],
   };
   const renders = [];
@@ -41,6 +44,7 @@ function fixture({ width = 340, api = true, configured = "true" } = {}) {
     head: { appendChild: (script) => scripts.push(script) },
   };
   const win = {
+    Date: { now: () => now },
     navigator: { onLine: true },
     addEventListener: (name, fn) => (events[name] = fn),
     setTimeout: (fn, delay) => {
@@ -89,6 +93,7 @@ function fixture({ width = 340, api = true, configured = "true" } = {}) {
     doc,
     events,
     submit,
+    proof,
     status,
     retry,
     renders,
@@ -98,8 +103,51 @@ function fixture({ width = 340, api = true, configured = "true" } = {}) {
     host,
     flush,
     advance,
+    suspend: (ms) => (now += ms),
   };
 }
+
+test("success submits the callback proof even when the SDK creates no form field", async () => {
+  const f = fixture();
+  await mountTurnstile(f.win, f.doc).ready;
+  assert.equal(f.renders[0]["response-field"], false);
+  f.renders[0].callback("current-proof");
+  assert.equal(f.proof.value, "current-proof");
+  // Autofill or form restoration must not silently remove the proof being sent.
+  f.proof.value = "";
+  f.events.submit({ preventDefault: assert.fail });
+  assert.equal(f.proof.value, "current-proof");
+});
+
+test("successful widgets refresh before expiry even without an SDK expiry callback", async () => {
+  const f = fixture();
+  await mountTurnstile(f.win, f.doc).ready;
+  f.renders[0].callback("old-proof");
+  await f.advance(240000);
+  assert.equal(f.submit.disabled, true);
+  assert.equal(f.proof.value, "");
+  assert.equal(f.renders.length, 2);
+  f.renders[0].callback("late-proof");
+  assert.equal(f.proof.value, "");
+  f.renders[1].callback("new-proof");
+  assert.equal(f.proof.value, "new-proof");
+});
+
+test("suspended mobile pages cannot submit a stale green success state", async () => {
+  const f = fixture();
+  await mountTurnstile(f.win, f.doc).ready;
+  f.renders[0].callback("old-proof");
+  f.suspend(301000);
+  let blocked = false;
+  f.events.submit({ preventDefault: () => (blocked = true) });
+  assert.equal(blocked, true);
+  assert.equal(f.proof.value, "");
+  await f.flush();
+  assert.equal(f.renders.length, 2);
+  f.renders[1].callback("fresh-proof");
+  f.events.submit({ preventDefault: assert.fail });
+  assert.equal(f.proof.value, "fresh-proof");
+});
 
 test("requires a valid challenge and blocks duplicate submissions", async () => {
   const f = fixture();
@@ -241,7 +289,7 @@ test("the SDK can finish after the previous 20 second deadline", async () => {
   await controller.ready;
   options.callback("valid-token");
   assert.equal(f.submit.disabled, false);
-  assert.equal(f.timers.size, 0);
+  assert.equal(f.timers.size, 1); // Only the proof expiry timer remains.
   assert.equal(f.scripts.length, 1);
 });
 
@@ -267,7 +315,7 @@ test("transient iframe errors recover without refreshing the registration form",
   assert.equal(f.renders.length, 2);
   f.renders[1].callback("recovered-token");
   assert.equal(f.submit.disabled, false);
-  assert.equal(f.timers.size, 0);
+  assert.equal(f.timers.size, 1); // Only the proof expiry timer remains.
   await f.advance(180000);
   assert.equal(f.renders.length, 2);
 });

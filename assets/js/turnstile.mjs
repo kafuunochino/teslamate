@@ -1,6 +1,8 @@
 const API_URL =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const RETRY_DELAYS = [2000, 5000];
+// Leave time for the request to reach Siteverify before its five-minute limit.
+const PROOF_LIFETIME = 240000;
 const NETWORK_HELP =
   "无法连接 Cloudflare 验证服务。部分国内网络可能无法访问，请稍后重试或联系管理员。";
 
@@ -29,8 +31,11 @@ export function mountTurnstile(win, doc) {
   const host = root.querySelector("[data-turnstile-widget]");
   const status = root.querySelector("[data-turnstile-status]");
   const retry = root.querySelector("[data-turnstile-retry]");
+  const proof = root.querySelector("[data-turnstile-response]");
   let widget;
   let valid = false;
+  let response = "";
+  let validUntil = 0;
   let submitting = false;
   let loading;
   let layout;
@@ -40,6 +45,7 @@ export function mountTurnstile(win, doc) {
   let retryTimer;
   let watchdog;
   let slowTimer;
+  let expiryTimer;
 
   const size = () => (host.clientWidth < 300 ? "compact" : "flexible");
   const color = () =>
@@ -49,6 +55,7 @@ export function mountTurnstile(win, doc) {
     win.clearTimeout(retryTimer);
     win.clearTimeout(watchdog);
     win.clearTimeout(slowTimer);
+    win.clearTimeout(expiryTimer);
   }
 
   function removeWidget() {
@@ -60,6 +67,9 @@ export function mountTurnstile(win, doc) {
 
   function pending(message, retryable = false) {
     valid = false;
+    response = "";
+    validUntil = 0;
+    if (proof) proof.value = "";
     submit.disabled = true;
     status.textContent = message;
     retry.hidden = !retryable;
@@ -123,6 +133,15 @@ export function mountTurnstile(win, doc) {
     watchdog = win.setTimeout(() => failed(id, NETWORK_HELP), delay);
   }
 
+  function expired(id) {
+    if (id !== generation || submitting) return;
+    generation++;
+    clearTimers();
+    removeWidget();
+    pending("验证已过期，正在重新验证…");
+    retryTimer = win.setTimeout(() => start(true), 0);
+  }
+
   function render(id, api) {
     if (id !== generation) return;
     win.clearTimeout(slowTimer);
@@ -137,25 +156,28 @@ export function mountTurnstile(win, doc) {
       // Own the retry budget so an unreachable service cannot spin forever.
       retry: "never",
       "refresh-expired": "manual",
+      // Keep exactly one response field under our control, outside SDK DOM.
+      "response-field": false,
       callback: (token) => {
         if (id !== generation || submitting) return;
-        if (typeof token !== "string" || token.length === 0)
+        if (
+          typeof token !== "string" ||
+          token.length === 0 ||
+          token.length > 2048
+        )
           return failed(id, "未收到有效验证结果，请重新验证。");
         clearTimers();
         retries = 0;
+        response = token;
+        proof.value = token;
+        validUntil = win.Date.now() + PROOF_LIFETIME;
+        expiryTimer = win.setTimeout(() => expired(id), PROOF_LIFETIME);
         valid = true;
         submit.disabled = false;
         status.textContent = "人机验证已通过";
         retry.hidden = true;
       },
-      "expired-callback": () => {
-        if (id !== generation || submitting) return;
-        generation++;
-        clearTimers();
-        removeWidget();
-        pending("验证已过期，正在重新验证…");
-        retryTimer = win.setTimeout(() => start(true), 0);
-      },
+      "expired-callback": () => expired(id),
       "timeout-callback": () => failed(id, "验证超时，请重新完成验证。"),
       "error-callback": (code) => {
         failed(id, ...challengeError(code));
@@ -202,13 +224,22 @@ export function mountTurnstile(win, doc) {
   submit.disabled = true;
   form.addEventListener("submit", (event) => {
     if (!valid || submitting) event.preventDefault();
-    else {
+    else if (win.Date.now() >= validUntil) {
+      event.preventDefault();
+      start(true);
+    } else {
+      // Re-copy at submission in case autofill/form restoration reset the DOM.
+      proof.value = response;
       submitting = true;
       clearTimers();
       submit.disabled = true;
     }
   });
   if (root.dataset.configured !== "true") return null;
+  if (!proof || proof.form !== form || proof.disabled) {
+    pending("验证表单未完整加载，请刷新页面重试。", false);
+    return null;
+  }
 
   retry.addEventListener("click", () => start(true));
   win.addEventListener("online", () => {

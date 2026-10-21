@@ -38,6 +38,7 @@ defmodule TeslaMateWeb.TurnstileComponent do
     >
       <input type="hidden" name="captcha_provider" value={@settings.provider} />
       <input type="hidden" name="captcha_revision" value={@settings.revision} />
+      <input type="hidden" name="cf-turnstile-response" value="" data-turnstile-response />
       <p class="help">请完成人机验证后继续。</p>
       <div data-turnstile-widget></div>
       <p data-turnstile-status class="help" role="status" aria-live="polite">

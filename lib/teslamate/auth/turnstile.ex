@@ -1,5 +1,6 @@
 defmodule TeslaMate.Auth.Turnstile do
   @moduledoc "Server-side Cloudflare Turnstile validation for platform authentication."
+  require Logger
 
   alias TeslaMateWeb.Config
   alias TeslaMateWeb.Plugs.LoginRateLimit
@@ -35,13 +36,13 @@ defmodule TeslaMate.Auth.Turnstile do
   def verify(token, ip, action, config) do
     cond do
       not TeslaMate.Auth.CaptchaSettings.configured?("cloudflare", config) ->
-        {:error, :unavailable}
+        rejected(:unavailable, :configuration_missing)
 
       not is_binary(token) ->
-        {:error, :invalid}
+        rejected(:invalid, :response_missing_or_malformed)
 
       byte_size(token) == 0 or byte_size(token) > 2048 ->
-        {:error, :invalid}
+        rejected(:invalid, :response_empty_or_oversized)
 
       true ->
         request(token, ip, action, config)
@@ -49,6 +50,13 @@ defmodule TeslaMate.Auth.Turnstile do
   end
 
   def message(:unavailable), do: "人机验证暂时不可用，请稍后刷新重试或联系管理员"
+
+  def message(:challenge_expired),
+    do: "上一次提交的验证已过期或已使用，请完成下方的新验证后再次提交。"
+
+  def message(:verification_configuration),
+    do: "人机验证配置不匹配，请联系管理员检查验证服务的网站域名及操作配置。"
+
   def message(_), do: "请完成人机验证后重试；验证过期时请重新验证"
 
   defp request(token, ip, action, config) do
@@ -69,27 +77,59 @@ defmodule TeslaMate.Auth.Turnstile do
            pool_timeout: 1_000
          ) do
       {:ok, %{status: 200, body: response}} -> validate_response(response, action, config)
-      _ -> {:error, :unavailable}
+      _ -> rejected(:unavailable, :transport_error)
     end
   rescue
-    _ -> {:error, :unavailable}
+    _ -> rejected(:unavailable, :transport_error)
   catch
-    :exit, _ -> {:error, :unavailable}
+    :exit, _ -> rejected(:unavailable, :transport_error)
   end
 
   defp validate_response(body, action, config) do
     case Jason.decode(body) do
-      {:ok, %{"success" => true, "hostname" => hostname, "action" => ^action}}
-      when is_binary(hostname) ->
-        if String.downcase(hostname) in String.split(config["hostnames"], ","),
-          do: :ok,
-          else: {:error, :invalid}
+      {:ok, %{"success" => true} = result} ->
+        hostname = result["hostname"]
+
+        cond do
+          not is_binary(hostname) ->
+            rejected(:verification_configuration, :hostname_missing)
+
+          String.downcase(hostname) not in String.split(config["hostnames"], ",") ->
+            rejected(:verification_configuration, :hostname_mismatch)
+
+          result["action"] != action ->
+            rejected(:verification_configuration, :action_mismatch)
+
+          true ->
+            :ok
+        end
+
+      {:ok, %{"success" => false, "error-codes" => codes}} when is_list(codes) ->
+        cond do
+          Enum.any?(codes, &(&1 in ["missing-input-secret", "invalid-input-secret"])) ->
+            rejected(:credentials, :secret_rejected)
+
+          "timeout-or-duplicate" in codes ->
+            rejected(:challenge_expired, :timeout_or_duplicate)
+
+          "internal-error" in codes ->
+            rejected(:unavailable, :upstream_internal_error)
+
+          true ->
+            rejected(:invalid, :response_rejected)
+        end
 
       {:ok, _} ->
-        {:error, :invalid}
+        rejected(:invalid, :response_rejected)
 
       _ ->
-        {:error, :unavailable}
+        rejected(:unavailable, :malformed_reply)
     end
+  end
+
+  defp rejected(reason, diagnostic) do
+    # Only fixed categories: never log provider payloads, tokens, keys or user data.
+    Logger.warning("[captcha] cloudflare verification failed: #{diagnostic}")
+    {:error, reason}
   end
 end

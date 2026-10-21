@@ -1,5 +1,6 @@
 defmodule TeslaMateWeb.TurnstileTest do
   use TeslaMateWeb.ConnCase, async: false
+  import ExUnit.CaptureLog
 
   alias TeslaMate.{Accounts, Repo}
   alias TeslaMate.Accounts.{Authenticator, User}
@@ -101,6 +102,27 @@ defmodule TeslaMateWeb.TurnstileTest do
     assert LoginRateLimit.challenge_required?(ip)
   end
 
+  test "the rendered login form carries one proof and the current provider revision", %{
+    current_user: user
+  } do
+    failed = post(build_conn(), "/sign_in", credentials(user, "wrong"))
+    document = failed |> html_response(422) |> Floki.parse_document!()
+    form = Floki.find(document, "form[action='/sign_in']")
+    assert [_] = Floki.find(form, "input[name='cf-turnstile-response'][data-turnstile-response]")
+
+    metadata =
+      for name <- ["captcha_provider", "captcha_revision"], into: %{} do
+        [value] = Floki.attribute(form, "input[name='#{name}']", "value")
+        {name, value}
+      end
+
+    assert metadata == %{"captcha_provider" => "cloudflare", "captcha_revision" => "0"}
+    accepted("login")
+    params = user |> credentials() |> with_token() |> Map.merge(metadata)
+    response = post(build_conn(), "/sign_in", params)
+    assert get_session(response, :user_session_token)
+  end
+
   test "registration always validates before account creation", %{current_user: admin} do
     {:ok, _} = Accounts.set_registration(admin, true)
     html = get(build_conn(), "/register") |> html_response(200)
@@ -138,18 +160,28 @@ defmodule TeslaMateWeb.TurnstileTest do
     accepted("login", %{"success" => false, "error-codes" => ["timeout-or-duplicate"]})
     response = post(build_conn(), "/sign_in", with_token(credentials(user)))
     assert response.status == 422
+    assert response.resp_body =~ "上一次提交的验证已过期或已使用"
     refute get_session(response, :user_session_token)
   end
 
   test "checks hostname and action and fails closed on invalid replies and transport errors" do
     for overrides <- [
           %{"success" => false},
-          %{"success" => "true"},
-          %{"hostname" => "attacker.example.com"},
-          %{"action" => "register"}
+          %{"success" => "true"}
         ] do
       accepted("login", overrides)
       assert {:error, :invalid} = Turnstile.verify("response", "192.0.2.1", "login")
+    end
+
+    for overrides <- [
+          %{"hostname" => "attacker.example.com"},
+          %{"hostname" => nil},
+          %{"action" => "register"},
+          %{"action" => nil}
+        ] do
+      accepted("login", overrides)
+      assert {:error, :verification_configuration} =
+               Turnstile.verify("response", "192.0.2.1", "login")
     end
 
     for response <- [
@@ -159,6 +191,32 @@ defmodule TeslaMateWeb.TurnstileTest do
         ] do
       Process.put(:siteverify_result, response)
       assert {:error, :unavailable} = Turnstile.verify("response", "192.0.2.1", "login")
+    end
+  end
+
+  test "upstream failures have safe diagnostics without logging credentials or payloads" do
+    for {code, reason, diagnostic} <- [
+          {"timeout-or-duplicate", :challenge_expired, "timeout_or_duplicate"},
+          {"invalid-input-secret", :credentials, "secret_rejected"},
+          {"internal-error", :unavailable, "upstream_internal_error"},
+          {"invalid-input-response", :invalid, "response_rejected"}
+        ] do
+      accepted("login", %{
+        "success" => false,
+        "error-codes" => [code, "sensitive-provider-payload"],
+        "private" => "sensitive-provider-payload"
+      })
+
+      log =
+        capture_log(fn ->
+          assert {:error, ^reason} = Turnstile.verify("private-token", "192.0.2.1", "login")
+        end)
+
+      assert log =~ diagnostic
+      refute log =~ "sensitive-provider-payload"
+      refute log =~ "private-token"
+      refute log =~ "test-private-key"
+      refute log =~ "192.0.2.1"
     end
   end
 
