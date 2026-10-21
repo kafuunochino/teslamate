@@ -180,6 +180,7 @@ defmodule TeslaMateWeb.TurnstileTest do
           %{"action" => nil}
         ] do
       accepted("login", overrides)
+
       assert {:error, :verification_configuration} =
                Turnstile.verify("response", "192.0.2.1", "login")
     end
